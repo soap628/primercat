@@ -1,0 +1,154 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "@/navigation";
+import { useAuth } from "@/lib/useAuth";
+import { useTranslations } from "next-intl";
+import { getPrimerJobs, getGrnaJobs, getBlastJobs, deleteJob, JobRecord } from "@/lib/api";
+
+type TabKey = "primer" | "grna" | "blast";
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleString();
+}
+
+function JobList({ jobs, type, onDelete, tDelete, tEmpty }: {
+  jobs: JobRecord[];
+  type: TabKey;
+  onDelete: (id: string) => void;
+  tDelete: string;
+  tEmpty: string;
+}) {
+  if (jobs.length === 0) {
+    return <p style={{ color: "#94a3b8", fontSize: 14, marginTop: 24 }}>{tEmpty}</p>;
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
+      {jobs.map((job) => (
+        <div
+          key={job.id}
+          style={{
+            background: "#f8fafc",
+            border: "1px solid #e2e8f0",
+            borderRadius: 10,
+            padding: "14px 16px",
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {job.gene_name || job.sequence_snippet || "—"}
+            </p>
+            <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748b" }}>
+              {type === "grna" && job.cas_type && <span>{job.cas_type} · {job.species} · </span>}
+              {type === "blast" && job.program && <span>{job.program} / {job.database} · </span>}
+              {formatDate(job.created_at)}
+            </p>
+          </div>
+          <button
+            onClick={() => onDelete(job.id)}
+            style={{
+              flexShrink: 0,
+              padding: "5px 10px",
+              background: "none",
+              border: "1px solid #fca5a5",
+              borderRadius: 6,
+              color: "#ef4444",
+              fontSize: 12,
+              cursor: "pointer",
+            }}
+          >
+            {tDelete}
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function AccountPage({ params: { locale } }: { params: { locale: string } }) {
+  const t = useTranslations("account");
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const [tab, setTab] = useState<TabKey>("primer");
+  const [primerJobs, setPrimerJobs] = useState<JobRecord[]>([]);
+  const [grnaJobs, setGrnaJobs] = useState<JobRecord[]>([]);
+  const [blastJobs, setBlastJobs] = useState<JobRecord[]>([]);
+  const [fetching, setFetching] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [loading, user, locale, router]);
+
+  useEffect(() => {
+    if (!user) return;
+    setFetching(true);
+    Promise.all([getPrimerJobs(), getGrnaJobs(), getBlastJobs()])
+      .then(([p, g, b]) => { setPrimerJobs(p); setGrnaJobs(g); setBlastJobs(b); })
+      .catch(console.error)
+      .finally(() => setFetching(false));
+  }, [user]);
+
+  async function handleDelete(type: TabKey, id: string) {
+    await deleteJob(type, id);
+    if (type === "primer") setPrimerJobs((j) => j.filter((x) => x.id !== id));
+    if (type === "grna") setGrnaJobs((j) => j.filter((x) => x.id !== id));
+    if (type === "blast") setBlastJobs((j) => j.filter((x) => x.id !== id));
+  }
+
+  if (loading || !user) return null;
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: "primer", label: t("primer_tab") },
+    { key: "grna", label: t("grna_tab") },
+    { key: "blast", label: t("blast_tab") },
+  ];
+
+  const jobsByTab: Record<TabKey, JobRecord[]> = { primer: primerJobs, grna: grnaJobs, blast: blastJobs };
+
+  return (
+    <div style={{ maxWidth: 700, margin: "48px auto", padding: "0 16px" }}>
+      <h1 style={{ fontSize: 24, fontWeight: 700, color: "#0f172a", marginBottom: 8 }}>{t("title")}</h1>
+      <p style={{ fontSize: 13, color: "#64748b", marginBottom: 24 }}>{user.email}</p>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: "1px solid #e2e8f0", paddingBottom: 0 }}>
+        {tabs.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            style={{
+              padding: "8px 16px",
+              border: "none",
+              background: "none",
+              borderBottom: tab === key ? "2px solid #4f46e5" : "2px solid transparent",
+              color: tab === key ? "#4f46e5" : "#64748b",
+              fontWeight: tab === key ? 600 : 400,
+              fontSize: 14,
+              cursor: "pointer",
+              marginBottom: -1,
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {fetching ? (
+        <p style={{ color: "#94a3b8", fontSize: 14 }}>Loading…</p>
+      ) : (
+        <JobList
+          jobs={jobsByTab[tab]}
+          type={tab}
+          onDelete={(id) => handleDelete(tab, id)}
+          tDelete={t("delete")}
+          tEmpty={t("empty")}
+        />
+      )}
+    </div>
+  );
+}

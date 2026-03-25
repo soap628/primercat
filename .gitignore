@@ -1,0 +1,26 @@
+# Environment files
+.env
+.env.local
+.env.production
+backend/.env
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+pytest-cache-files-*/
+*.egg-info/
+
+# Node
+node_modules/
+.next/
+
+# Claude
+.claude/
+
+# Misc
+fund-calc/
+offshore-hub/
