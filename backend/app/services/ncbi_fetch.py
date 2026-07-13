@@ -43,19 +43,39 @@ class GeneInfoData:
     organism: str
 
 
+def _is_mane_select(record: SeqRecord) -> bool:
+    """Return True if any CDS feature on this record carries a MANE Select tag."""
+    for feat in record.features:
+        if feat.type != "CDS":
+            continue
+        note = " ".join(feat.qualifiers.get("note", []))
+        tag = " ".join(feat.qualifiers.get("tag", []))
+        if "MANE Select" in note or "MANE Select" in tag:
+            return True
+    return False
+
+
 def _pick_best_transcript(records: list[SeqRecord]) -> tuple[SeqRecord, str]:
     """
-    优先选 NM_ 开头的 RefSeq 转录本，再选 CDS 最长的。
+    选取最佳转录本，优先级：
+    1. MANE Select（人类基因组官方标准转录本，NCBI/Ensembl 联合认定）
+    2. NM_ RefSeq 编码转录本中 CDS 最长的
+    3. 所有记录中 CDS 最长的（兜底）
     返回 (record, selection_reason)
     """
-    nm_records = [r for r in records if r.id.startswith("NM_")]
-
     def cds_length(r: SeqRecord) -> int:
         for feat in r.features:
             if feat.type == "CDS":
                 return len(feat.location)
         return 0
 
+    mane_records = [r for r in records if _is_mane_select(r)]
+    if mane_records:
+        best = max(mane_records, key=cds_length)
+        reason = f"选取 MANE Select 转录本（NCBI/Ensembl 联合认定，CDS {cds_length(best)} bp）"
+        return best, reason
+
+    nm_records = [r for r in records if r.id.startswith("NM_")]
     if nm_records:
         best = max(nm_records, key=cds_length)
         reason = f"从 {len(nm_records)} 条 NM_ RefSeq 编码转录本中选取 CDS 最长的（{cds_length(best)} bp）"

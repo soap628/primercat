@@ -1,339 +1,668 @@
 import { Link } from "@/navigation";
 
+const TONE_STYLES: Record<string, { bg: string; border: string; dot: string }> = {
+  green: { bg: "rgba(34,197,94,0.07)",  border: "rgba(34,197,94,0.22)",  dot: "#22c55e" },
+  amber: { bg: "rgba(251,191,36,0.07)", border: "rgba(251,191,36,0.25)", dot: "#f59e0b" },
+  red:   { bg: "rgba(239,68,68,0.07)",  border: "rgba(239,68,68,0.20)",  dot: "#ef4444" },
+};
+
 const COPY = {
   zh: {
-    badge: "可信度",
-    title: "结果的可信度从何而来",
+    badge: "结果可信度",
+    title: "结果页面的每一列数字，背后是什么",
     intro:
-      "这页解释 PrimerCat 的结果在哪些方面有充分依据、哪些方面仍需进一步验证，以及如何正确理解 BLAST 状态标注。",
-    qpcrTitle: "qPCR 引物设计已经能提供什么",
-    qpcrIntro:
-      "每次设计都附带了足够的依据和边界标注，让用户在实验前就能对候选引物有清晰的判断，而不是盲目信任一个黑盒分数。",
-    qpcrGoodTitle: "这些方面已经有说服力",
-    qpcrGood: [
-      "在物种上下文中自动选取最合适的 RefSeq 转录本作为设计模板",
-      "结果页直接展示设计依据、筛查状态、扩增子和推荐理由",
-      "BLAST 失败不会被误报为已通过特异性验证",
-      "转录本层面证据与全基因组结论在产品中已明确区分",
-    ],
-    qpcrCareTitle: "用户仍需自行确认",
-    qpcrCare: [
-      "RefSeq RNA BLAST 不等同于全基因组 PCR 特异性验证",
-      "正式实验前建议结合更高层级的 in-silico 分析或湿实验验证",
-    ],
-    positioningTitle: "如何向他人介绍这个工具",
-    positioningCards: [
-      {
-        title: "适合这样描述",
-        body: "可审计的 qPCR 引物设计工具，结果附带设计依据和明确的结论边界。",
-      },
-      {
-        title: "避免这样描述",
-        body: "不要用「保证准确」「完全验证」「临床级别」等措辞，这类说法会让专业用户立刻产生警惕。",
-      },
-      {
-        title: "最准确的定位",
-        body: "面向科研用途的 qPCR 引物设计工具，以透明的工作流和清晰的结论边界见长。",
-      },
-    ],
-    extraTitle: "其他工具如何理解",
-    extraIntro:
-      "CRISPR gRNA 设计和 BLAST 比对仍然可用，更适合作为配套能力理解，在需要时调用。",
-    extraCards: [
-      {
-        title: "CRISPR gRNA",
-        body: "有脱靶证据层，适合作为 CRISPR 实验设计的初筛工作台。功能实用，通过 More Tools 可随时访问。",
-      },
-      {
-        title: "BLAST",
-        body: "作为配套序列工具，适合在 qPCR 设计或其他分析任务后做快速比对检查。",
-      },
-    ],
-    reasonTitle: "清楚的边界反而更有说服力",
-    reasonBody:
-      "长期使用科研工具的人，更愿意信任那些清楚知道自己能做什么、不能做什么的工具。PrimerCat 把结论边界直接写在产品里，而不是等用户自己去猜。",
-    ctaPrimer: "打开引物设计",
-    ctaMethods: "了解工作原理",
-    ctaTools: "更多工具",
-  },
-  en: {
-    badge: "Trust",
-    title: "Where this tool's confidence comes from",
-    intro:
-      "This page explains what PrimerCat results are well-supported for, what still needs user verification, and how to read the BLAST validation status correctly.",
-    qpcrTitle: "What the qPCR primer design already delivers",
-    qpcrIntro:
-      "Results come with enough evidence and labeled boundaries that users can form a clear picture of each candidate before going to the bench — not just a score to trust blindly.",
-    qpcrGoodTitle: "What is already solid",
-    qpcrGood: [
-      "Automatically selects the most suitable RefSeq transcript in species context before primer design",
-      "Result page shows design basis, screening status, amplicon evidence, and ranking rationale",
-      "BLAST failures are not reported as specificity passes",
-      "Transcript-level evidence and genome-wide claims are clearly separated throughout the UI",
-    ],
-    qpcrCareTitle: "What you still need to verify",
-    qpcrCare: [
-      "RefSeq RNA BLAST is not the same as genome-wide PCR specificity validation",
-      "Formal experimental use should include stronger in-silico checks or wet-lab validation",
-    ],
-    positioningTitle: "How to describe this tool",
-    positioningCards: [
-      {
-        title: "Accurate framing",
-        body: "Auditable qPCR primer design — results include design basis and explicit confidence boundaries.",
-      },
-      {
-        title: "Avoid",
-        body: "Words like guaranteed, fully validated, or clinical-grade will immediately prompt skepticism from experienced researchers.",
-      },
-      {
-        title: "Best positioning",
-        body: "A research-use qPCR primer design tool with transparent workflow and clearly labeled result boundaries.",
-      },
-    ],
-    extraTitle: "The additional tools",
-    extraIntro:
-      "CRISPR gRNA design and BLAST alignment remain useful supporting capabilities — available whenever you need them.",
-    extraCards: [
-      {
-        title: "CRISPR gRNA",
-        body: "Has evidence layers and clear status reporting — a practical first-pass screening workbench, accessible through More Tools.",
-      },
-      {
-        title: "BLAST",
-        body: "A supporting sequence utility for quick follow-up checks after qPCR design or other analysis work.",
-      },
-    ],
-    reasonTitle: "Honest boundaries build more trust",
-    reasonBody:
-      "Researchers who rely on scientific tools over time trust the ones that are clear about what they can and cannot prove. PrimerCat states its result boundaries directly rather than leaving users to figure them out.",
-    ctaPrimer: "Open Primer Design",
-    ctaMethods: "How It Works",
-    ctaTools: "More Tools",
-  },
-} as const;
+      "PrimerCat 不只给你一个排名列表——结果页面随结果同步呈现了推理依据、特异性状态和设计边界。这里解释每项数据的来源，以及它能回答哪些问题、回答不了哪些问题。",
 
-function BulletBlock({
-  title,
-  intro,
-  goodTitle,
-  goodItems,
-  careTitle,
-  careItems,
+    heroAsideTitle: "透明度原则",
+    heroAsideBody:
+      "结果不是黑箱打分。每一对引物或每一条 gRNA 的得分，都可以在结果页逐项追溯：Tm、GC%、跨外显子状态、Bowtie2 / BLAST 命中数……推荐理由和设计限制一并展示。",
+    heroMetricLabel: "结果覆盖维度",
+    heroMetricValue: "6 项",
+    heroMetricBody: "每条结果涵盖序列参数、热力学特性、基因组特异性、结构风险、外显子结构和活性估算六个维度。",
+
+    evidenceTitle: "结果页面已经给了你什么",
+    evidenceIntro:
+      "下面六项信息已经内嵌在每条结果里——不需要额外查阅文献，打开结果页就能看到。",
+    evidenceItems: [
+      {
+        icon: "01",
+        title: "模板来源与转录本 ID",
+        body: "系统自动从 NCBI RefSeq 选取的主转录本编号（NM_XXXXXX.X）、外显子数量、CDS 长度，以及选择该转录本的依据（CDS 完整性优先）。",
+      },
+      {
+        icon: "02",
+        title: "热力学参数",
+        body: "左右引物的 Tm（熔解温度）、GC%、发卡 ΔG、自身 3' 末端互补热力学值——均由 Primer3 在设计阶段计算，并在参数越界时直接过滤掉该候选。",
+      },
+      {
+        icon: "03",
+        title: "基因组特异性状态",
+        body: "每条引物经 Bowtie2 全基因组比对（hg38/mm10）后的命中情况：唯一命中 / 脱靶命中数 / 无命中，并标注最高相似度百分比。",
+      },
+      {
+        icon: "04",
+        title: "外显子跨越状态",
+        body: "扩增子是否横跨至少一个外显子–外显子连接处，标记为「跨外显子 ✓」或「同一外显子」，以及扩增子长度（bp）。",
+      },
+      {
+        icon: "05",
+        title: "综合评分细项",
+        body: "总分由 Tm 差、GC% 偏差、特异性、外显子跨越、扩增子大小、引物末端稳定性六个子分加权合并，每项得分可在结果卡展开区查看。",
+      },
+      {
+        icon: "06",
+        title: "gRNA 活性估算维度",
+        body: "gRNA 结果页包含 GC%、种子区连续 G 计数、PAM 邻近区碱基偏好、脱靶命中数——四项均为序列特征估算，结果页已标注「需实验验证」。",
+      },
+    ],
+
+    toolsTitle: "每个工具的覆盖范围与边界",
+    toolsIntro:
+      "下面列出每个工具明确覆盖的内容（✓），以及它不处理或边界情况（⚠）。",
+    tools: [
+      {
+        tag: "qPCR",
+        color: "#22c55e",
+        title: "qPCR 引物设计",
+        solid: [
+          "Primer3 热力学过滤（Tm、GC%、hairpin、二聚体）",
+          "Bowtie2 全基因组唯一性比对（hg38 / mm10，单次批量）",
+          "外显子–外显子跨越检测（基于 RefSeq 注释的外显子坐标）",
+          "扩增子大小 80–200 bp（qPCR 优化范围）",
+          "综合评分排序（6 子分加权）",
+          "设计依据完整展示在结果页",
+        ],
+        limit: [
+          "基因组 DNA 中的内含子命中被保守标记为脱靶（RT-qPCR 的 cDNA 模板不含内含子，此保守性可接受）",
+          "SNP / 多态性位点不检查——引物覆盖区域若含常见 SNP 可能导致扩增失败",
+          "不做湿实验验证（扩增效率曲线、溶解曲线需自行验证）",
+          "引物浓度、缓冲液组成等实验条件由用户自行优化",
+        ],
+      },
+      {
+        tag: "CRISPR",
+        color: "#7c3aed",
+        title: "CRISPR gRNA 设计",
+        solid: [
+          "Bowtie2 全基因组脱靶筛查（≤3 错配，hg38 / mm10）",
+          "支持 SpCas9（NGG）、SpCas9-NG（NG）、Cas12a（TTTV）三种 PAM",
+          "正反链全覆盖扫描",
+          "GC%、种子区连续 G、PAM 临近碱基偏好等序列特征评估",
+          "脱靶命中数与最高相似度展示",
+        ],
+        limit: [
+          "活性评分为序列特征估算，未纳入染色质可及性、DNA 甲基化等表观遗传因素",
+          "脱靶筛查限于 ≤3 错配的完全对齐命中；RNA / DNA 泡形结构或插入/缺失错配不在范围内",
+          "编辑效率和脱靶切割需在细胞系中实测验证",
+          "不提供 HDR 供体模板设计",
+        ],
+      },
+      {
+        tag: "BLAST",
+        color: "#3b82f6",
+        title: "BLAST 序列比对",
+        solid: [
+          "NCBI BLAST（blastn / blastx / tblastx）标准查询",
+          "E-value、比对得分、覆盖率、Identity% 完整展示",
+          "支持自定义序列输入",
+          "结果中展示物种来源与 GenBank 登录号",
+        ],
+        limit: [
+          "依赖 NCBI 服务器响应速度（高峰期可能超时）",
+          "结果时效性取决于 NCBI 数据库更新周期",
+          "不做 MSA（多序列比对）或系统发育分析",
+        ],
+      },
+    ],
+
+    signalTitle: "如何读懂特异性状态标签",
+    signalItems: [
+      {
+        signal: "✓ 特异",
+        meaning: "Bowtie2 / BLAST 仅找到唯一高相似度命中，或脱靶命中数 ≤2 且脱靶相似度 <80%。可作为第一选择，仍建议凝胶或溶解曲线验证。",
+        tone: "green",
+      },
+      {
+        signal: "⚠ 潜在脱靶",
+        meaning: "发现 >2 处 ≥80% 相似度的脱靶命中，或命中位置落在多个基因座。建议检查脱靶位点的基因功能后再决定是否使用。",
+        tone: "amber",
+      },
+      {
+        signal: "✗ 非特异",
+        meaning: "存在多处高相似度（>90%）脱靶命中，该引物或 gRNA 在基因组中重复出现。强烈建议优先选用排名靠前的特异性引物。",
+        tone: "red",
+      },
+      {
+        signal: "— 无命中",
+        meaning: "Bowtie2 在基因组中完全未检测到该序列（允许 ≤2 错配）。可能是序列过短、含大量简单重复，或物种基因组索引不可用。",
+        tone: "amber",
+      },
+    ],
+
+    solidLabel: "✓ 覆盖范围",
+    limitLabel: "⚠ 边界 / 限制",
+
+    ctaTitle: "准备好了？从这里开始",
+    ctaBody: "了解了数据来源和边界，就能更有把握地解读结果——也知道下一步该做什么实验来验证。",
+    ctaPrimer: "设计 qPCR 引物",
+    ctaMethods: "查看工作原理",
+    ctaGrna: "设计 CRISPR gRNA",
+  },
+
+  en: {
+    badge: "Result Credibility",
+    title: "What's behind every column of numbers on the results page",
+    intro:
+      "PrimerCat doesn't just hand you a ranked list — the results page ships reasoning, specificity status, and design boundaries alongside every result. Here's what each data point comes from, what questions it answers, and where it stops.",
+
+    heroAsideTitle: "Transparency Principle",
+    heroAsideBody:
+      "Results aren't black-box scores. Every primer pair or gRNA score is traceable on the results page: Tm, GC%, exon-spanning status, Bowtie2 / BLAST hit count… the rationale and design limits are shown together.",
+    heroMetricLabel: "Dimensions covered",
+    heroMetricValue: "6",
+    heroMetricBody: "Each result covers six dimensions: sequence parameters, thermodynamics, genome specificity, structural risk, exon architecture, and activity estimate.",
+
+    evidenceTitle: "What the results page already tells you",
+    evidenceIntro:
+      "The six items below are embedded in every result — no extra literature lookup needed. Open the results page and they're right there.",
+    evidenceItems: [
+      {
+        icon: "01",
+        title: "Template source & transcript ID",
+        body: "The RefSeq primary transcript accession (NM_XXXXXX.X) chosen automatically, exon count, CDS length, and the selection rationale (CDS completeness preferred).",
+      },
+      {
+        icon: "02",
+        title: "Thermodynamic parameters",
+        body: "Tm, GC%, hairpin ΔG, and 3′-end self-complementarity for both primers — computed by Primer3 at design time; candidates that exceed thresholds are filtered out before ranking.",
+      },
+      {
+        icon: "03",
+        title: "Genome-level specificity status",
+        body: "Per-primer Bowtie2 whole-genome alignment results (hg38/mm10): unique hit / off-target count / no hit, with the top identity percentage shown.",
+      },
+      {
+        icon: "04",
+        title: "Exon-spanning status",
+        body: "Whether the amplicon crosses at least one exon–exon junction (flagged ✓ Exon-spanning or Same exon), plus amplicon length in bp.",
+      },
+      {
+        icon: "05",
+        title: "Composite score breakdown",
+        body: "Total score combines six sub-scores (Tm delta, GC% deviation, specificity, exon-spanning, amplicon size, primer-end stability) with weighted addition — expand any result card to inspect each sub-score.",
+      },
+      {
+        icon: "06",
+        title: "gRNA activity estimate dimensions",
+        body: "gRNA results include GC%, seed-region consecutive-G count, PAM-proximal nucleotide preference, and off-target hit count — all sequence-feature estimates; the page already flags 'experimental validation required'.",
+      },
+    ],
+
+    toolsTitle: "Coverage and boundaries per tool",
+    toolsIntro:
+      "Below are what each tool explicitly covers (✓) and what it does not handle or where it has known limits (⚠).",
+    tools: [
+      {
+        tag: "qPCR",
+        color: "#22c55e",
+        title: "qPCR Primer Design",
+        solid: [
+          "Primer3 thermodynamic filtering (Tm, GC%, hairpin, dimer)",
+          "Bowtie2 whole-genome uniqueness alignment (hg38 / mm10, single batch)",
+          "Exon–exon junction spanning detection (based on RefSeq exon coordinates)",
+          "Amplicon size 80–200 bp (qPCR-optimised range)",
+          "Composite score ranking (6 weighted sub-scores)",
+          "Full design rationale displayed on the results page",
+        ],
+        limit: [
+          "Intronic genomic hits are conservatively flagged as off-target (acceptable for RT-qPCR on cDNA, which lacks introns)",
+          "SNP / polymorphism sites not checked — a primer overlapping a common SNP may fail in certain individuals",
+          "No wet-lab validation (amplification efficiency curves, melt curves must be verified experimentally)",
+          "Primer concentration and buffer conditions are left to the user to optimise",
+        ],
+      },
+      {
+        tag: "CRISPR",
+        color: "#7c3aed",
+        title: "CRISPR gRNA Design",
+        solid: [
+          "Bowtie2 whole-genome off-target screening (≤3 mismatches, hg38 / mm10)",
+          "Supports SpCas9 (NGG), SpCas9-NG (NG), Cas12a (TTTV) PAMs",
+          "Both-strand full-length scanning",
+          "GC%, seed-region consecutive-G, PAM-proximal nucleotide preference scoring",
+          "Off-target hit count and top identity displayed",
+        ],
+        limit: [
+          "Activity scores are sequence-feature estimates — chromatin accessibility, DNA methylation, and other epigenetic factors are not considered",
+          "Off-target screening limited to ≤3-mismatch end-to-end alignments; RNA/DNA bulge mismatches or indel mismatches are out of scope",
+          "Editing efficiency and off-target cleavage must be validated experimentally in your cell line",
+          "HDR donor template design is not provided",
+        ],
+      },
+      {
+        tag: "BLAST",
+        color: "#3b82f6",
+        title: "BLAST Sequence Search",
+        solid: [
+          "Standard NCBI BLAST queries (blastn / blastx / tblastx)",
+          "Full display of E-value, score, coverage, and Identity%",
+          "Supports custom sequence input",
+          "Species of origin and GenBank accession shown in results",
+        ],
+        limit: [
+          "Dependent on NCBI server response time (may time out during peak hours)",
+          "Result freshness depends on the NCBI database update cycle",
+          "No MSA (multiple sequence alignment) or phylogenetic analysis",
+        ],
+      },
+    ],
+
+    signalTitle: "How to read specificity status labels",
+    signalItems: [
+      {
+        signal: "✓ Specific",
+        meaning: "Bowtie2 / BLAST found only one high-identity hit, or ≤2 off-target hits all below 80% identity. Use as first choice; gel or melt-curve confirmation is still recommended.",
+        tone: "green",
+      },
+      {
+        signal: "⚠ Potential off-target",
+        meaning: "More than 2 hits with ≥80% identity found, or hits spread across multiple loci. Review the off-target gene functions before committing to this primer or gRNA.",
+        tone: "amber",
+      },
+      {
+        signal: "✗ Non-specific",
+        meaning: "Multiple high-identity (>90%) off-target hits found — the sequence appears repeatedly in the genome. Strongly prefer higher-ranked specific alternatives.",
+        tone: "red",
+      },
+      {
+        signal: "— No hit",
+        meaning: "Bowtie2 found no alignment in the genome (within ≤2 mismatches). Possible causes: sequence too short, heavy simple-repeat content, or the species genome index is unavailable.",
+        tone: "amber",
+      },
+    ],
+
+    solidLabel: "✓ Coverage",
+    limitLabel: "⚠ Limits / Caveats",
+
+    ctaTitle: "Ready to start?",
+    ctaBody: "Understanding where the data comes from — and where it stops — means you can interpret results with confidence and know exactly which experiments to run next.",
+    ctaPrimer: "Design qPCR primers",
+    ctaMethods: "How it works",
+    ctaGrna: "Design CRISPR gRNA",
+  },
+};
+
+export default function ValidationPage({
+  params: { locale },
 }: {
-  title: string;
-  intro: string;
-  goodTitle: string;
-  goodItems: ReadonlyArray<string>;
-  careTitle: string;
-  careItems: ReadonlyArray<string>;
+  params: { locale: string };
 }) {
+  const copy = locale === "zh" ? COPY.zh : COPY.en;
+
   return (
-    <section
+    <main
+      className="vp-main"
       style={{
-        padding: "24px clamp(20px, 4vw, 30px)",
-        borderRadius: 32,
-        background: "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))",
-        border: "1px solid rgba(148,163,184,0.16)",
-        boxShadow: "0 18px 36px rgba(15,23,42,0.05)",
+        maxWidth: 860,
+        margin: "0 auto",
+        padding: "48px 24px 96px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 72,
       }}
     >
-      <div style={{ maxWidth: 920, marginBottom: 18 }}>
-        <h2 style={{ fontSize: 30, letterSpacing: "-0.04em", color: "var(--text-1)", marginBottom: 10 }}>{title}</h2>
-        <p style={{ fontSize: 14, lineHeight: 1.85, color: "var(--text-2)" }}>{intro}</p>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
-        <div
-          className="tool-card"
+      {/* ── Hero ──────────────────────────────────────────────── */}
+      <section style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        <span
           style={{
-            padding: 18,
-            borderRadius: 24,
-            background: "rgba(244,250,246,0.92)",
-            border: "1px solid rgba(15,106,69,0.16)",
+            display: "inline-block",
+            alignSelf: "flex-start",
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "var(--accent)",
+            background: "rgba(var(--accent-rgb),0.10)",
+            borderRadius: 6,
+            padding: "3px 10px",
           }}
         >
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#0f6a45", marginBottom: 10 }}>
-            {goodTitle}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {goodItems.map((item) => (
-              <div
-                key={item}
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: 16,
-                  background: "rgba(255,255,255,0.86)",
-                  border: "1px solid rgba(148,163,184,0.12)",
-                  fontSize: 13,
-                  lineHeight: 1.75,
-                  color: "var(--text-2)",
-                }}
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
+          {copy.badge}
+        </span>
 
-        <div
-          className="tool-card"
+        <h1
           style={{
-            padding: 18,
-            borderRadius: 24,
-            background: "rgba(255,248,235,0.92)",
-            border: "1px solid rgba(245,158,11,0.18)",
+            fontSize: "clamp(28px, 5vw, 42px)",
+            fontWeight: 800,
+            lineHeight: 1.2,
+            color: "var(--text-1)",
+            margin: 0,
           }}
         >
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#b45309", marginBottom: 10 }}>
-            {careTitle}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {careItems.map((item) => (
-              <div
-                key={item}
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: 16,
-                  background: "rgba(255,255,255,0.86)",
-                  border: "1px solid rgba(245,158,11,0.14)",
-                  fontSize: 13,
-                  lineHeight: 1.75,
-                  color: "var(--text-2)",
-                }}
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+          {copy.title}
+        </h1>
 
-export default function ValidationPage({ params: { locale } }: { params: { locale: string } }) {
-  const copy = locale === "zh" ? COPY.zh : COPY.en;
-  const heroAsideTitle = locale === "zh" ? "核心结论" : "Short Answer";
-  const heroAsideBody = locale === "zh"
-    ? "qPCR 引物设计是目前最完整的功能，有清晰的流程和边界标注。其他工具可配合使用。"
-    : "The most well-supported feature here is qPCR primer design. The other tools are useful but work best as supporting capabilities.";
-  const heroMetricLabel = locale === "zh" ? "主承诺" : "Main Promise";
-  const heroMetricValue = locale === "zh" ? "Auditable qPCR" : "Auditable qPCR";
-  const heroMetricBody = locale === "zh"
-    ? "核心可信度来自透明的流程、真实的筛查状态和明确的边界，而不是更大的宣传口号。"
-    : "Credibility comes from transparent workflow, explicit screening state, and clear boundaries — not louder claims.";
-  const positioningLabel = locale === "zh" ? "Public Framing" : "Public Framing";
-  const supportingLabel = locale === "zh" ? "Supporting Tools" : "Supporting Tools";
-  const reasonLabel = locale === "zh" ? "Trust Direction" : "Trust Direction";
+        <p style={{ fontSize: 17, lineHeight: 1.75, color: "var(--text-2)", margin: 0, maxWidth: 680 }}>
+          {copy.intro}
+        </p>
 
-  return (
-    <div className="story-page">
-      <section
-        className="story-hero"
-        style={{
-          padding: "34px clamp(22px, 4vw, 40px)",
-          borderRadius: 34,
-          background:
-            "radial-gradient(circle at top right, rgba(15,106,69,0.16), transparent 30%), linear-gradient(135deg, #071224 0%, #10263c 58%, #0f6a45 100%)",
-          color: "#fff",
-          boxShadow: "0 28px 64px rgba(15,23,42,0.18)",
-        }}
-      >
-        <div className="story-hero-grid">
-          <div className="story-hero-panel">
-            <div className="story-kicker">{copy.badge}</div>
-            <h1 className="story-display" style={{ margin: "16px 0 14px", maxWidth: 920 }}>
-              {copy.title}
-            </h1>
-            <p className="story-copy" style={{ color: "rgba(255,255,255,0.84)", maxWidth: 920 }}>{copy.intro}</p>
-          </div>
-
-          <aside className="story-hero-aside">
-            <div className="story-mini-label">{heroAsideTitle}</div>
-            <div className="story-mini-body" style={{ marginTop: 10 }}>{heroAsideBody}</div>
-            <div className="story-mini-metric">
-              <div className="story-mini-label">{heroMetricLabel}</div>
-              <div className="story-mini-value">{heroMetricValue}</div>
-              <div className="story-mini-body">{heroMetricBody}</div>
+        {/* aside + metric row */}
+        <div className="vp-hero-aside-row">
+          <div
+            style={{
+              background: "var(--surface-2)",
+              border: "1px solid var(--border)",
+              borderRadius: 12,
+              padding: "20px 24px",
+            }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-2)", marginBottom: 8 }}>
+              {copy.heroAsideTitle}
             </div>
-          </aside>
+            <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-2)", margin: 0 }}>
+              {copy.heroAsideBody}
+            </p>
+          </div>
+
+          <div
+            className="vp-metric-tile"
+            style={{
+              background: "var(--surface-2)",
+              border: "1px solid var(--border)",
+              borderRadius: 12,
+              padding: "20px 24px",
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-3)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              {copy.heroMetricLabel}
+            </div>
+            <div style={{ fontSize: 40, fontWeight: 900, color: "var(--accent)", lineHeight: 1 }}>
+              {copy.heroMetricValue}
+            </div>
+            <div style={{ fontSize: 12, color: "var(--text-3)", lineHeight: 1.5 }}>
+              {copy.heroMetricBody}
+            </div>
+          </div>
         </div>
       </section>
 
-      <BulletBlock
-        title={copy.qpcrTitle}
-        intro={copy.qpcrIntro}
-        goodTitle={copy.qpcrGoodTitle}
-        goodItems={copy.qpcrGood}
-        careTitle={copy.qpcrCareTitle}
-        careItems={copy.qpcrCare}
-      />
+      {/* ── Evidence cards ──────────────────────────────────────── */}
+      <section style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-1)", margin: "0 0 8px" }}>
+            {copy.evidenceTitle}
+          </h2>
+          <p style={{ fontSize: 15, color: "var(--text-2)", margin: 0, lineHeight: 1.7 }}>
+            {copy.evidenceIntro}
+          </p>
+        </div>
 
-      <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.04em", color: "var(--text-1)" }}>{copy.positioningTitle}</div>
-        <div className="story-card-grid">
-          {copy.positioningCards.map((card) => (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+            gap: 14,
+          }}
+        >
+          {copy.evidenceItems.map((item) => (
             <div
-              key={card.title}
-              className="tool-card story-card"
+              key={item.icon}
+              style={{
+                background: "var(--surface-2)",
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                padding: "18px 20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}
             >
-              <div className="story-card-title">{card.title}</div>
-              <p className="story-card-copy">{card.body}</p>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: "0.10em",
+                  color: "var(--accent)",
+                  background: "rgba(var(--accent-rgb),0.10)",
+                  borderRadius: 6,
+                  padding: "2px 8px",
+                  alignSelf: "flex-start",
+                }}
+              >
+                {item.icon}
+              </span>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-1)" }}>
+                {item.title}
+              </div>
+              <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--text-2)", margin: 0 }}>
+                {item.body}
+              </p>
             </div>
           ))}
         </div>
       </section>
 
-      <section
-        className="story-surface"
-        style={{
-          padding: "24px clamp(20px, 4vw, 30px)",
-        }}
-      >
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#1d4ed8", marginBottom: 10 }}>
-          {supportingLabel}
+      {/* ── Per-tool scope ─────────────────────────────────────── */}
+      <section style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-1)", margin: "0 0 8px" }}>
+            {copy.toolsTitle}
+          </h2>
+          <p style={{ fontSize: 15, color: "var(--text-2)", margin: 0, lineHeight: 1.7 }}>
+            {copy.toolsIntro}
+          </p>
         </div>
-        <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.04em", color: "var(--text-1)", marginBottom: 10 }}>{copy.extraTitle}</div>
-        <p style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text-2)", marginBottom: 14 }}>{copy.extraIntro}</p>
-        <div className="story-card-grid">
-          {copy.extraCards.map((card) => (
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {copy.tools.map((tool) => (
             <div
-              key={card.title}
-              className="tool-card story-card"
+              key={tool.title}
+              style={{
+                background: "var(--surface-2)",
+                border: "1px solid var(--border)",
+                borderRadius: 14,
+                overflow: "hidden",
+              }}
             >
-              <div className="story-card-title">{card.title}</div>
-              <p className="story-card-copy">{card.body}</p>
+              {/* tool header */}
+              <div
+                style={{
+                  padding: "14px 20px",
+                  borderBottom: "1px solid var(--border)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.06em",
+                    color: tool.color,
+                    background: `${tool.color}18`,
+                    borderRadius: 6,
+                    padding: "2px 9px",
+                  }}
+                >
+                  {tool.tag}
+                </span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: "var(--text-1)" }}>
+                  {tool.title}
+                </span>
+              </div>
+
+              {/* solid + limit columns */}
+              <div className="vp-tool-columns">
+                <div className="vp-tool-col-solid">
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.07em",
+                      textTransform: "uppercase",
+                      color: "#22c55e",
+                      marginBottom: 12,
+                    }}
+                  >
+                    {copy.solidLabel}
+                  </div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                    {tool.solid.map((s, i) => (
+                      <li key={i} style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-2)", display: "flex", gap: 7, alignItems: "flex-start" }}>
+                        <span style={{ color: "#22c55e", flexShrink: 0, marginTop: 2 }}>✓</span>
+                        <span>{s}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="vp-tool-col-limit">
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.07em",
+                      textTransform: "uppercase",
+                      color: "#f59e0b",
+                      marginBottom: 12,
+                    }}
+                  >
+                    {copy.limitLabel}
+                  </div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                    {tool.limit.map((l, i) => (
+                      <li key={i} style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-2)", display: "flex", gap: 7, alignItems: "flex-start" }}>
+                        <span style={{ color: "#f59e0b", flexShrink: 0, marginTop: 2 }}>⚠</span>
+                        <span>{l}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
+      {/* ── Signal guide ──────────────────────────────────────── */}
+      <section style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-1)", margin: 0 }}>
+          {copy.signalTitle}
+        </h2>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {copy.signalItems.map((item) => {
+            const ts = TONE_STYLES[item.tone];
+            return (
+              <div
+                key={item.signal}
+                className="vp-signal-row"
+                style={{
+                  border: `1px solid ${ts.border}`,
+                }}
+              >
+                <div
+                  className="vp-signal-label"
+                  style={{
+                    background: ts.bg,
+                    borderRight: `1px solid ${ts.border}`,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: ts.dot,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: ts.dot }}>
+                    {item.signal}
+                  </span>
+                </div>
+                <div className="vp-signal-body">
+                  <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: "var(--text-2)" }}>
+                    {item.meaning}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── CTA ──────────────────────────────────────────────────── */}
       <section
-        className="story-cta-panel"
         style={{
-          padding: "24px clamp(20px, 4vw, 30px)",
-          background: "linear-gradient(135deg, #0b1e3e, #15324b)",
-          color: "#fff",
+          background: "var(--surface-2)",
+          border: "1px solid var(--border)",
+          borderRadius: 16,
+          padding: "36px 32px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 16,
+          textAlign: "center",
         }}
       >
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.68)", marginBottom: 10 }}>
-          {reasonLabel}
-        </div>
-        <div style={{ fontSize: 28, lineHeight: 1.08, letterSpacing: "-0.04em", marginBottom: 10 }}>{copy.reasonTitle}</div>
-        <p style={{ fontSize: 14, lineHeight: 1.85, color: "rgba(255,255,255,0.84)", maxWidth: 920 }}>{copy.reasonBody}</p>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
-          <Link href="/primer">
-            <button className="hero-btn-primary">{copy.ctaPrimer}</button>
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-1)", margin: 0 }}>
+          {copy.ctaTitle}
+        </h2>
+        <p style={{ fontSize: 15, lineHeight: 1.75, color: "var(--text-2)", margin: 0, maxWidth: 520 }}>
+          {copy.ctaBody}
+        </p>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", marginTop: 8 }}>
+          <Link
+            href="/primer"
+            style={{
+              display: "inline-block",
+              padding: "10px 22px",
+              borderRadius: 8,
+              background: "var(--accent)",
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: 14,
+              textDecoration: "none",
+            }}
+          >
+            {copy.ctaPrimer}
           </Link>
-          <Link href="/methods">
-            <button className="hero-btn-secondary">{copy.ctaMethods}</button>
+          <Link
+            href="/methods"
+            style={{
+              display: "inline-block",
+              padding: "10px 22px",
+              borderRadius: 8,
+              background: "var(--surface-3)",
+              color: "var(--text-1)",
+              fontWeight: 700,
+              fontSize: 14,
+              textDecoration: "none",
+              border: "1px solid var(--border)",
+            }}
+          >
+            {copy.ctaMethods}
           </Link>
-          <Link href="/tools">
-            <button className="hero-btn-secondary">{copy.ctaTools}</button>
+          <Link
+            href="/grna"
+            style={{
+              display: "inline-block",
+              padding: "10px 22px",
+              borderRadius: 8,
+              background: "var(--surface-3)",
+              color: "var(--text-1)",
+              fontWeight: 700,
+              fontSize: 14,
+              textDecoration: "none",
+              border: "1px solid var(--border)",
+            }}
+          >
+            {copy.ctaGrna}
           </Link>
         </div>
       </section>
-    </div>
+    </main>
   );
 }

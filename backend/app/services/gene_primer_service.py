@@ -10,6 +10,7 @@ from app.schemas.gene_primer import (
 )
 from app.services.ncbi_fetch import fetch_transcript, fetch_gene_info, TranscriptInfo, ExonInfo, GeneInfoData
 from app.services.primer_blast import blast_primer
+from app.services.primer_bowtie2 import validate_primers_batch, primer_bowtie2_available
 from app.services.primer_scoring import score_primer_pair, detect_exon_span
 
 _executor = ThreadPoolExecutor(max_workers=4)
@@ -35,6 +36,8 @@ PRIMER3_SETTINGS = {
     "PRIMER_MAX_SELF_ANY_TH": 45.0,
     "PRIMER_MAX_SELF_END_TH": 35.0,
     "PRIMER_MAX_HAIRPIN_TH": 24.0,
+    "PRIMER_PAIR_MAX_COMPL_ANY_TH": 45.0,
+    "PRIMER_PAIR_MAX_COMPL_END_TH": 35.0,
 }
 
 
@@ -54,8 +57,10 @@ def build_design_basis(
     candidate_pairs_designed: int,
     candidate_pairs_blasted: int,
     returned_pairs: int,
+    species: str = "human",
 ) -> PrimerDesignBasis:
     product_min, product_max = PRIMER3_SETTINGS["PRIMER_PRODUCT_SIZE_RANGE"][0]
+    use_bowtie2 = primer_bowtie2_available(species)
     return PrimerDesignBasis(
         template_source="ncbi_refseq_transcript" if transcript else "custom_sequence",
         design_region_start=1,
@@ -81,9 +86,9 @@ def build_design_basis(
         candidate_pairs_designed=candidate_pairs_designed,
         candidate_pairs_blasted=candidate_pairs_blasted,
         returned_pairs=returned_pairs,
-        blast_database="refseq_rna",
-        specificity_scope="refseq_rna_transcripts",
-        genome_wide_specificity_checked=False,
+        blast_database="genome_bowtie2" if use_bowtie2 else "refseq_rna",
+        specificity_scope="reference_genome_bowtie2" if use_bowtie2 else "refseq_rna_transcripts",
+        genome_wide_specificity_checked=use_bowtie2,
         off_target_identity_threshold=80.0,
     )
 
@@ -121,7 +126,7 @@ def _design_primers(sequence: str, num_candidates: int = DEFAULT_NUM_CANDIDATES)
                 self_end_th=round(result.get(f"PRIMER_LEFT_{i}_SELF_END_TH", 0.0), 1),
                 hairpin_th=round(result.get(f"PRIMER_LEFT_{i}_HAIRPIN_TH", 0.0), 1),
                 gc_clamp=_gc_clamp(left_seq),
-                start=left_start,
+                pos=left_start,
                 length=left_len,
             ),
             "right_props": PrimerProperties(
@@ -129,7 +134,7 @@ def _design_primers(sequence: str, num_candidates: int = DEFAULT_NUM_CANDIDATES)
                 self_end_th=round(result.get(f"PRIMER_RIGHT_{i}_SELF_END_TH", 0.0), 1),
                 hairpin_th=round(result.get(f"PRIMER_RIGHT_{i}_HAIRPIN_TH", 0.0), 1),
                 gc_clamp=_gc_clamp(right_seq),
-                start=right_pos[0],
+                pos=right_pos[0],
                 length=right_pos[1],
             ),
         })
@@ -177,28 +182,44 @@ async def gene_primer_stream(req: GenePrimerRequest) -> AsyncGenerator[str, None
         candidate_pairs_blasted = len(candidates)
 
         n_primers = len(candidates) * 2
+        use_bowtie2 = primer_bowtie2_available(req.species.value)
+        validation_engine = "Bowtie2 基因组比对" if use_bowtie2 else "NCBI BLAST"
         yield _sse("progress", {
             "step": 2, "total": 4,
-            "msg": f"设计出 {len(candidates)} 对候选引物，提交 {n_primers} 条引物并发 BLAST..."
+            "msg": f"设计出 {len(candidates)} 对候选引物，提交 {n_primers} 条引物验证（{validation_engine}）..."
         })
 
-        # ── 步骤 3：全部引物同时提交 BLAST，并发等待 ────────────────
+        # ── 步骤 3：特异性验证 ────────────────────────────────────────
         yield _sse("progress", {
             "step": 3, "total": 4,
-            "msg": f"BLAST 验证中（{len(candidates)} 对 / {n_primers} 条引物全并发，请稍候）..."
+            "msg": f"特异性验证中（{validation_engine}，{n_primers} 条引物，请稍候）..."
         })
 
-        # 一次性提交全部 BLAST 任务
-        blast_tasks = []
-        for pair in candidates:
-            blast_tasks.append(loop.run_in_executor(_blast_executor, blast_primer, pair["left"], req.species.value))
-            blast_tasks.append(loop.run_in_executor(_blast_executor, blast_primer, pair["right"], req.species.value))
-
-        try:
-            blast_results = await asyncio.wait_for(asyncio.gather(*blast_tasks), timeout=120)
-        except asyncio.TimeoutError:
-            yield _sse("error", {"msg": "BLAST 验证超时（>120s），NCBI 服务器响应缓慢，请稍后重试"})
-            return
+        if use_bowtie2:
+            # 所有引物一次性送入 Bowtie2（单进程，~3s 完成全部）
+            all_seqs = []
+            for pair in candidates:
+                all_seqs.append(pair["left"])
+                all_seqs.append(pair["right"])
+            try:
+                blast_results = await asyncio.wait_for(
+                    loop.run_in_executor(_blast_executor, validate_primers_batch, all_seqs, req.species.value),
+                    timeout=60,
+                )
+            except asyncio.TimeoutError:
+                yield _sse("error", {"msg": "Bowtie2 验证超时（>60s），请稍后重试"})
+                return
+        else:
+            # 回退：并发 NCBI BLAST
+            blast_tasks = []
+            for pair in candidates:
+                blast_tasks.append(loop.run_in_executor(_blast_executor, blast_primer, pair["left"], req.species.value))
+                blast_tasks.append(loop.run_in_executor(_blast_executor, blast_primer, pair["right"], req.species.value))
+            try:
+                blast_results = await asyncio.wait_for(asyncio.gather(*blast_tasks), timeout=120)
+            except asyncio.TimeoutError:
+                yield _sse("error", {"msg": "BLAST 验证超时（>120s），NCBI 服务器响应缓慢，请稍后重试"})
+                return
 
         # 评分
         validated = []
@@ -206,7 +227,13 @@ async def gene_primer_stream(req: GenePrimerRequest) -> AsyncGenerator[str, None
             bl = blast_results[i * 2]
             br = blast_results[i * 2 + 1]
 
-            exon_span = detect_exon_span(pair["left"], pair["right"], sequence, exons)
+            exon_span = detect_exon_span(
+                pair["left_props"].pos,
+                pair["left_props"].length,
+                pair["right_props"].pos,  # primer3 PRIMER_RIGHT_{i}[0] = 3'-end pos
+                pair["right_props"].length,
+                exons,
+            )
             score = score_primer_pair(
                 pair["left"], pair["right"],
                 pair["left_tm"], pair["right_tm"],
@@ -261,6 +288,7 @@ async def gene_primer_stream(req: GenePrimerRequest) -> AsyncGenerator[str, None
                 candidate_pairs_designed=candidate_pairs_designed,
                 candidate_pairs_blasted=candidate_pairs_blasted,
                 returned_pairs=len(top),
+                species=req.species.value,
             ),
             primer_pairs=top,
             gene_info=GeneInfo(
@@ -279,13 +307,13 @@ async def gene_primer_stream(req: GenePrimerRequest) -> AsyncGenerator[str, None
                 protein_length=transcript.protein_length,
                 exon_count=len(transcript.exons),
             ) if gene_info_data and transcript else None,
-            message=f"返回 {len(top)} 对引物（{specific_n} 对通过 RefSeq RNA BLAST 校验，{exon_n} 对跨外显子）",
+            message=f"返回 {len(top)} 对引物（{specific_n} 对通过{'基因组 Bowtie2' if use_bowtie2 else 'RefSeq RNA BLAST'}特异性校验，{exon_n} 对跨外显子）",
         )
         yield _sse("result", response.model_dump())
 
     except ValueError as e:
         yield _sse("error", {"msg": str(e)})
     except asyncio.TimeoutError:
-        yield _sse("error", {"msg": "请求超时，NCBI 服务器响应缓慢，请稍后重试"})
+        yield _sse("error", {"msg": "请求超时，服务器响应缓慢，请稍后重试"})
     except Exception as e:
         yield _sse("error", {"msg": f"内部错误：{e}"})

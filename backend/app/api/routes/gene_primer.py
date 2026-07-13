@@ -9,6 +9,7 @@ from app.services.gene_primer_service import gene_primer_stream
 from app.db.session import AsyncSessionLocal
 from app.db.models.jobs import PrimerJob
 from app.core.security import get_optional_user
+from app.core.rate_limit import rate_limit_dependency
 
 router = APIRouter(prefix="/gene-primer", tags=["qPCR 引物设计（智能模式）"])
 logger = logging.getLogger("uvicorn")
@@ -53,6 +54,7 @@ async def _stream_and_save(req: GenePrimerRequest, user):
 async def design_gene_primers(
     req: GenePrimerRequest,
     current_user=Depends(get_optional_user),
+    _rl: None = rate_limit_dependency(rpm=3),
 ):
     return StreamingResponse(
         _stream_and_save(req, current_user),

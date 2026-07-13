@@ -113,7 +113,7 @@ function PrimerExpandedDetail({ result }: { result: Record<string, unknown> }) {
               )}
               {blastL && <span>F 最高同一性 {(blastL.top_hit_identity as number)?.toFixed(1)}%</span>}
               {blastR && <span>R 最高同一性 {(blastR.top_hit_identity as number)?.toFixed(1)}%</span>}
-              {exon?.spans_junction && (
+              {exon && (exon.spans_junction as boolean) && (
                 <span style={{ color: "var(--blast-color)" }}>
                   ✓ 跨外显子 {exon.left_exon as number}–{exon.right_exon as number}
                 </span>

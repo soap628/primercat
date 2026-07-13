@@ -1,9 +1,31 @@
+import re
 import primer3
 from app.schemas.primer import PrimerDesignRequest, PrimerDesignResponse, PrimerPair
+
+_VALID_NT = re.compile(r'^[ACGTN]+$')
 
 
 def design_qpcr_primers(req: PrimerDesignRequest) -> PrimerDesignResponse:
     seq = req.sequence.upper().strip()
+
+    if not _VALID_NT.match(seq):
+        return PrimerDesignResponse(
+            success=False,
+            gene_name=req.gene_name,
+            sequence_length=len(seq),
+            primer_pairs=[],
+            message="序列包含非法字符，只允许 A/C/G/T/N",
+        )
+
+    n_count = seq.count('N')
+    if n_count / len(seq) > 0.1:
+        return PrimerDesignResponse(
+            success=False,
+            gene_name=req.gene_name,
+            sequence_length=len(seq),
+            primer_pairs=[],
+            message=f"序列中 N 碱基比例过高（{n_count}/{len(seq)}），无法设计引物",
+        )
 
     primer3_input = {
         "SEQUENCE_ID": req.gene_name or "target",

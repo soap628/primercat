@@ -4,10 +4,11 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 from dataclasses import dataclass
-from functools import lru_cache
 from hashlib import sha1
 from pathlib import Path
+from threading import Lock
 from typing import Callable
 
 from Bio import SeqIO
@@ -312,9 +313,28 @@ def get_grna_offtarget_readiness(species: str) -> GrnaOffTargetReadinessResponse
     )
 
 
-@lru_cache(maxsize=4)
+_GENOME_INDEX_TTL = 24 * 3600  # seconds
+_genome_cache: dict[str, tuple[float, object]] = {}
+_genome_cache_lock = Lock()
+
+
 def _load_genome_index(fasta_path: str):
-    return SeqIO.index(fasta_path, "fasta")
+    now = time.time()
+    with _genome_cache_lock:
+        entry = _genome_cache.get(fasta_path)
+        if entry is not None:
+            loaded_at, index = entry
+            if now - loaded_at < _GENOME_INDEX_TTL:
+                return index
+        # Use a persistent SQLite-backed index so repeated server restarts
+        # skip the expensive full-FASTA scan (first build ~2 min, then <1s).
+        db_path = fasta_path + ".idx.db"
+        try:
+            index = SeqIO.index_db(db_path, fasta_path, "fasta")
+        except Exception:
+            index = SeqIO.index(fasta_path, "fasta")
+        _genome_cache[fasta_path] = (now, index)
+        return index
 
 
 def _pam_length(cas_type: CasType) -> int:

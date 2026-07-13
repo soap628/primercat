@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/lib/useAuth";
 import { useToast } from "@/lib/useToast";
 
@@ -28,23 +28,23 @@ function ScoreRing({ score }: { score: number }) {
   const radius = 22;
   const circumference = 2 * Math.PI * radius;
   const fill = Math.min(score / 100, 1) * circumference;
-  const color = score >= 75 ? "#0f6a45" : score >= 50 ? "#b45309" : "#b42318";
+  const color =
+    score >= 65 ? "#4ade80" : score >= 40 ? "#ffa42b" : "#f87171";
   return (
-    <svg width="60" height="60" viewBox="0 0 60 60" style={{ flexShrink: 0 }}>
-      <circle cx="30" cy="30" r="26" fill="#f8fafc" />
-      <circle cx="30" cy="30" r={radius} fill="none" stroke="#d7dee7" strokeWidth="4" />
+    <svg width="64" height="64" viewBox="0 0 64 64" style={{ flexShrink: 0 }} className="grna-score-ring">
+      <circle cx="32" cy="32" r="28" fill="var(--bg-inset)" />
+      <circle cx="32" cy="32" r={radius} fill="none" stroke="var(--border-mid)" strokeWidth="5" />
       <circle
-        cx="30"
-        cy="30"
-        r={radius}
+        cx="32" cy="32" r={radius}
         fill="none"
         stroke={color}
-        strokeWidth="4"
+        strokeWidth="5"
         strokeDasharray={`${fill} ${circumference}`}
         strokeLinecap="round"
-        transform="rotate(-90 30 30)"
+        transform="rotate(-90 32 32)"
+        style={{ filter: `drop-shadow(0 0 4px ${color}88)` }}
       />
-      <text x="30" y="34" textAnchor="middle" fontSize="14" fontWeight="800" fill={color}>
+      <text x="32" y="37" textAnchor="middle" fontSize="15" fontWeight="800" fill={color}>
         {score}
       </text>
     </svg>
@@ -187,80 +187,6 @@ function getReadinessMeta(
   return { className: "badge badge-red", label: t("readiness_unavailable") };
 }
 
-function getSpeciesEnvVars(species: string) {
-  if (species === "mouse") {
-    return {
-      indexVar: "GRNA_BOWTIE2_INDEX_MOUSE",
-      fastaVar: "GRNA_GENOME_FASTA_MOUSE",
-      exampleIndex: "D:/genomes/mm39/bowtie2/mm39",
-      exampleFasta: "D:/genomes/mm39/mm39.fa",
-    };
-  }
-  return {
-    indexVar: "GRNA_BOWTIE2_INDEX_HUMAN",
-    fastaVar: "GRNA_GENOME_FASTA_HUMAN",
-    exampleIndex: "D:/genomes/hg38/bowtie2/hg38",
-    exampleFasta: "D:/genomes/hg38/hg38.fa",
-  };
-}
-
-function buildEnvTemplate(species: string, readiness: GrnaOfftargetReadiness | null) {
-  const env = getSpeciesEnvVars(species);
-  return [
-    "# CRISPR genome-level off-target backend",
-    `GRNA_OFFTARGET_BACKEND=${readiness?.backend_mode || "auto"}`,
-    `GRNA_ENABLE_NT_BLAST_FALLBACK=${readiness?.fallback_enabled ?? true}`,
-    "GRNA_BOWTIE2_PATH=bowtie2",
-    `${env.indexVar}=${env.exampleIndex}`,
-    `${env.fastaVar}=${env.exampleFasta}`,
-  ].join("\n");
-}
-
-function getReadinessActionItems(
-  readiness: GrnaOfftargetReadiness | null,
-  species: string,
-  t: ReturnType<typeof useTranslations>,
-) {
-  if (!readiness) return [];
-
-  const env = getSpeciesEnvVars(species);
-  const items: string[] = [];
-  const needsBowtie = readiness.missing_requirements.some((item) => item.toLowerCase().includes("bowtie2"));
-  const needsIndex = readiness.missing_env_vars.includes(env.indexVar);
-  const needsFasta = readiness.missing_env_vars.includes(env.fastaVar);
-
-  if (readiness.readiness_status === "ready") {
-    items.push(t("readiness_action_ready"));
-  } else if (readiness.readiness_status === "fallback") {
-    items.push(t("readiness_action_fallback"));
-  } else if (readiness.readiness_status === "disabled") {
-    items.push(t("readiness_action_disabled"));
-  } else {
-    items.push(t("readiness_action_unavailable"));
-  }
-
-  if (needsBowtie) {
-    items.push(t("readiness_action_bowtie"));
-  }
-  if (needsIndex || needsFasta) {
-    items.push(
-      t("readiness_action_env", {
-        indexVar: env.indexVar,
-        fastaVar: env.fastaVar,
-      }),
-    );
-  }
-  if (!readiness.target_locus_anchor_ready) {
-    items.push(t("readiness_action_anchor"));
-  }
-
-  return items;
-}
-
-function getStatusText(enabled: boolean, t: ReturnType<typeof useTranslations>) {
-  return enabled ? t("readiness_status_yes") : t("readiness_status_no");
-}
-
 function formatBpCount(value: number) {
   return value.toLocaleString("en-US");
 }
@@ -299,6 +225,7 @@ function getHitRegionMeta(annotation: GrnaHitAnnotation | null | undefined, t: R
 export default function GrnaPage() {
   const t = useTranslations("grna");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { user } = useAuth();
   const { toast } = useToast();
   const [sequence, setSequence] = useState("");
@@ -310,8 +237,6 @@ export default function GrnaPage() {
   const [result, setResult] = useState<GrnaResponse | null>(null);
   const [error, setError] = useState("");
   const [readiness, setReadiness] = useState<GrnaOfftargetReadiness | null>(null);
-  const [readinessError, setReadinessError] = useState("");
-  const [templateCopied, setTemplateCopied] = useState(false);
   const [expandedRank, setExpandedRank] = useState<number | null>(null);
 
   const parsedTargetLocus = parseTargetLocusInput(targetLocusText);
@@ -321,16 +246,14 @@ export default function GrnaPage() {
 
     async function loadReadiness() {
       setReadiness(null);
-      setReadinessError("");
       try {
         const response = await getGrnaOfftargetReadiness(species);
         if (!cancelled) {
           setReadiness(response);
         }
-      } catch (err: any) {
+      } catch {
         if (!cancelled) {
           setReadiness(null);
-          setReadinessError(err?.message || tCommon("request_failed"));
         }
       }
     }
@@ -343,7 +266,7 @@ export default function GrnaPage() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (sequence.trim().length < 23) {
+    if (!geneName.trim() && sequence.trim().length < 23) {
       setError(t("error_short_sequence"));
       setResult(null);
       return;
@@ -359,7 +282,7 @@ export default function GrnaPage() {
     setResult(null);
     try {
       const response = await designGrna({
-        sequence,
+        sequence: sequence.trim() || undefined,
         gene_name: geneName || undefined,
         cas_type: casType,
         species,
@@ -373,7 +296,8 @@ export default function GrnaPage() {
       setResult(response);
       if (user) toast("已保存到历史记录");
     } catch (err: any) {
-      setError(err.message || tCommon("request_failed"));
+      const msg = err?.name === "AbortError" ? "请求超时，请稍后重试" : (err.message || tCommon("request_failed"));
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -404,8 +328,6 @@ export default function GrnaPage() {
         })
     : "";
   const readinessMeta = getReadinessMeta(readiness, t);
-  const envTemplate = buildEnvTemplate(species, readiness);
-  const readinessActions = getReadinessActionItems(readiness, species, t);
   const hitAnnotationMeta = result ? getHitAnnotationMeta(result, t) : null;
 
   const casOptions: Array<{ value: CasValue; pam: string; desc: string }> = [
@@ -417,7 +339,7 @@ export default function GrnaPage() {
   return (
     <div className="page-sidebar-layout" style={{ display: "flex", gap: 28, alignItems: "flex-start" }}>
       <aside
-        className="page-sidebar"
+        className="page-sidebar grna-sidebar"
         style={{
           width: 336,
           flexShrink: 0,
@@ -425,34 +347,45 @@ export default function GrnaPage() {
           top: 72,
           padding: 22,
           borderRadius: 28,
-          border: "1px solid rgba(15,106,69,0.14)",
-          background: "linear-gradient(180deg, rgba(248,252,249,0.98), rgba(255,255,255,0.98))",
-          boxShadow: "0 26px 60px rgba(15,23,42,0.08)",
+          border: "1px solid var(--border)",
+          background: "var(--bg-card)",
+          boxShadow: "var(--shadow-lg)",
         }}
       >
-        <div
-          style={{
-            padding: 18,
-            borderRadius: 22,
-            background: "linear-gradient(135deg, #0f6a45 0%, #134e4a 100%)",
-            color: "#fff",
-            marginBottom: 18,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              opacity: 0.78,
-              marginBottom: 8,
-            }}
-          >
-            {t("badge")}
+        <div style={{ marginBottom: 20 }}>
+          {/* CrisprCat brand mark */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 12, flexShrink: 0,
+              background: "linear-gradient(135deg, #1a3a6b 0%, #1e5ba8 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 0 0 1px rgba(83,157,245,0.3), 0 4px 12px rgba(83,157,245,0.2)",
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                {/* Scissors / CRISPR scissors icon */}
+                <circle cx="6" cy="6" r="2.5" stroke="#539df5" strokeWidth="1.5" />
+                <circle cx="6" cy="18" r="2.5" stroke="#539df5" strokeWidth="1.5" />
+                <path d="M8.5 8L18.5 18" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M8.5 16L18.5 6" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round" />
+                <circle cx="19" cy="12" r="1.5" fill="#539df5" />
+              </svg>
+            </div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-0.01em" }}>
+                Crispr<span style={{ color: "#539df5" }}>Cat</span>
+              </div>
+              <div style={{ fontSize: 10, color: "var(--text-3)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                {t("badge")}
+              </div>
+            </div>
           </div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 6 }}>{t("title")}</h1>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: "rgba(255,255,255,0.84)" }}>{t("subtitle")}</p>
+          <h1 className="grna-page-headline">{t("title")}</h1>
+          <p className="grna-panel-subtitle">{t("subtitle")}</p>
+          <div className="primer-panel-chips">
+            {["SpCas9", "Cas12a", "Off-target Check"].map((item) => (
+              <span key={item} className="primer-panel-chip">{item}</span>
+            ))}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -466,30 +399,18 @@ export default function GrnaPage() {
                   key={option.value}
                   type="button"
                   onClick={() => setCasType(option.value)}
+                  className="grna-choice-tile"
+                  data-selected={casType === option.value ? "true" : "false"}
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
                     gap: 10,
                     padding: "11px 12px",
-                    borderRadius: 18,
-                    border:
-                      casType === option.value
-                        ? "1.5px solid rgba(15,106,69,0.45)"
-                        : "1px solid rgba(148,163,184,0.24)",
-                    background:
-                      casType === option.value ? "rgba(217,251,231,0.78)" : "rgba(255,255,255,0.84)",
-                    cursor: "pointer",
                   }}
                 >
                   <div>
-                    <div
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: casType === option.value ? "#0f6a45" : "var(--text-1)",
-                      }}
-                    >
+                    <div style={{ fontSize: 14, fontWeight: 700 }}>
                       {option.value}
                     </div>
                     <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>{option.desc}</div>
@@ -500,7 +421,7 @@ export default function GrnaPage() {
                       fontWeight: 700,
                       padding: "4px 8px",
                       borderRadius: 999,
-                      background: "#fff",
+                      background: "var(--bg-card)",
                     }}
                   >
                     {option.pam}
@@ -516,180 +437,37 @@ export default function GrnaPage() {
             </label>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
               {(["human", "mouse"] as SpeciesValue[]).map((value) => (
-                <button
+                <label
                   key={value}
-                  type="button"
-                  onClick={() => setSpecies(value)}
-                  style={{
-                    padding: "10px 12px",
-                    borderRadius: 16,
-                    border:
-                      species === value
-                        ? "1.5px solid rgba(29,78,216,0.35)"
-                        : "1px solid rgba(148,163,184,0.24)",
-                    background:
-                      species === value ? "rgba(219,234,254,0.82)" : "rgba(255,255,255,0.84)",
-                    color: species === value ? "#1d4ed8" : "var(--text-2)",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
+                  className="grna-choice-tile"
+                  data-selected={species === value ? "true" : "false"}
+                  style={{ padding: "10px 12px", cursor: "pointer" }}
                 >
+                  <input type="radio" name="grna-species" value={value} checked={species === value} onChange={() => setSpecies(value)} style={{ display: "none" }} />
                   {value === "mouse" ? t("species_mouse") : t("species_human")}
-                </button>
+                </label>
               ))}
             </div>
           </div>
 
           <div
-            className="card-sm"
             style={{
-              padding: "14px 15px",
-              borderRadius: 18,
-              background: readiness?.genome_backend_ready
-                ? "rgba(240,253,244,0.92)"
-                : "rgba(248,250,252,0.92)",
-              border: readiness?.genome_backend_ready
-                ? "1px solid rgba(34,197,94,0.22)"
-                : "1px solid rgba(148,163,184,0.18)",
+              padding: "12px 14px",
+              borderRadius: 14,
+              background: "var(--bg-inset)",
+              border: "1px solid var(--border)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
             }}
           >
-            <div style={{ display: "flex", gap: 10, justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-1)" }}>{t("readiness_title")}</div>
+            <div style={{ fontSize: 12, color: "var(--text-2)" }}>{t("readiness_title")}</div>
+            {readiness ? (
               <span className={readinessMeta.className}>{readinessMeta.label}</span>
-            </div>
-            <p style={{ fontSize: 12, lineHeight: 1.7, color: "var(--text-2)" }}>
-              {readiness?.summary || t("readiness_loading_body")}
-            </p>
-            {readiness ? (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8, marginTop: 10 }}>
-                <div style={{ padding: "10px 12px", borderRadius: 16, background: "rgba(255,255,255,0.76)", border: "1px solid rgba(148,163,184,0.14)" }}>
-                  <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 4 }}>{t("readiness_engine_label")}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)" }}>{readiness.active_engine}</div>
-                </div>
-                <div style={{ padding: "10px 12px", borderRadius: 16, background: "rgba(255,255,255,0.76)", border: "1px solid rgba(148,163,184,0.14)" }}>
-                  <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 4 }}>{t("readiness_backend_label")}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)" }}>{readiness.backend_mode}</div>
-                </div>
-              </div>
-            ) : null}
-            {readinessActions.length ? (
-              <div style={{ marginTop: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)", marginBottom: 6 }}>{t("readiness_next_title")}</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {readinessActions.map((item) => (
-                    <div key={item} style={{ fontSize: 12, lineHeight: 1.6, color: "var(--text-2)" }}>
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-            {readiness && readiness.missing_env_vars.length ? (
-              <div style={{ marginTop: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)", marginBottom: 6 }}>{t("readiness_env_title")}</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {readiness.missing_env_vars.map((name) => (
-                    <code key={name} style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 999, background: "rgba(255,255,255,0.92)" }}>
-                      {name}
-                    </code>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-            <div style={{ marginTop: 12 }}>
-              <div style={{ display: "flex", gap: 10, justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", marginBottom: 6 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)" }}>{t("readiness_template_title")}</div>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(envTemplate);
-                      setTemplateCopied(true);
-                      setTimeout(() => setTemplateCopied(false), 1800);
-                    } catch {
-                      setReadinessError(t("readiness_copy_failed"));
-                    }
-                  }}
-                  style={{ padding: "6px 10px", borderRadius: 12, fontSize: 12 }}
-                >
-                  {templateCopied ? t("readiness_copied") : t("readiness_copy_template")}
-                </button>
-              </div>
-              <p style={{ fontSize: 12, lineHeight: 1.7, color: "var(--text-2)", marginBottom: 8 }}>
-                {t("readiness_template_body")}
-              </p>
-              <pre
-                style={{
-                  margin: 0,
-                  padding: "12px 13px",
-                  borderRadius: 18,
-                  background: "rgba(15,23,42,0.96)",
-                  color: "#e5eef7",
-                  fontSize: 11,
-                  lineHeight: 1.7,
-                  overflowX: "auto",
-                }}
-              >
-                {envTemplate}
-              </pre>
-            </div>
-            <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)", marginBottom: 6 }}>{t("readiness_steps_title")}</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <div style={{ fontSize: 12, lineHeight: 1.6, color: "var(--text-2)" }}>{t("readiness_step_install")}</div>
-                <div style={{ fontSize: 12, lineHeight: 1.6, color: "var(--text-2)" }}>{t("readiness_step_index")}</div>
-                <div style={{ fontSize: 12, lineHeight: 1.6, color: "var(--text-2)" }}>{t("readiness_step_env")}</div>
-              </div>
-            </div>
-            {parsedTargetLocus && readiness && !readiness.target_locus_anchor_ready ? (
-              <div style={{ marginTop: 10, fontSize: 12, lineHeight: 1.7, color: "#b45309" }}>
-                {t("readiness_anchor_note")}
-              </div>
-            ) : null}
-            {readiness ? (
-              <details style={{ marginTop: 12 }}>
-                <summary style={{ cursor: "pointer", fontSize: 12, fontWeight: 700, color: "var(--text-2)" }}>
-                  {t("readiness_summary_title")}
-                </summary>
-                <div
-                  style={{
-                    marginTop: 10,
-                    padding: "12px 13px",
-                    borderRadius: 18,
-                    background: "rgba(255,255,255,0.76)",
-                    border: "1px solid rgba(148,163,184,0.14)",
-                  }}
-                >
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
-                    <div style={{ fontSize: 12, lineHeight: 1.6, color: "var(--text-2)" }}>{t("readiness_summary_species")}: {getSpeciesLabel(readiness.species, t)}</div>
-                    <div style={{ fontSize: 12, lineHeight: 1.6, color: "var(--text-2)" }}>{t("readiness_summary_status")}: {readinessMeta.label}</div>
-                    <div style={{ fontSize: 12, lineHeight: 1.6, color: "var(--text-2)" }}>{t("readiness_summary_engine")}: {readiness.active_engine}</div>
-                    <div style={{ fontSize: 12, lineHeight: 1.6, color: "var(--text-2)" }}>{t("readiness_summary_backend")}: {readiness.backend_mode}</div>
-                    <div style={{ fontSize: 12, lineHeight: 1.6, color: "var(--text-2)" }}>{t("readiness_summary_fallback")}: {getStatusText(readiness.fallback_enabled, t)}</div>
-                    <div style={{ fontSize: 12, lineHeight: 1.6, color: "var(--text-2)" }}>{t("readiness_summary_anchor")}: {getStatusText(readiness.target_locus_anchor_ready, t)}</div>
-                  </div>
-                  {readiness.missing_requirements.length ? (
-                    <div style={{ marginTop: 10 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)", marginBottom: 6 }}>{t("readiness_missing_title")}</div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                        {readiness.missing_requirements.map((item) => (
-                          <div key={item} style={{ fontSize: 12, lineHeight: 1.6, color: "var(--text-2)" }}>
-                            {item}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </details>
-            ) : null}
-            {readinessError ? (
-              <div style={{ marginTop: 10, fontSize: 12, lineHeight: 1.7, color: "var(--red)" }}>
-                {t("readiness_error")}: {readinessError}
-              </div>
-            ) : null}
+            ) : (
+              <span style={{ fontSize: 12, color: "var(--text-3)" }}>{t("readiness_loading")}</span>
+            )}
           </div>
 
           <div>
@@ -741,8 +519,8 @@ export default function GrnaPage() {
           <div>
             <label className="label-caps" style={{ display: "block", marginBottom: 8 }}>
               {t("seq_label")}{" "}
-              <span style={{ color: "var(--red)", textTransform: "none", letterSpacing: 0 }}>
-                {t("seq_required")}
+              <span style={{ color: "var(--text-3)", textTransform: "none", letterSpacing: 0 }}>
+                {t("seq_optional")}
               </span>
             </label>
             <textarea
@@ -759,7 +537,6 @@ export default function GrnaPage() {
               placeholder={t("seq_placeholder")}
               value={sequence}
               onChange={(event) => setSequence(event.target.value.replace(/\s/g, ""))}
-              required
             />
             <div
               style={{
@@ -778,21 +555,25 @@ export default function GrnaPage() {
           <button
             type="submit"
             disabled={loading}
+            className="btn-primary"
             style={{
               width: "100%",
-              padding: "12px 0",
-              borderRadius: 18,
-              border: "none",
-              background: loading
-                ? "rgba(15,106,69,0.45)"
-                : "linear-gradient(135deg, #0f6a45, #134e4a)",
-              color: "#fff",
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: loading ? "not-allowed" : "pointer",
+              padding: "11px 0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
             }}
           >
-            {loading ? t("searching_btn") : t("search_btn")}
+            {loading ? (
+              <>
+                <svg className="animate-spin" style={{ width: 16, height: 16 }} viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+                {t("searching_btn")}
+              </>
+            ) : t("search_btn")}
           </button>
         </form>
 
@@ -802,11 +583,11 @@ export default function GrnaPage() {
             marginTop: 14,
             padding: "14px 15px",
             borderRadius: 18,
-            background: "rgba(255,248,235,0.86)",
-            border: "1px solid rgba(245,158,11,0.24)",
+            background: "var(--tone-amber-bg)",
+            border: "1px solid var(--tone-amber-border)",
           }}
         >
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#b45309", marginBottom: 5 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--tone-amber-label)", marginBottom: 5 }}>
             {t("risk_note_title")}
           </div>
           <p style={{ fontSize: 12, lineHeight: 1.65, color: "var(--text-2)" }}>{t("risk_note_body")}</p>
@@ -831,87 +612,104 @@ export default function GrnaPage() {
         ) : null}
       </aside>
 
-      <main style={{ flex: 1, minWidth: 0 }}>
+      <main className="grna-main-panel" style={{ flex: 1, minWidth: 0 }}>
         {!result && !loading ? (
           <div
-            className="empty-state"
+            className="grna-empty-state"
             style={{
               minHeight: 520,
-              padding: "34px clamp(24px, 4vw, 40px)",
+              padding: "40px clamp(24px, 4vw, 48px)",
               borderRadius: 34,
-              border: "1px solid rgba(15,106,69,0.12)",
-              background:
-                "radial-gradient(circle at top right, rgba(15,106,69,0.15), transparent 34%), linear-gradient(180deg, rgba(249,252,250,1), rgba(255,255,255,1))",
-              boxShadow: "0 26px 60px rgba(15,23,42,0.08)",
-              alignItems: "flex-start",
+              border: "1px solid var(--border)",
+              background: "radial-gradient(ellipse at 80% 20%, rgba(83,157,245,0.10) 0%, transparent 60%), radial-gradient(ellipse at 10% 80%, rgba(83,157,245,0.06) 0%, transparent 50%), var(--bg-card)",
+              boxShadow: "var(--shadow-lg)",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <div
-              style={{
-                display: "inline-flex",
-                padding: "6px 12px",
-                borderRadius: 999,
-                background: "rgba(15,106,69,0.09)",
-                color: "#0f6a45",
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                marginBottom: 18,
-              }}
+            {/* DNA helix decoration */}
+            <svg
+              width="180" height="340"
+              viewBox="0 0 180 340"
+              style={{ position: "absolute", right: -20, top: 0, opacity: 0.12, pointerEvents: "none" }}
+              aria-hidden="true"
             >
-              {t("badge")}
+              {Array.from({ length: 14 }, (_, i) => {
+                const y = i * 24 + 20;
+                const phase = (i / 14) * Math.PI * 2;
+                const x1 = 90 + Math.sin(phase) * 60;
+                const x2 = 90 - Math.sin(phase) * 60;
+                return (
+                  <g key={i}>
+                    <line x1={x1} y1={y} x2={x2} y2={y} stroke="#539df5" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+                    <circle cx={x1} cy={y} r="5" fill="#539df5" />
+                    <circle cx={x2} cy={y} r="5" fill="#93c5fd" />
+                  </g>
+                );
+              })}
+              <path
+                d={Array.from({ length: 60 }, (_, i) => {
+                  const y = i * 5.5 + 10;
+                  const x = 90 + Math.sin((i / 60) * Math.PI * 4) * 60;
+                  return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+                }).join(" ")}
+                fill="none" stroke="#539df5" strokeWidth="2" strokeLinecap="round"
+              />
+              <path
+                d={Array.from({ length: 60 }, (_, i) => {
+                  const y = i * 5.5 + 10;
+                  const x = 90 - Math.sin((i / 60) * Math.PI * 4) * 60;
+                  return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+                }).join(" ")}
+                fill="none" stroke="#93c5fd" strokeWidth="2" strokeLinecap="round"
+              />
+            </svg>
+
+            <div style={{
+              display: "inline-flex", padding: "6px 14px", borderRadius: 999,
+              background: "rgba(83,157,245,0.14)", border: "1px solid rgba(83,157,245,0.25)",
+              color: "#539df5", fontSize: 11, fontWeight: 700,
+              letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 20,
+            }}>
+              ✂️ &nbsp;{t("badge")}
             </div>
-            <h2
-              style={{
-                fontSize: "clamp(34px, 4vw, 50px)",
-                lineHeight: 1.04,
-                letterSpacing: "-0.04em",
-                color: "var(--text-1)",
-                marginBottom: 12,
-              }}
-            >
+            <h2 style={{
+              fontSize: "clamp(32px, 4vw, 52px)",
+              lineHeight: 1.04, letterSpacing: "-0.04em",
+              color: "var(--text-1)", marginBottom: 14, maxWidth: 640,
+            }}>
               {t("empty_title")}
             </h2>
-            <p style={{ fontSize: 15, lineHeight: 1.8, color: "var(--text-2)", maxWidth: 680 }}>{t("empty_subtitle")}</p>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
-                gap: 14,
-                width: "100%",
-                marginTop: 30,
-              }}
-            >
+            <p style={{ fontSize: 15, lineHeight: 1.8, color: "var(--text-2)", maxWidth: 580 }}>{t("empty_subtitle")}</p>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: 14, width: "100%", marginTop: 32,
+            }}>
               {[
-                { eyebrow: t("feature_activity_eyebrow"), title: t("feature_activity_title"), body: t("feature_activity_body") },
-                { eyebrow: t("feature_offtarget_eyebrow"), title: t("feature_offtarget_title"), body: t("feature_offtarget_body") },
-                { eyebrow: t("feature_evidence_eyebrow"), title: t("feature_evidence_title"), body: t("feature_evidence_body") },
+                { eyebrow: t("feature_activity_eyebrow"), title: t("feature_activity_title"), body: t("feature_activity_body"), icon: "⚡" },
+                { eyebrow: t("feature_offtarget_eyebrow"), title: t("feature_offtarget_title"), body: t("feature_offtarget_body"), icon: "🎯" },
+                { eyebrow: t("feature_evidence_eyebrow"), title: t("feature_evidence_title"), body: t("feature_evidence_body"), icon: "🔬" },
               ].map((feature) => (
                 <div
                   key={feature.title}
                   className="tool-card"
                   style={{
-                    padding: 18,
+                    padding: 20,
                     borderRadius: 24,
-                    background: "rgba(255,255,255,0.88)",
-                    border: "1px solid rgba(148,163,184,0.16)",
-                    boxShadow: "0 16px 28px rgba(15,23,42,0.05)",
+                    background: "var(--bg-inset)",
+                    border: "1px solid var(--border)",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                      color: "#0f6a45",
-                      marginBottom: 10,
-                    }}
-                  >
+                  <div style={{ fontSize: 22, marginBottom: 8 }}>{feature.icon}</div>
+                  <div style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
+                    textTransform: "uppercase", color: "#539df5", marginBottom: 6,
+                  }}>
                     {feature.eyebrow}
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: "var(--text-1)", marginBottom: 8 }}>{feature.title}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)", marginBottom: 8 }}>{feature.title}</div>
                   <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--text-2)" }}>{feature.body}</p>
                 </div>
               ))}
@@ -920,49 +718,60 @@ export default function GrnaPage() {
         ) : null}
 
         {loading ? (
-          <div
-            style={{
-              minHeight: 420,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              padding: "36px clamp(24px, 4vw, 42px)",
-              borderRadius: 34,
-              border: "1px solid rgba(15,106,69,0.12)",
-              background: "linear-gradient(180deg, #f8fbf9 0%, #ffffff 100%)",
-              boxShadow: "0 24px 56px rgba(15,23,42,0.08)",
-            }}
-          >
-            <div
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 18,
-                display: "grid",
-                placeItems: "center",
-                background: "rgba(15,106,69,0.12)",
-                marginBottom: 18,
-              }}
-            >
-              <svg className="animate-spin" style={{ width: 24, height: 24, color: "#0f6a45" }} viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+          <div style={{
+            minHeight: 420,
+            display: "flex", flexDirection: "column", justifyContent: "center",
+            padding: "36px clamp(24px, 4vw, 42px)",
+            borderRadius: 34,
+            border: "1px solid rgba(83,157,245,0.25)",
+            background: "radial-gradient(ellipse at center, rgba(83,157,245,0.07) 0%, var(--bg-card) 70%)",
+            boxShadow: "var(--shadow-lg)",
+          }}>
+            {/* Animated scissors icon */}
+            <div style={{
+              width: 60, height: 60, borderRadius: 20,
+              display: "grid", placeItems: "center",
+              background: "rgba(83,157,245,0.14)",
+              border: "1px solid rgba(83,157,245,0.25)",
+              marginBottom: 22,
+            }}>
+              <svg className="animate-spin" style={{ width: 28, height: 28, color: "#539df5" }} viewBox="0 0 24 24" fill="none">
+                <circle cx="6" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+                <circle cx="6" cy="18" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M8.5 8L18.5 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+                <path d="M8.5 16L18.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <circle cx="19" cy="12" r="1.5" fill="currentColor" />
               </svg>
             </div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text-1)", marginBottom: 8 }}>{t("searching_btn")}</div>
-            <p style={{ fontSize: 14, lineHeight: 1.75, color: "var(--text-2)", maxWidth: 560 }}>{t("scanning_msg")}</p>
+            <div style={{ fontSize: 26, fontWeight: 800, color: "var(--text-1)", marginBottom: 10, letterSpacing: "-0.02em" }}>
+              {t("searching_btn")}
+            </div>
+            <p style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text-2)", maxWidth: 520 }}>{t("scanning_msg")}</p>
+            {/* Progress bar */}
+            <div style={{
+              marginTop: 24, height: 3, borderRadius: 999,
+              background: "var(--border)", overflow: "hidden", maxWidth: 360,
+            }}>
+              <div style={{
+                height: "100%", borderRadius: 999,
+                background: "linear-gradient(90deg, #539df5, #93c5fd, #539df5)",
+                backgroundSize: "200% 100%",
+                animation: "shimmer 1.6s linear infinite",
+              }} />
+            </div>
           </div>
         ) : null}
 
         {result ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <section
+              className="grna-result-hero"
               style={{
                 padding: "28px clamp(22px, 4vw, 34px)",
                 borderRadius: 34,
-                background: "linear-gradient(135deg, #0f172a 0%, #10352f 62%, #0f6a45 100%)",
+                background: "linear-gradient(135deg, #0a1628 0%, #0d1f3c 62%, #0f3460 100%)",
                 color: "#fff",
-                boxShadow: "0 28px 64px rgba(15,23,42,0.16)",
+                boxShadow: "var(--shadow-xl)",
               }}
             >
               {result.target_locus ? (
@@ -1064,8 +873,8 @@ export default function GrnaPage() {
                 style={{
                   padding: 18,
                   borderRadius: 24,
-                  background: "rgba(240,249,255,0.92)",
-                  border: "1px solid rgba(59,130,246,0.18)",
+                  background: "rgba(83,157,245,0.08)",
+                  border: "1px solid rgba(83,157,245,0.22)",
                 }}
               >
                 <div style={{ display: "flex", gap: 12, justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap" }}>
@@ -1076,7 +885,7 @@ export default function GrnaPage() {
                         fontWeight: 700,
                         letterSpacing: "0.06em",
                         textTransform: "uppercase",
-                        color: "#1d4ed8",
+                        color: "var(--tone-blue-label)",
                         marginBottom: 8,
                       }}
                     >
@@ -1116,8 +925,8 @@ export default function GrnaPage() {
                 style={{
                   padding: 16,
                   borderRadius: 24,
-                  background: "rgba(255,248,235,0.92)",
-                  border: "1px solid rgba(245,158,11,0.24)",
+                  background: "var(--tone-amber-bg)",
+                  border: "1px solid var(--tone-amber-border)",
                 }}
               >
                 <div
@@ -1126,7 +935,7 @@ export default function GrnaPage() {
                     fontWeight: 700,
                     letterSpacing: "0.06em",
                     textTransform: "uppercase",
-                    color: "#b45309",
+                    color: "var(--tone-amber-label)",
                     marginBottom: 8,
                   }}
                 >
@@ -1137,12 +946,81 @@ export default function GrnaPage() {
               </section>
             ) : null}
 
+            {/* Gene info card */}
+            {result.gene_name && (result.gene_full_name || result.gene_summary) ? (
+              <section
+                style={{
+                  padding: "20px 24px",
+                  borderRadius: 24,
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border)",
+                  boxShadow: "var(--shadow-sm)",
+                }}
+              >
+                <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap", marginBottom: result.gene_summary ? 12 : 0 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-0.01em" }}>
+                        {result.gene_name}
+                      </div>
+                      {result.gene_full_name ? (
+                        <div style={{ fontSize: 13, color: "var(--text-2)", fontStyle: "italic" }}>
+                          {result.gene_full_name}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {result.gene_chromosome ? (
+                        <span style={{
+                          fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999,
+                          background: "rgba(83,157,245,0.12)", color: "#539df5",
+                          border: "1px solid rgba(83,157,245,0.2)",
+                        }}>
+                          Chr {result.gene_chromosome}
+                        </span>
+                      ) : null}
+                      {result.species ? (
+                        <span style={{
+                          fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999,
+                          background: "var(--bg-inset)", color: "var(--text-3)",
+                          border: "1px solid var(--border)",
+                        }}>
+                          {getSpeciesLabel(result.species, t)}
+                        </span>
+                      ) : null}
+                      {result.gene_aliases ? (
+                        <span style={{
+                          fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999,
+                          background: "var(--bg-inset)", color: "var(--text-3)",
+                          border: "1px solid var(--border)",
+                        }}>
+                          aka {result.gene_aliases.split(";").slice(0, 3).join(", ")}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+                {result.gene_summary ? (
+                  <p style={{
+                    fontSize: 13, lineHeight: 1.8, color: "var(--text-2)",
+                    margin: 0,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 4,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  } as React.CSSProperties}>
+                    {result.gene_summary}
+                  </p>
+                ) : null}
+              </section>
+            ) : null}
+
             <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
               {[
-                { meta: result.risk_model, title: t("activity_model_title"), body: t("activity_model_body"), tint: "rgba(217,251,231,0.92)" },
-                { meta: result.off_target_model, title: t("offtarget_model_title"), body: t("offtarget_model_body"), tint: "rgba(219,234,254,0.92)" },
-                { meta: `${getSpeciesLabel(result.species, t)} / ${result.off_target_scope}`, title: t("scope_title"), body: t("scope_body"), tint: "rgba(255,248,235,0.92)" },
-                { meta: hitAnnotationMeta?.label || t("hit_annotation_fallback_badge"), title: t("hit_annotation_card_title"), body: hitAnnotationMeta?.body || t("hit_annotation_fallback_body"), tint: "rgba(243,244,246,0.96)" },
+                { meta: result.risk_model, title: t("activity_model_title"), body: t("activity_model_body"), tint: "var(--tone-green-bg)" },
+                { meta: result.off_target_model, title: t("offtarget_model_title"), body: t("offtarget_model_body"), tint: "var(--tone-blue-bg)" },
+                { meta: `${getSpeciesLabel(result.species, t)} / ${result.off_target_scope}`, title: t("scope_title"), body: t("scope_body"), tint: "var(--tone-amber-bg)" },
+                { meta: hitAnnotationMeta?.label || t("hit_annotation_fallback_badge"), title: t("hit_annotation_card_title"), body: hitAnnotationMeta?.body || t("hit_annotation_fallback_body"), tint: "var(--bg-inset)" },
               ].map((card) => (
                 <div
                   key={card.title}
@@ -1150,9 +1028,9 @@ export default function GrnaPage() {
                   style={{
                     padding: 18,
                     borderRadius: 24,
-                    background: "rgba(255,255,255,0.92)",
-                    border: "1px solid rgba(148,163,184,0.16)",
-                    boxShadow: "0 16px 28px rgba(15,23,42,0.05)",
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border)",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   <div
@@ -1176,20 +1054,57 @@ export default function GrnaPage() {
             </section>
 
             <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {result.fetched_transcript_id ? (
+                <div style={{
+                  padding: "10px 16px",
+                  borderRadius: 10,
+                  background: "var(--bg-inset)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-2)",
+                  fontSize: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}>
+                  <span style={{ fontSize: 15 }}>🧬</span>
+                  <span>
+                    {t("fetched_transcript_label")}{" "}
+                    <code style={{ color: "var(--text-1)", fontWeight: 600 }}>{result.fetched_transcript_id}</code>
+                    {result.fetched_transcript_desc ? <> — {result.fetched_transcript_desc}</> : null}
+                  </span>
+                </div>
+              ) : null}
+              <div style={{
+                padding: "10px 16px",
+                borderRadius: 10,
+                background: "var(--tone-amber-bg, #fffbeb)",
+                border: "1px solid #f59e0b44",
+                color: "var(--text-1)",
+                fontSize: 13,
+              }}>
+                ⚠️ {t("activity_score_warning")}
+              </div>
               {result.grna_list.map((guide, index) => {
                 const expanded = expandedRank === guide.rank;
                 const offTargetBadge = getOffTargetBadge(guide, t);
                 const anchorStatus = getAnchorStatusMeta(guide.target_locus_status, t);
+                const riskColor = guide.off_target_risk === "Low" ? "#4ade80"
+                  : guide.off_target_risk === "Medium" ? "#ffa42b"
+                  : guide.off_target_risk === "High" ? "#f87171"
+                  : guide.heuristic_risk === "Low" ? "#4ade80"
+                  : guide.heuristic_risk === "Medium" ? "#ffa42b"
+                  : "#f87171";
                 return (
                   <article
                     key={guide.rank}
                     className={`tool-card fade-in-up delay-${Math.min(index + 1, 5)}`}
                     style={{
                       borderRadius: 30,
-                      border: "1px solid rgba(148,163,184,0.16)",
-                      background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(249,251,252,0.98))",
-                      boxShadow: expanded ? "0 28px 54px rgba(15,23,42,0.10)" : "0 12px 24px rgba(15,23,42,0.05)",
+                      border: "1px solid var(--border)",
+                      background: "var(--bg-card)",
+                      boxShadow: expanded ? "var(--shadow-lg)" : "var(--shadow-xs)",
                       overflow: "hidden",
+                      borderLeft: `3px solid ${riskColor}`,
                     }}
                   >
                     <button
@@ -1217,8 +1132,8 @@ export default function GrnaPage() {
                             borderRadius: 14,
                             display: "grid",
                             placeItems: "center",
-                            background: expanded ? "rgba(15,106,69,0.12)" : "rgba(15,23,42,0.05)",
-                            color: expanded ? "#0f6a45" : "var(--text-2)",
+                            background: expanded ? "rgba(83,157,245,0.15)" : "rgba(255,255,255,0.06)",
+                            color: expanded ? "#539df5" : "var(--text-2)",
                             fontSize: 14,
                             fontWeight: 800,
                             flexShrink: 0,
@@ -1228,26 +1143,42 @@ export default function GrnaPage() {
                         </div>
                         <div style={{ minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-                            <span
+                            <code
                               style={{
                                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
                                 fontSize: 15,
                                 fontWeight: 700,
                                 letterSpacing: "0.06em",
-                                color: "var(--text-1)",
                               }}
                             >
-                              {guide.grna_sequence}
-                            </span>
+                              <span style={{ color: "var(--text-1)" }}>{guide.grna_sequence}</span>
+                              <span style={{ color: "var(--tone-amber-label, #b45309)", opacity: 0.9, marginLeft: 1 }}>{guide.pam}</span>
+                            </code>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(guide.grna_sequence); }}
+                              style={{
+                                fontSize: 10,
+                                padding: "2px 7px",
+                                borderRadius: 4,
+                                border: "1px solid rgba(83,157,245,0.3)",
+                                background: "rgba(83,157,245,0.08)",
+                                color: "#539df5",
+                                cursor: "pointer",
+                                flexShrink: 0,
+                              }}
+                            >
+                              Copy
+                            </button>
                             <code
                               style={{
                                 fontSize: 11,
                                 fontWeight: 700,
                                 padding: "3px 8px",
                                 borderRadius: 999,
-                                background: "rgba(253,230,138,0.34)",
-                                color: "#b45309",
-                                border: "1px solid rgba(245,158,11,0.2)",
+                                background: "var(--tone-amber-bg)",
+                                color: "var(--tone-amber-label)",
+                                border: "1px solid var(--tone-amber-border)",
                               }}
                             >
                               PAM {guide.pam}
@@ -1273,14 +1204,14 @@ export default function GrnaPage() {
                     </button>
 
                     {expanded ? (
-                      <div style={{ borderTop: "1px solid rgba(148,163,184,0.16)", padding: "16px 20px 20px" }}>
+                      <div style={{ borderTop: "1px solid var(--border)", padding: "16px 20px 20px" }}>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
                           <div
                             style={{
                               padding: 18,
                               borderRadius: 24,
-                              background: "rgba(244,250,246,0.94)",
-                              border: "1px solid rgba(15,106,69,0.14)",
+                              background: "var(--tone-green-bg)",
+                              border: "1px solid var(--tone-green-border)",
                             }}
                           >
                             <div
@@ -1289,7 +1220,7 @@ export default function GrnaPage() {
                                 fontWeight: 700,
                                 letterSpacing: "0.06em",
                                 textTransform: "uppercase",
-                                color: "#0f6a45",
+                                color: "var(--tone-green-label)",
                                 marginBottom: 10,
                               }}
                             >
@@ -1310,12 +1241,15 @@ export default function GrnaPage() {
                                 marginTop: 10,
                                 padding: "12px 13px",
                                 borderRadius: 18,
-                                background: "rgba(255,255,255,0.72)",
-                                border: "1px solid rgba(148,163,184,0.16)",
+                                background: "var(--bg-inset)",
+                                border: "1px solid var(--border)",
                               }}
                             >
                               <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 5 }}>{t("guide_with_pam_label")}</div>
-                              <code style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)", wordBreak: "break-all" }}>{guide.guide_with_pam}</code>
+                              <code style={{ fontSize: 13, fontWeight: 700, wordBreak: "break-all" }}>
+                                <span style={{ color: "var(--text-1)" }}>{guide.grna_sequence}</span>
+                                <span style={{ color: "var(--tone-amber-label, #b45309)", opacity: 0.9 }}>{guide.pam}</span>
+                              </code>
                             </div>
                             <p style={{ fontSize: 12, lineHeight: 1.7, color: "var(--text-2)", marginTop: 10 }}>{t("activity_panel_body")}</p>
                           </div>
@@ -1324,8 +1258,8 @@ export default function GrnaPage() {
                             style={{
                               padding: 18,
                               borderRadius: 24,
-                              background: "rgba(245,248,255,0.94)",
-                              border: "1px solid rgba(29,78,216,0.14)",
+                              background: "var(--tone-blue-bg)",
+                              border: "1px solid var(--tone-blue-border)",
                             }}
                           >
                             <div
@@ -1334,7 +1268,7 @@ export default function GrnaPage() {
                                 fontWeight: 700,
                                 letterSpacing: "0.06em",
                                 textTransform: "uppercase",
-                                color: "#1d4ed8",
+                                color: "var(--tone-blue-label)",
                                 marginBottom: 10,
                               }}
                             >
@@ -1355,8 +1289,8 @@ export default function GrnaPage() {
                                 style={{
                                   padding: "12px 13px",
                                   borderRadius: 18,
-                                  background: "rgba(255,255,255,0.72)",
-                                  border: "1px solid rgba(148,163,184,0.16)",
+                                  background: "var(--bg-inset)",
+                                  border: "1px solid var(--border)",
                                 }}
                               >
                                 <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 4 }}>{t("best_non_target_label")}</div>
@@ -1366,8 +1300,8 @@ export default function GrnaPage() {
                                 style={{
                                   padding: "12px 13px",
                                   borderRadius: 18,
-                                  background: "rgba(255,255,255,0.72)",
-                                  border: "1px solid rgba(148,163,184,0.16)",
+                                  background: "var(--bg-inset)",
+                                  border: "1px solid var(--border)",
                                 }}
                               >
                                 <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 4 }}>{t("screen_scope_label")}</div>
@@ -1380,8 +1314,8 @@ export default function GrnaPage() {
                                   marginTop: 10,
                                   padding: "12px 13px",
                                   borderRadius: 18,
-                                  background: "rgba(255,255,255,0.72)",
-                                  border: "1px solid rgba(148,163,184,0.16)",
+                                  background: "var(--bg-inset)",
+                                  border: "1px solid var(--border)",
                                 }}
                               >
                                 <div
@@ -1410,8 +1344,8 @@ export default function GrnaPage() {
                               marginTop: 14,
                               padding: 16,
                               borderRadius: 24,
-                              background: "rgba(255,255,255,0.86)",
-                              border: "1px solid rgba(148,163,184,0.14)",
+                              background: "var(--bg-inset)",
+                              border: "1px solid var(--border)",
                             }}
                           >
                             <div style={{ display: "flex", gap: 10, justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", marginBottom: 10 }}>
@@ -1438,8 +1372,8 @@ export default function GrnaPage() {
                                       alignItems: "center",
                                       padding: "12px 14px",
                                       borderRadius: 18,
-                                      background: "rgba(248,250,252,0.92)",
-                                      border: "1px solid rgba(148,163,184,0.16)",
+                                      background: "var(--bg-card)",
+                                      border: "1px solid var(--border)",
                                     }}
                                   >
                                     <div style={{ minWidth: 0 }}>
@@ -1502,8 +1436,8 @@ export default function GrnaPage() {
                             marginTop: 14,
                             padding: "14px 16px",
                             borderRadius: 20,
-                            background: "rgba(255,248,235,0.72)",
-                            border: "1px solid rgba(245,158,11,0.18)",
+                            background: "var(--tone-amber-bg)",
+                            border: "1px solid var(--tone-amber-border)",
                             fontSize: 12,
                             lineHeight: 1.7,
                             color: "var(--text-2)",

@@ -75,11 +75,11 @@ class GrnaHitAnnotation(BaseModel):
 
 
 class GrnaDesignRequest(BaseModel):
-    sequence: str = Field(..., description="Target DNA sequence (5'->3').", min_length=23)
+    sequence: Optional[str] = Field(None, description="Target DNA sequence (5'->3'). If omitted, gene_name is used to fetch the RefSeq CDS sequence automatically.", max_length=50_000)
     cas_type: CasType = Field(CasType.cas9, description="Cas nuclease.")
     species: Species = Field(Species.human, description="Reference species for off-target screening.")
-    num_return: int = Field(10, description="Number of candidate guides to return.", ge=1, le=50)
-    gene_name: Optional[str] = Field(None, description="Optional gene label shown in the result.")
+    num_return: int = Field(5, description="Number of candidate guides to return.", ge=1, le=20)
+    gene_name: Optional[str] = Field(None, description="Gene name (HGNC symbol). Used to auto-fetch the RefSeq sequence when sequence is not provided.")
     target_locus: Optional[TargetLocus] = Field(
         None,
         description="Optional expected genomic locus used to anchor the intended on-target site.",
@@ -145,6 +145,12 @@ class GrnaDesignResponse(BaseModel):
     hit_annotation_ready: bool = False
     hit_annotation_source: str = "none"
     hit_annotation_summary: str = ""
+    fetched_transcript_id: Optional[str] = None
+    fetched_transcript_desc: Optional[str] = None
+    gene_full_name: Optional[str] = None
+    gene_summary: Optional[str] = None
+    gene_chromosome: Optional[str] = None
+    gene_aliases: Optional[str] = None
     message: str = ""
 
 

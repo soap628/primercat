@@ -1,3 +1,6 @@
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,6 +11,7 @@ from app.db.models.jobs import PrimerJob
 from app.core.security import get_optional_user
 
 router = APIRouter(prefix="/primer", tags=["qPCR 引物设计"])
+_executor = ThreadPoolExecutor(max_workers=4)
 
 
 @router.post("/design", response_model=PrimerDesignResponse)
@@ -16,7 +20,8 @@ async def design_primers(
     current_user=Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = design_qpcr_primers(req)
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(_executor, design_qpcr_primers, req)
     if current_user and result.success:
         job = PrimerJob(
             user_id=current_user.id,

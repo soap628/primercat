@@ -49,7 +49,7 @@ def _run_blast(req: BlastRequest) -> BlastResponse:
         for rank, alignment in enumerate(record.alignments, start=1):
             if not alignment.hsps:
                 continue
-            hsp = alignment.hsps[0]  # 取最优 HSP
+            hsp = max(alignment.hsps, key=lambda h: h.bits)
             identity_pct = round(hsp.identities / hsp.align_length * 100, 1)
             gaps_pct = round((hsp.gaps or 0) / hsp.align_length * 100, 1)
 
@@ -57,7 +57,7 @@ def _run_blast(req: BlastRequest) -> BlastResponse:
                 BlastHit(
                     rank=rank,
                     accession=alignment.accession,
-                    title=alignment.title[:120],  # 截断过长的标题
+                    title=alignment.title[:300],  # Display truncation; full title not needed for UI
                     length=alignment.length,
                     best_hsp=BlastHsp(
                         score=hsp.score,
@@ -70,9 +70,9 @@ def _run_blast(req: BlastRequest) -> BlastResponse:
                         query_end=hsp.query_end,
                         subject_start=hsp.sbjct_start,
                         subject_end=hsp.sbjct_end,
-                        query_seq=str(hsp.query)[:120],
-                        subject_seq=str(hsp.sbjct)[:120],
-                        midline=str(hsp.match)[:120],
+                        query_seq=str(hsp.query)[:300],      # Display truncation
+                        subject_seq=str(hsp.sbjct)[:300],    # Display truncation
+                        midline=str(hsp.match)[:300],        # Display truncation
                     ),
                 )
             )
@@ -100,5 +100,5 @@ def _run_blast(req: BlastRequest) -> BlastResponse:
 
 async def blast_sequence(req: BlastRequest) -> BlastResponse:
     """异步入口，将同步 BLAST 查询投入线程池。"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     return await loop.run_in_executor(_executor, _run_blast, req)

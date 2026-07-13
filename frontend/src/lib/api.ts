@@ -1,18 +1,23 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
-function authHeaders(): HeadersInit {
-  if (typeof window === "undefined") return { "Content-Type": "application/json" };
-  const token = localStorage.getItem("primercat_token");
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
+function jsonHeaders(): HeadersInit {
+  return { "Content-Type": "application/json" };
+}
+
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 180_000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, credentials: "include", signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function designPrimers(payload: PrimerRequest): Promise<PrimerResponse> {
-  const res = await fetch(`${BASE_URL}/primer/design`, {
+  const res = await fetchWithTimeout(`${BASE_URL}/primer/design`, {
     method: "POST",
-    headers: authHeaders(),
+    headers: jsonHeaders(),
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(await res.text());
@@ -20,9 +25,9 @@ export async function designPrimers(payload: PrimerRequest): Promise<PrimerRespo
 }
 
 export async function designGrna(payload: GrnaRequest): Promise<GrnaResponse> {
-  const res = await fetch(`${BASE_URL}/grna/design`, {
+  const res = await fetchWithTimeout(`${BASE_URL}/grna/design`, {
     method: "POST",
-    headers: authHeaders(),
+    headers: jsonHeaders(),
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(await res.text());
@@ -30,17 +35,17 @@ export async function designGrna(payload: GrnaRequest): Promise<GrnaResponse> {
 }
 
 export async function getGrnaOfftargetReadiness(species: "human" | "mouse"): Promise<GrnaOfftargetReadiness> {
-  const res = await fetch(`${BASE_URL}/grna/offtarget-readiness?species=${species}`);
+  const res = await fetchWithTimeout(`${BASE_URL}/grna/offtarget-readiness?species=${species}`, {}, 10_000);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function blastSearch(payload: BlastRequest): Promise<BlastResponse> {
-  const res = await fetch(`${BASE_URL}/blast/search`, {
+  const res = await fetchWithTimeout(`${BASE_URL}/blast/search`, {
     method: "POST",
-    headers: authHeaders(),
+    headers: jsonHeaders(),
     body: JSON.stringify(payload),
-  });
+  }, 300_000); // BLAST 最多等 5 分钟
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
@@ -50,7 +55,8 @@ export async function blastSearch(payload: BlastRequest): Promise<BlastResponse>
 export async function register(email: string, password: string, displayName?: string): Promise<AuthToken> {
   const res = await fetch(`${BASE_URL}/auth/register`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: jsonHeaders(),
+    credentials: "include",
     body: JSON.stringify({ email, password, display_name: displayName || "" }),
   });
   if (!res.ok) throw new Error(await res.text());
@@ -60,15 +66,23 @@ export async function register(email: string, password: string, displayName?: st
 export async function login(email: string, password: string): Promise<AuthToken> {
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: jsonHeaders(),
+    credentials: "include",
     body: JSON.stringify({ email, password }),
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
+export async function logoutApi(): Promise<void> {
+  await fetch(`${BASE_URL}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+}
+
 export async function getMe(): Promise<AuthUser> {
-  const res = await fetch(`${BASE_URL}/auth/me`, { headers: authHeaders() });
+  const res = await fetch(`${BASE_URL}/auth/me`, { credentials: "include" });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
@@ -87,25 +101,25 @@ function jobsQuery(params: JobsParams = {}) {
 }
 
 export async function getPrimerJobs(params: JobsParams = {}): Promise<JobRecord[]> {
-  const res = await fetch(`${BASE_URL}/jobs/primer${jobsQuery(params)}`, { headers: authHeaders() });
+  const res = await fetch(`${BASE_URL}/jobs/primer${jobsQuery(params)}`, { credentials: "include" });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function getGrnaJobs(params: JobsParams = {}): Promise<JobRecord[]> {
-  const res = await fetch(`${BASE_URL}/jobs/grna${jobsQuery(params)}`, { headers: authHeaders() });
+  const res = await fetch(`${BASE_URL}/jobs/grna${jobsQuery(params)}`, { credentials: "include" });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function getBlastJobs(params: JobsParams = {}): Promise<JobRecord[]> {
-  const res = await fetch(`${BASE_URL}/jobs/blast${jobsQuery(params)}`, { headers: authHeaders() });
+  const res = await fetch(`${BASE_URL}/jobs/blast${jobsQuery(params)}`, { credentials: "include" });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function deleteJob(type: "primer" | "grna" | "blast", id: string): Promise<void> {
-  const res = await fetch(`${BASE_URL}/jobs/${type}/${id}`, { method: "DELETE", headers: authHeaders() });
+  const res = await fetch(`${BASE_URL}/jobs/${type}/${id}`, { method: "DELETE", credentials: "include" });
   if (!res.ok) throw new Error(await res.text());
 }
 
@@ -172,7 +186,7 @@ export interface PrimerResponse {
 }
 
 export interface GrnaRequest {
-  sequence: string;
+  sequence?: string;
   gene_name?: string;
   cas_type?: "SpCas9" | "Cas12a" | "SpCas9-NG";
   species?: "human" | "mouse";
@@ -253,6 +267,12 @@ export interface GrnaResponse {
   hit_annotation_ready: boolean;
   hit_annotation_source: string;
   hit_annotation_summary: string;
+  fetched_transcript_id?: string | null;
+  fetched_transcript_desc?: string | null;
+  gene_full_name?: string | null;
+  gene_summary?: string | null;
+  gene_chromosome?: string | null;
+  gene_aliases?: string | null;
   message: string;
 }
 
@@ -307,5 +327,75 @@ export interface BlastResponse {
   database: string;
   query_length: number;
   hits: BlastHit[];
+  message: string;
+}
+
+// ── Gene Primer Types ────────────────────────────────────────────────────────
+
+export interface BlastTopHit { rank: number; title: string; identity: number; is_off_target: boolean; }
+export interface BlastValidation {
+  specific: boolean;
+  top_hit_identity: number;
+  off_target_count: number;
+  top_hits: BlastTopHit[];
+  status?: "validated" | "no_hits" | "error";
+  message?: string;
+}
+export interface ExonSpan { spans_junction: boolean; left_exon: number | null; right_exon: number | null; junction_count: number; }
+export interface PrimerScore { total: number; tm_score: number; gc_score: number; specificity_score: number; exon_score: number; dimer_score: number; }
+export interface PrimerProperties { self_any_th: number; self_end_th: number; hairpin_th: number; gc_clamp: number; pos: number; length: number; }
+export interface PrimerDesignBasis {
+  template_source: string;
+  design_region_start: number;
+  design_region_end: number;
+  cds_region_start?: number | null;
+  cds_region_end?: number | null;
+  exon_count: number;
+  exon_spanning_preferred: boolean;
+  primer_size_min: number;
+  primer_size_opt: number;
+  primer_size_max: number;
+  tm_min: number;
+  tm_opt: number;
+  tm_max: number;
+  gc_min: number;
+  gc_max: number;
+  product_min: number;
+  product_max: number;
+  max_poly_x: number;
+  max_self_any_th: number;
+  max_self_end_th: number;
+  max_hairpin_th: number;
+  candidate_pairs_designed: number;
+  candidate_pairs_blasted: number;
+  returned_pairs: number;
+  blast_database: string;
+  specificity_scope: string;
+  genome_wide_specificity_checked: boolean;
+  off_target_identity_threshold: number;
+}
+export interface GeneInfo {
+  gene_symbol: string; full_name: string; summary: string;
+  chromosome: string; map_location: string; aliases: string; organism: string;
+  transcript_id: string; transcript_description: string;
+  total_nm_found: number; selection_reason: string;
+  cds_length: number; protein_length: number; exon_count: number;
+}
+export interface ValidatedPrimerPair {
+  rank: number; left_primer: string; right_primer: string;
+  left_tm: number; right_tm: number; left_gc: number; right_gc: number;
+  product_size: number; penalty: number;
+  blast_left: BlastValidation; blast_right: BlastValidation;
+  is_specific: boolean; exon_span: ExonSpan; score: PrimerScore;
+  left_props: PrimerProperties | null; right_props: PrimerProperties | null;
+  amplicon_sequence: string;
+}
+export interface ExonViz { index: number; start: number; end: number; }
+export interface GenePrimerResult {
+  success: boolean; gene_name?: string; species: string; transcript_id?: string;
+  sequence_length: number; cds_start: number; cds_end: number;
+  exons: ExonViz[]; primer_pairs: ValidatedPrimerPair[];
+  design_basis?: PrimerDesignBasis;
+  gene_info?: GeneInfo;
   message: string;
 }

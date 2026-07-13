@@ -11,9 +11,25 @@ from app.core.config import settings
 
 Entrez.email = settings.NCBI_EMAIL or "primercat@example.com"
 Entrez.tool = settings.NCBI_TOOL
-Entrez.timeout = 30  # Entrez HTTP 请求超时（秒）
+Entrez.timeout = 60  # Entrez HTTP 请求超时（秒）
 if settings.NCBI_API_KEY:
     Entrez.api_key = settings.NCBI_API_KEY
+
+# ── Cache backend selection ──────────────────────────────────────────────────
+# If NCBI_CACHE_DIR is set, use diskcache (shared across all workers/processes).
+# Otherwise fall back to the in-process OrderedDict LRU cache (single-worker only).
+
+_disk_cache: Any = None  # diskcache.Cache instance, if enabled
+
+if settings.NCBI_CACHE_DIR:
+    try:
+        import diskcache  # type: ignore[import]
+        _disk_cache = diskcache.Cache(
+            settings.NCBI_CACHE_DIR,
+            size_limit=512 * 1024 * 1024,  # 512 MB on-disk limit
+        )
+    except Exception:
+        _disk_cache = None
 
 _cache_lock = Lock()
 _cache: "OrderedDict[tuple[Hashable, ...], tuple[float, Any]]" = OrderedDict()
@@ -41,26 +57,39 @@ def cached_call(
     should_cache: Callable[[Any], bool] | None = None,
 ) -> Any:
     key = (namespace, *parts)
+    key_str = ":".join(str(p) for p in key)
+
+    # ── diskcache path (multi-worker) ────────────────────────────────────────
+    if _disk_cache is not None:
+        cached = _disk_cache.get(key_str)
+        if cached is not None:
+            return _deepcopy(cached) if isinstance(cached, (list, dict)) else cached
+        value = loader()
+        if should_cache is None or should_cache(value):
+            _disk_cache.set(key_str, value, expire=settings.NCBI_CACHE_TTL_SECONDS)
+        return value
+
+    # ── in-process LRU path (single-worker fallback) ─────────────────────────
     now = time.time()
     with _cache_lock:
         _purge_expired(now)
-        cached = _cache.get(key)
-        if cached is not None:
-            _, value = cached
+        cached_entry = _cache.get(key)
+        if cached_entry is not None:
+            _, value = cached_entry
             _cache.move_to_end(key)
-            return _deepcopy(value)
+            return _deepcopy(value) if isinstance(value, (list, dict)) else value
 
     value = loader()
     if should_cache is not None and not should_cache(value):
         return value
 
     with _cache_lock:
-        _cache[key] = (time.time(), _deepcopy(value))
+        _cache[key] = (time.time(), _deepcopy(value) if isinstance(value, (list, dict)) else value)
         _cache.move_to_end(key)
         while len(_cache) > settings.NCBI_CACHE_MAXSIZE:
             _cache.popitem(last=False)
 
-    return _deepcopy(value)
+    return _deepcopy(value) if isinstance(value, (list, dict)) else value
 
 
 def throttle_ncbi() -> None:
@@ -105,10 +134,25 @@ def entrez_fetch_genbank_records(**kwargs: Any) -> list[Any]:
         handle.close()
 
 
-def run_qblast(**kwargs: Any) -> list[Any]:
-    throttle_ncbi()
-    handle = NCBIWWW.qblast(**kwargs)
-    try:
-        return list(NCBIXML.parse(handle))
-    finally:
-        handle.close()
+def run_qblast(retries: int = 2, retry_delay: float = 1.5, **kwargs: Any) -> list[Any]:
+    """
+    Submit a BLAST query via NCBI WWW BLAST and parse the XML results.
+
+    Retries up to `retries` times on transient errors (network timeouts,
+    NCBI 5xx responses). Each retry waits `retry_delay` seconds.
+    Raises the last exception if all attempts fail.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(retries + 1):
+        try:
+            throttle_ncbi()
+            handle = NCBIWWW.qblast(**kwargs)
+            try:
+                return list(NCBIXML.parse(handle))
+            finally:
+                handle.close()
+        except Exception as exc:
+            last_exc = exc
+            if attempt < retries:
+                time.sleep(retry_delay)
+    raise last_exc  # type: ignore[misc]

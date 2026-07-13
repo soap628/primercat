@@ -1,10 +1,12 @@
-"use client";
+﻿"use client";
 
-import { useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/lib/useAuth";
 import { useToast } from "@/lib/useToast";
 import { blastSearch, BlastResponse, BlastHit } from "@/lib/api";
+
+const BLAST_CACHE_KEY = "primercat_blast_result";
 
 type BlastProgram = "blastn" | "blastp" | "blastx" | "tblastn";
 type LoadingStage = "submit" | "remote" | "parse";
@@ -33,6 +35,14 @@ function fmt(e: number) {
   return e.toFixed(4);
 }
 
+function evalueColor(e: number): string {
+  if (e === 0 || e < 1e-100) return "var(--color-danger, #f3727f)";
+  if (e < 1e-50) return "var(--color-warn, #ffa42b)";
+  if (e < 1e-10) return "#ffa42b";
+  if (e < 0.01) return "var(--text-2)";
+  return "var(--text-3)";
+}
+
 function normalizeSequence(input: string) {
   return input.replace(/^>.*\n/, "").replace(/\s/g, "");
 }
@@ -55,9 +65,38 @@ function extractErrorDetail(input: string) {
   return raw;
 }
 
+function exportBlastCSV(result: BlastResponse) {
+  const header = ["Rank", "Accession", "Title", "Length", "Bits", "E-value", "Identity%", "Gaps%", "Align Length", "Query Start", "Query End", "Subject Start", "Subject End"].join(",");
+  const rows = result.hits.map((h) =>
+    [
+      h.rank,
+      h.accession,
+      `"${h.title.replace(/"/g, '""')}"`,
+      h.length,
+      h.best_hsp.bits,
+      h.best_hsp.expect,
+      h.best_hsp.identity_pct,
+      h.best_hsp.gaps_pct,
+      h.best_hsp.align_length,
+      h.best_hsp.query_start,
+      h.best_hsp.query_end,
+      h.best_hsp.subject_start,
+      h.best_hsp.subject_end,
+    ].join(",")
+  );
+  const blob = new Blob(["\uFEFF" + [header, ...rows].join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `PrimerCat_BLAST_${result.program}_${result.database}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function BlastPage() {
   const t = useTranslations("blast");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -71,6 +110,14 @@ export default function BlastPage() {
   const [error, setError] = useState("");
   const [selectedHit, setSelectedHit] = useState<BlastHit | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // 从 sessionStorage 恢复上次结果
+  useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem(BLAST_CACHE_KEY);
+      if (cached) setResult(JSON.parse(cached));
+    } catch {}
+  }, []);
 
   const cleanSequence = normalizeSequence(sequence);
   const loadingStages = [
@@ -148,9 +195,11 @@ export default function BlastPage() {
       }
 
       setResult(res);
+      try { sessionStorage.setItem(BLAST_CACHE_KEY, JSON.stringify(res)); } catch {}
       if (user) toast("已保存到历史记录");
     } catch (err: any) {
-      setError(mapBlastError(err?.message || ""));
+      const msg = err?.name === "AbortError" ? "请求超时，请稍后重试" : mapBlastError(err?.message || "");
+      setError(msg);
     } finally {
       clearStageTimers();
       setLoading(false);
@@ -166,7 +215,7 @@ export default function BlastPage() {
           flexShrink: 0,
           position: "sticky",
           top: 72,
-          background: "#ffffff",
+          background: "var(--bg-card)",
           borderRadius: "var(--r-lg)",
           padding: 20,
           border: "1px solid var(--border)",
@@ -201,7 +250,7 @@ export default function BlastPage() {
                     cursor: "pointer",
                     transition: "all 0.15s",
                     border: `1.5px solid ${program === item.value ? "var(--blast-color)" : "var(--border-mid)"}`,
-                    background: program === item.value ? "#f5f3ff" : "transparent",
+                    background: program === item.value ? "var(--bg-inset)" : "transparent",
                   }}
                 >
                   <code
@@ -209,7 +258,7 @@ export default function BlastPage() {
                       fontSize: 13,
                       fontFamily: "monospace",
                       fontWeight: 600,
-                      color: program === item.value ? "#6d28d9" : "var(--text-1)",
+                      color: program === item.value ? "var(--blast-color)" : "var(--text-1)",
                     }}
                   >
                     {item.label}
@@ -393,8 +442,8 @@ export default function BlastPage() {
                       gap: 12,
                       padding: "12px 14px",
                       borderRadius: 12,
-                      background: current ? "#faf5ff" : "#f8fafc",
-                      border: current ? "1px solid #ddd6fe" : "1px solid #e2e8f0",
+                      background: current ? "var(--bg-inset)" : "var(--bg-card)",
+                      border: current ? "1px solid var(--border-mid)" : "1px solid var(--border)",
                     }}
                   >
                     <div
@@ -403,7 +452,7 @@ export default function BlastPage() {
                         width: 18,
                         height: 18,
                         borderRadius: "50%",
-                        background: active ? "var(--blast-color)" : "#cbd5e1",
+                        background: active ? "var(--blast-color)" : "var(--border)",
                         color: "#fff",
                         fontSize: 11,
                         fontWeight: 700,
@@ -437,7 +486,28 @@ export default function BlastPage() {
                   {result.program} vs {result.database} · {result.message}
                 </p>
               </div>
-              <span className="badge badge-gray">{result.hits.length} hits</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span className="badge badge-gray">{result.hits.length} hits</span>
+                {result.hits.length > 0 && (
+                  <button
+                    onClick={() => exportBlastCSV(result)}
+                    style={{
+                      padding: "5px 12px",
+                      borderRadius: "var(--r-md)",
+                      border: "1px solid var(--border-mid)",
+                      background: "var(--bg-card)",
+                      color: "var(--text-2)",
+                      fontSize: 12,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
+                  >
+                    ↓ CSV
+                  </button>
+                )}
+              </div>
             </div>
 
             {result.hits.length === 0 ? (
@@ -462,7 +532,7 @@ export default function BlastPage() {
                           gap: 14,
                           cursor: "pointer",
                           borderLeft: isSelected ? "3px solid var(--blast-color)" : "3px solid transparent",
-                          background: isSelected ? "#faf5ff" : "var(--bg-card)",
+                          background: isSelected ? "var(--bg-inset)" : "var(--bg-card)",
                         }}
                       >
                         <span
@@ -485,10 +555,10 @@ export default function BlastPage() {
                                 fontFamily: "monospace",
                                 padding: "1px 7px",
                                 borderRadius: "var(--r-sm)",
-                                background: "#f5f3ff",
-                                color: "#6d28d9",
+                                background: "var(--bg-inset)",
+                                color: "var(--blast-color)",
                                 fontWeight: 600,
-                                border: "1px solid #ede9fe",
+                                border: "1px solid var(--border-mid)",
                               }}
                             >
                               {hit.accession}
@@ -508,7 +578,7 @@ export default function BlastPage() {
                         </div>
                         <div style={{ textAlign: "right", fontSize: 12, flexShrink: 0 }}>
                           <div style={{ fontWeight: 600, color: "var(--text-1)" }}>{hit.best_hsp.bits} bits</div>
-                          <div style={{ fontFamily: "monospace", color: "var(--text-3)", marginTop: 2 }}>E: {fmt(hit.best_hsp.expect)}</div>
+                          <div style={{ fontFamily: "monospace", color: evalueColor(hit.best_hsp.expect), marginTop: 2 }}>E: {fmt(hit.best_hsp.expect)}</div>
                         </div>
                         <div style={{ fontWeight: 700, fontSize: 14, color: identityColor, flexShrink: 0, width: 48, textAlign: "right" }}>
                           {hit.best_hsp.identity_pct}%
@@ -533,8 +603,8 @@ export default function BlastPage() {
                           style={{
                             marginTop: 4,
                             borderRadius: "var(--r-md)",
-                            background: "#0d1117",
-                            border: "1px solid rgba(255,255,255,0.08)",
+                            background: "var(--bg-inset)",
+                            border: "1px solid var(--border)",
                             padding: "14px 18px",
                           }}
                         >
@@ -543,13 +613,13 @@ export default function BlastPage() {
                               display: "flex",
                               gap: 20,
                               fontSize: 12,
-                              color: "rgba(255,255,255,0.4)",
+                              color: "var(--text-3)",
                               marginBottom: 10,
                               flexWrap: "wrap",
                             }}
                           >
                             <span>Score: {hit.best_hsp.bits} bits</span>
-                            <span>E-value: {fmt(hit.best_hsp.expect)}</span>
+                            <span>E-value: <span style={{ color: evalueColor(hit.best_hsp.expect) }}>{fmt(hit.best_hsp.expect)}</span></span>
                             <span>Identity: {hit.best_hsp.identity_pct}%</span>
                             <span>Gaps: {hit.best_hsp.gaps_pct}%</span>
                           </div>
@@ -557,7 +627,7 @@ export default function BlastPage() {
                             style={{
                               fontFamily: "monospace",
                               fontSize: 12,
-                              color: "#4ade80",
+                              color: "#ffb1ee",
                               overflow: "auto",
                               whiteSpace: "pre",
                               lineHeight: 1.8,

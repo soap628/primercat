@@ -98,24 +98,33 @@ def score_primer_pair(
 
 
 def detect_exon_span(
-    left: str,
-    right: str,
-    sequence: str,
+    left_start: int,
+    left_len: int,
+    right_end: int,
+    right_len: int,
     exons: list[ExonInfo],
 ) -> ExonSpan:
-    """检测引物对是否跨外显子边界。"""
+    """检测引物对是否跨外显子边界。
+
+    使用 primer3 返回的坐标而非序列搜索，避免重复元件（Alu、LINE 等）导致的
+    str.find() 错误定位。
+
+    Parameters
+    ----------
+    left_start : int
+        左引物 5' 端在模板上的 0-based 起始位置（primer3 PRIMER_LEFT_{i}[0]）。
+    left_len : int
+        左引物长度（primer3 PRIMER_LEFT_{i}[1]）。
+    right_end : int
+        右引物 3' 端在模板上的 0-based 位置（primer3 PRIMER_RIGHT_{i}[0]），
+        即扩增子最末一个碱基的位置。
+    right_len : int
+        右引物长度（primer3 PRIMER_RIGHT_{i}[1]）。
+    exons : list[ExonInfo]
+        外显子信息列表，每个元素含 index/start/end。
+    """
     if len(exons) <= 1:
         return ExonSpan(spans_junction=False, left_exon=0, right_exon=0, junction_count=0)
-
-    seq = sequence.upper()
-    left_pos = seq.find(left.upper())
-    # 反向引物需要找反向互补
-    comp = str.maketrans("ACGT", "TGCA")
-    right_rc = right.upper().translate(comp)[::-1]
-    right_pos = seq.find(right_rc)
-
-    if left_pos == -1 or right_pos == -1:
-        return ExonSpan(spans_junction=False, left_exon=None, right_exon=None, junction_count=0)
 
     def find_exon(pos: int) -> Optional[int]:
         for e in exons:
@@ -123,8 +132,8 @@ def detect_exon_span(
                 return e.index
         return None
 
-    left_exon = find_exon(left_pos)
-    right_exon = find_exon(right_pos + len(right_rc) - 1)  # 引物末尾碱基所在外显子
+    left_exon = find_exon(left_start)
+    right_exon = find_exon(right_end)
 
     if left_exon is None or right_exon is None:
         return ExonSpan(spans_junction=False, left_exon=left_exon, right_exon=right_exon, junction_count=0)

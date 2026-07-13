@@ -1,81 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { memo, useEffect, useRef, useState } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/lib/useAuth";
 import { useToast } from "@/lib/useToast";
+import type {
+  BlastTopHit,
+  BlastValidation,
+  ExonSpan,
+  PrimerScore,
+  PrimerProperties,
+  PrimerDesignBasis,
+  GeneInfo,
+  ValidatedPrimerPair,
+  ExonViz,
+  GenePrimerResult,
+} from "@/lib/api";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
-interface BlastTopHit { rank: number; title: string; identity: number; is_off_target: boolean; }
-interface BlastValidation {
-  specific: boolean;
-  top_hit_identity: number;
-  off_target_count: number;
-  top_hits: BlastTopHit[];
-  status?: "validated" | "no_hits" | "error";
-  message?: string;
-}
-interface ExonSpan { spans_junction: boolean; left_exon: number | null; right_exon: number | null; junction_count: number; }
-interface PrimerScore { total: number; tm_score: number; gc_score: number; specificity_score: number; exon_score: number; dimer_score: number; }
-interface PrimerProperties { self_any_th: number; self_end_th: number; hairpin_th: number; gc_clamp: number; start: number; length: number; }
-interface PrimerDesignBasis {
-  template_source: string;
-  design_region_start: number;
-  design_region_end: number;
-  cds_region_start?: number | null;
-  cds_region_end?: number | null;
-  exon_count: number;
-  exon_spanning_preferred: boolean;
-  primer_size_min: number;
-  primer_size_opt: number;
-  primer_size_max: number;
-  tm_min: number;
-  tm_opt: number;
-  tm_max: number;
-  gc_min: number;
-  gc_max: number;
-  product_min: number;
-  product_max: number;
-  max_poly_x: number;
-  max_self_any_th: number;
-  max_self_end_th: number;
-  max_hairpin_th: number;
-  candidate_pairs_designed: number;
-  candidate_pairs_blasted: number;
-  returned_pairs: number;
-  blast_database: string;
-  specificity_scope: string;
-  genome_wide_specificity_checked: boolean;
-  off_target_identity_threshold: number;
-}
-interface GeneInfo {
-  gene_symbol: string; full_name: string; summary: string;
-  chromosome: string; map_location: string; aliases: string; organism: string;
-  transcript_id: string; transcript_description: string;
-  total_nm_found: number; selection_reason: string;
-  cds_length: number; protein_length: number; exon_count: number;
-}
-interface ValidatedPrimerPair {
-  rank: number; left_primer: string; right_primer: string;
-  left_tm: number; right_tm: number; left_gc: number; right_gc: number;
-  product_size: number; penalty: number;
-  blast_left: BlastValidation; blast_right: BlastValidation;
-  is_specific: boolean; exon_span: ExonSpan; score: PrimerScore;
-  left_props: PrimerProperties | null; right_props: PrimerProperties | null;
-  amplicon_sequence: string;
-}
-interface ExonViz { index: number; start: number; end: number; }
-interface PrimerResult {
-  success: boolean; gene_name?: string; species: string; transcript_id?: string;
-  sequence_length: number; cds_start: number; cds_end: number;
-  exons: ExonViz[]; primer_pairs: ValidatedPrimerPair[];
-  design_basis?: PrimerDesignBasis;
-  gene_info?: GeneInfo;
-  message: string;
-}
-
-function ValidationChecklist({ p }: { p: ValidatedPrimerPair }) {
+const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: ValidatedPrimerPair }) {
   const t = useTranslations("primer");
   const tmDiff = Math.abs(p.left_tm - p.right_tm);
   const blastLeftStatus = p.blast_left.status ?? "validated";
@@ -98,7 +42,7 @@ function ValidationChecklist({ p }: { p: ValidatedPrimerPair }) {
   const dimerOk = (p.left_props?.self_end_th ?? 0) < 35 && (p.right_props?.self_end_th ?? 0) < 35;
 
   const items = [
-    { label: t("check_tm_range"), pass: tmOk, detail: `F: ${p.left_tm}°C / R: ${p.right_tm}°C` },
+    { label: t("check_tm_range"), pass: tmOk, detail: `F: ${p.left_tm}°C / R: ${p.right_tm}°C · ${t("tm_conditions_note")}` },
     { label: t("check_tm_diff"), pass: tmMatchOk, detail: `${t("diff_label")} ${tmDiff.toFixed(1)}°C` },
     { label: t("check_gc"), pass: gcOk, detail: `F: ${p.left_gc}% / R: ${p.right_gc}%` },
     { label: t("check_clamp"), pass: clampOk, detail: `F: ${p.left_props?.gc_clamp ?? "—"} / R: ${p.right_props?.gc_clamp ?? "—"}` },
@@ -118,7 +62,7 @@ function ValidationChecklist({ p }: { p: ValidatedPrimerPair }) {
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <p className="label-caps">{t("checklist_title")}</p>
-        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 100, background: countBg.bg, color: countBg.color }}>
+        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: countBg.bg, color: countBg.color }}>
           {t("pass_badge", { n: passCount, total: items.length })}
         </span>
       </div>
@@ -133,9 +77,9 @@ function ValidationChecklist({ p }: { p: ValidatedPrimerPair }) {
       </div>
     </div>
   );
-}
+});
 
-function BlastHitsTable({ left, right }: { left: BlastValidation; right: BlastValidation }) {
+const BlastHitsTable = memo(function BlastHitsTable({ left, right }: { left: BlastValidation; right: BlastValidation }) {
   const t = useTranslations("primer");
   return (
     <div>
@@ -175,9 +119,9 @@ function BlastHitsTable({ left, right }: { left: BlastValidation; right: BlastVa
       ))}
     </div>
   );
-}
+});
 
-function PrimerPropsTable({ p }: { p: ValidatedPrimerPair }) {
+const PrimerPropsTable = memo(function PrimerPropsTable({ p }: { p: ValidatedPrimerPair }) {
   const t = useTranslations("primer");
   if (!p.left_props || !p.right_props) return null;
   const rows = [
@@ -185,7 +129,7 @@ function PrimerPropsTable({ p }: { p: ValidatedPrimerPair }) {
     { label: t("self_end_label"), left: `${p.left_props.self_end_th}°C`, right: `${p.right_props.self_end_th}°C`, threshold: "< 35°C", leftOk: p.left_props.self_end_th < 35, rightOk: p.right_props.self_end_th < 35 },
     { label: t("hairpin_label"), left: `${p.left_props.hairpin_th}°C`, right: `${p.right_props.hairpin_th}°C`, threshold: "< 24°C", leftOk: p.left_props.hairpin_th < 24, rightOk: p.right_props.hairpin_th < 24 },
     { label: t("gc_clamp_label"), left: `${p.left_props.gc_clamp}`, right: `${p.right_props.gc_clamp}`, threshold: "1–3", leftOk: p.left_props.gc_clamp >= 1 && p.left_props.gc_clamp <= 3, rightOk: p.right_props.gc_clamp >= 1 && p.right_props.gc_clamp <= 3 },
-    { label: t("position_label"), left: `${p.left_props.start}`, right: `${p.right_props.start}`, threshold: "—", leftOk: true, rightOk: true },
+    { label: t("position_label"), left: `${p.left_props.pos}`, right: `${p.right_props.pos}`, threshold: "—", leftOk: true, rightOk: true },
     { label: t("length_label"), left: `${p.left_props.length} bp`, right: `${p.right_props.length} bp`, threshold: "18–25 bp", leftOk: p.left_props.length >= 18 && p.left_props.length <= 25, rightOk: p.right_props.length >= 18 && p.right_props.length <= 25 },
   ];
   return (
@@ -213,7 +157,7 @@ function PrimerPropsTable({ p }: { p: ValidatedPrimerPair }) {
       </table>
     </div>
   );
-}
+});
 
 function AmpliconViewer({ pair }: { pair: ValidatedPrimerPair }) {
   const t = useTranslations("primer");
@@ -252,7 +196,7 @@ function AmpliconViewer({ pair }: { pair: ValidatedPrimerPair }) {
           {copied ? `✓ ${t("amplicon_copied")}` : t("amplicon_copy")}
         </button>
       </div>
-      <div className="bg-slate-50 rounded-lg p-3 font-mono text-xs leading-relaxed break-all border border-slate-100">
+      <div className="bg-slate-50 rounded p-3 font-mono text-xs leading-relaxed break-all border border-slate-200">
         {parts.map((part, i) => (
           <span key={i} className={
             part.type === "left" ? "bg-blue-100 text-blue-700 rounded px-0.5" :
@@ -265,44 +209,6 @@ function AmpliconViewer({ pair }: { pair: ValidatedPrimerPair }) {
         <span><span className="inline-block w-3 h-3 bg-blue-100 rounded mr-1 align-middle" />{t("amplicon_forward_legend")}</span>
         <span><span className="inline-block w-3 h-3 bg-emerald-100 rounded mr-1 align-middle" />{t("amplicon_reverse_legend")}</span>
       </div>
-    </div>
-  );
-}
-
-function ScoreRing({ score, uid }: { score: number; uid: string }) {
-  const r = 21;
-  const circ = 2 * Math.PI * r;
-  const fill = (score / 100) * circ;
-  const colorA = score >= 75 ? "#0f766e" : score >= 50 ? "#4338ca" : "#b91c1c";
-  const colorB = score >= 75 ? "#34d399" : score >= 50 ? "#818cf8" : "#fb7185";
-  const glow = score >= 75 ? "rgba(16,185,129,0.18)" : score >= 50 ? "rgba(99,102,241,0.18)" : "rgba(244,63,94,0.16)";
-  const gradId = `psg-${uid}`;
-  return (
-    <div className="primer-score-ring-shell" style={{ filter: `drop-shadow(0 10px 18px ${glow})` }}>
-      <svg width="60" height="60" viewBox="0 0 60 60">
-        <defs>
-          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={colorA} />
-            <stop offset="100%" stopColor={colorB} />
-          </linearGradient>
-        </defs>
-        <circle cx="30" cy="30" r={r + 4} fill="rgba(255,255,255,0.7)" />
-        <circle cx="30" cy="30" r={r} fill="rgba(248,250,252,0.95)" />
-        <circle cx="30" cy="30" r={r} fill="none" stroke="#e2e8f0" strokeWidth="4" />
-        <circle
-          cx="30"
-          cy="30"
-          r={r}
-          fill="none"
-          stroke={`url(#${gradId})`}
-          strokeWidth="4"
-          strokeDasharray={`${fill} ${circ}`}
-          strokeLinecap="round"
-          transform="rotate(-90 30 30)"
-        />
-        <text x="30" y="31" textAnchor="middle" fontSize="15" fontWeight="700" fill={colorA}>{score}</text>
-        <text x="30" y="42" textAnchor="middle" fontSize="6.5" letterSpacing="0.18em" fill="#64748b">SCORE</text>
-      </svg>
     </div>
   );
 }
@@ -372,17 +278,17 @@ function PrimerWorkflowModal({ onClose }: { onClose: () => void }) {
             marginBottom: 18,
           }}
         >
-          <div style={{ padding: 14, borderRadius: 18, background: "#eef2ff", border: "1px solid #c7d2fe" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#4338ca", marginBottom: 6 }}>
+          <div style={{ padding: 14, borderRadius: 6, background: "var(--tone-blue-bg)", border: "1px solid var(--tone-blue-border)" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--tone-blue-label)", marginBottom: 6 }}>
               {t("help_data_title")}
             </div>
-            <div style={{ fontSize: 13, color: "#3730a3", lineHeight: 1.7 }}>{t("help_data_body")}</div>
+            <div style={{ fontSize: 13, color: "var(--tone-blue-value)", lineHeight: 1.7 }}>{t("help_data_body")}</div>
           </div>
-          <div style={{ padding: 14, borderRadius: 18, background: "#ecfdf5", border: "1px solid #a7f3d0" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#047857", marginBottom: 6 }}>
+          <div style={{ padding: 14, borderRadius: 6, background: "var(--tone-green-bg)", border: "1px solid var(--tone-green-border)" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--tone-green-label)", marginBottom: 6 }}>
               {t("help_output_title")}
             </div>
-            <div style={{ fontSize: 13, color: "#065f46", lineHeight: 1.7 }}>{t("help_output_body")}</div>
+            <div style={{ fontSize: 13, color: "var(--tone-green-value)", lineHeight: 1.7 }}>{t("help_output_body")}</div>
           </div>
         </div>
 
@@ -400,29 +306,29 @@ function PrimerWorkflowModal({ onClose }: { onClose: () => void }) {
           ))}
         </div>
 
-        <div style={{ padding: 18, borderRadius: 20, background: "#fff7ed", border: "1px solid #fed7aa", marginBottom: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#c2410c", marginBottom: 8 }}>
+        <div style={{ padding: 18, borderRadius: 6, background: "var(--tone-orange-bg)", border: "1px solid var(--tone-orange-border)", marginBottom: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--tone-orange-label)", marginBottom: 8 }}>
             {t("help_score_title")}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 8 }}>
             {scoreRules.map((rule) => (
-              <div key={rule} style={{ fontSize: 13, color: "#9a3412", lineHeight: 1.6 }}>
+              <div key={rule} style={{ fontSize: 13, color: "var(--tone-orange-value)", lineHeight: 1.6 }}>
                 • {rule}
               </div>
             ))}
           </div>
         </div>
 
-        <div style={{ padding: 16, borderRadius: 18, background: "#fefce8", border: "1px solid #fde68a" }}>
-          <div style={{ fontSize: 13, fontWeight: 650, color: "#92400e", marginBottom: 6 }}>{t("help_note_title")}</div>
-          <div style={{ fontSize: 13, color: "#a16207", lineHeight: 1.75 }}>{t("help_note_body")}</div>
+        <div style={{ padding: 16, borderRadius: 6, background: "var(--tone-amber-bg)", border: "1px solid var(--tone-amber-border)" }}>
+          <div style={{ fontSize: 13, fontWeight: 650, color: "var(--tone-amber-label)", marginBottom: 6 }}>{t("help_note_title")}</div>
+          <div style={{ fontSize: 13, color: "var(--tone-amber-value)", lineHeight: 1.75 }}>{t("help_note_body")}</div>
         </div>
       </div>
     </div>
   );
 }
 
-function DesignBasisCard({ result }: { result: PrimerResult }) {
+function DesignBasisCard({ result }: { result: GenePrimerResult }) {
   const t = useTranslations("primer");
   const basis = result.design_basis;
 
@@ -481,99 +387,48 @@ function DesignBasisCard({ result }: { result: PrimerResult }) {
   const scoringFactors = [t("score_tm"), t("score_gc"), t("score_specificity"), t("score_exon"), t("score_dimer")];
 
   return (
-    <div className="card primer-section-card" style={{ padding: 20, marginBottom: 16 }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
+    <div className="card primer-section-card" style={{ padding: "16px 20px", marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 14 }}>
         <div>
-          <p className="label-caps" style={{ marginBottom: 8 }}>{t("design_basis_title")}</p>
-          <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.7, margin: 0 }}>{t("design_basis_intro")}</p>
+          <p className="label-caps" style={{ marginBottom: 4 }}>{t("design_basis_title")}</p>
+          <p style={{ fontSize: 12, color: "var(--text-3)", margin: 0 }}>{t("design_basis_intro")}</p>
         </div>
-        <div style={{ flexShrink: 0, padding: "8px 12px", borderRadius: 999, background: "var(--accent-soft)", color: "var(--accent)", fontSize: 11, fontWeight: 700 }}>
-          Primer3 · BLAST · NCBI
+        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+          {["Primer3", "BLAST", "NCBI"].map(s => (
+            <span key={s} style={{ fontSize: 10, padding: "2px 7px", borderRadius: 3, background: "var(--bg-inset)", border: "1px solid var(--border)", color: "var(--text-3)", fontWeight: 600 }}>{s}</span>
+          ))}
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 14 }}>
-        <div style={{ padding: 16, borderRadius: 18, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#475569", marginBottom: 10 }}>
-            {t("basis_template_block")}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {templateItems.map((item) => (
-              <div key={item.label} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 12 }}>
-                <span style={{ color: "var(--text-3)" }}>{item.label}</span>
-                <span style={{ color: "var(--text-1)", fontWeight: 500, textAlign: "right" }}>{item.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ padding: 16, borderRadius: 18, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#475569", marginBottom: 10 }}>
-            {t("basis_constraints_block")}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {constraintItems.map((item) => (
-              <div key={item.label} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 12 }}>
-                <span style={{ color: "var(--text-3)" }}>{item.label}</span>
-                <span style={{ color: "var(--text-1)", fontWeight: 500, textAlign: "right" }}>{item.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ padding: 16, borderRadius: 18, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#475569", marginBottom: 10 }}>
-            {t("basis_screening_block")}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {screeningItems.map((item) => (
-              <div key={item.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                <span style={{ fontSize: 12, color: "var(--text-3)" }}>{item.label}</span>
-                <span style={{ minWidth: 44, padding: "4px 8px", borderRadius: 999, background: "#eef2ff", color: "#4338ca", fontSize: 12, fontWeight: 700, textAlign: "center" }}>
-                  {item.value}
-                </span>
-              </div>
-            ))}
-            <div style={{ marginTop: 8, paddingTop: 10, borderTop: "1px solid #e2e8f0", fontSize: 12, color: "var(--text-2)", lineHeight: 1.7 }}>
-              {t("basis_scoring_caption")}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 1, background: "var(--border)", border: "1px solid var(--border)", borderRadius: 6, overflow: "hidden", marginBottom: 12 }}>
+        {[
+          { title: t("basis_template_block"), items: templateItems },
+          { title: t("basis_constraints_block"), items: constraintItems },
+          { title: t("basis_specificity_block"), items: specificityItems },
+          { title: t("basis_screening_block"), items: screeningItems },
+        ].map(({ title, items }) => (
+          <div key={title} style={{ padding: "12px 14px", background: "var(--bg-card)" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: 8 }}>{title}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              {items.map((item: { label: string; value: string }) => (
+                <div key={item.label} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 12 }}>
+                  <span style={{ color: "var(--text-3)" }}>{item.label}</span>
+                  <span style={{ color: "var(--text-1)", fontWeight: 500, textAlign: "right" }}>{item.value}</span>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 14 }}>
-        <div style={{ padding: 16, borderRadius: 18, background: "#fff7ed", border: "1px solid #fed7aa" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#c2410c", marginBottom: 10 }}>
-            {t("basis_specificity_block")}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {specificityItems.map((item) => (
-              <div key={item.label} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 12 }}>
-                <span style={{ color: "#9a3412" }}>{item.label}</span>
-                <span style={{ color: "#7c2d12", fontWeight: 500, textAlign: "right" }}>{item.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div style={{ padding: 16, borderRadius: 18, background: "#fefce8", border: "1px solid #fde68a" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#92400e", marginBottom: 8 }}>{t("basis_scope_note_title")}</div>
-          <div style={{ fontSize: 12, color: "#a16207", lineHeight: 1.75 }}>{t("basis_scope_note_body")}</div>
-        </div>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 12px", borderRadius: 4, background: "var(--orange-soft)", border: "1px solid rgba(180,83,9,0.15)", marginBottom: 10 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", flexShrink: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("basis_scope_note_title")}</span>
+        <span style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.65 }}>{t("basis_scope_note_body")}</span>
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
         {scoringFactors.map((factor) => (
-          <span
-            key={factor}
-            style={{
-              padding: "6px 10px",
-              borderRadius: 999,
-              background: "var(--bg-inset)",
-              border: "1px solid var(--border)",
-              fontSize: 12,
-              color: "var(--text-2)",
-            }}
-          >
+          <span key={factor} style={{ padding: "3px 8px", borderRadius: 3, background: "var(--bg-inset)", border: "1px solid var(--border)", fontSize: 11, color: "var(--text-2)" }}>
             {factor}
           </span>
         ))}
@@ -597,12 +452,6 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
   const rightHairpin = p.right_props?.hairpin_th ?? 0;
   const worstSelfEnd = Math.max(leftSelfEnd, rightSelfEnd);
   const worstHairpin = Math.max(leftHairpin, rightHairpin);
-  const toneStyles = {
-    strong: { bg: "#ecfdf5", border: "#a7f3d0", label: "#047857", value: "#065f46" },
-    ok: { bg: "#eef2ff", border: "#c7d2fe", label: "#4338ca", value: "#3730a3" },
-    watch: { bg: "#fffbeb", border: "#fde68a", label: "#b45309", value: "#92400e" },
-  } as const;
-
   const tmTone =
     tmAvg >= 59 && tmAvg <= 61 && tmDiff < 1
       ? "strong"
@@ -630,7 +479,7 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
       label: t("score_tm"),
       score: p.score.tm_score,
       tone: tmTone,
-      metric: `F ${p.left_tm}°C · R ${p.right_tm}°C · Δ${tmDiff.toFixed(1)}°C`,
+      metric: `F ${p.left_tm}°C · R ${p.right_tm}°C · Δ${tmDiff.toFixed(1)}°C · ${t("tm_conditions_note")}`,
       observation: tmTone === "strong" ? t("reason_tm_ideal") : tmTone === "ok" ? t("reason_tm_ok") : t("reason_tm_watch"),
     },
     {
@@ -682,68 +531,68 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
     .slice(0, 3);
   const cautions = insights.filter((item) => item.tone === "watch");
 
+  const toneColor = { strong: "var(--green)", ok: "var(--primer-color)", watch: "var(--orange)" } as const;
+  const toneDot = { strong: "●", ok: "●", watch: "▲" } as const;
+
   return (
-    <div className="primer-recommendation-card" style={{ padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
+    <div className="primer-recommendation-card" style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)" }}>
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
         <div>
-          <p className="label-caps" style={{ marginBottom: 8 }}>{t("reason_title")}</p>
-          <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.7, margin: 0 }}>{t("reason_subtitle", { rank: p.rank })}</p>
+          <p className="label-caps" style={{ marginBottom: 4 }}>{t("reason_title")}</p>
+          <p style={{ fontSize: 12, color: "var(--text-3)", margin: 0 }}>{t("reason_subtitle", { rank: p.rank })}</p>
         </div>
-        <div style={{ flexShrink: 0, padding: "10px 12px", borderRadius: 16, background: "var(--bg-inset)", border: "1px solid var(--border)" }}>
-          <div style={{ fontSize: 10, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>{t("score_total")}</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-1)", lineHeight: 1 }}>{p.score.total}</div>
+        <div style={{ flexShrink: 0, padding: "4px 10px", borderRadius: 4, background: "var(--bg-inset)", border: "1px solid var(--border)", textAlign: "center" }}>
+          <div style={{ fontSize: 9, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{t("score_total")}</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "var(--text-1)", lineHeight: 1.2 }}>{p.score.total}</div>
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 14 }}>
-        <div style={{ padding: 14, borderRadius: 18, background: "#ecfdf5", border: "1px solid #a7f3d0" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#047857", marginBottom: 8 }}>{t("reason_strengths_title")}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {/* Insights table */}
+      <div style={{ border: "1px solid var(--border)", borderRadius: 6, overflow: "hidden", marginBottom: 12 }}>
+        {insights.map((item, i) => (
+          <div key={item.key} style={{ display: "grid", gridTemplateColumns: "120px 56px 1fr", alignItems: "start", gap: 0, borderTop: i > 0 ? "1px solid var(--border)" : undefined, background: "var(--bg-card)" }}>
+            <div style={{ padding: "8px 12px", borderRight: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 10, color: toneColor[item.tone] }}>{toneDot[item.tone]}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-1)" }}>{item.label}</span>
+            </div>
+            <div style={{ padding: "8px 10px", borderRight: "1px solid var(--border)", textAlign: "right" }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: toneColor[item.tone] }}>{item.score.toFixed(1)}</span>
+            </div>
+            <div style={{ padding: "8px 12px" }}>
+              <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 2 }}>{item.metric}</div>
+              <div style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.55 }}>{item.observation}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Strengths / Cautions */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div style={{ padding: "10px 12px", border: "1px solid var(--border)", borderLeft: "3px solid var(--green)", borderRadius: 4, background: "var(--bg-card)" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--green)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("reason_strengths_title")}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
             {strengths.map((item) => (
-              <div key={item.key} style={{ fontSize: 12, color: "#065f46", lineHeight: 1.7 }}>
-                <strong>{item.label}:</strong> {item.observation}
+              <div key={item.key} style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.55 }}>
+                <span style={{ fontWeight: 600, color: "var(--text-1)" }}>{item.label}:</span> {item.observation}
               </div>
             ))}
           </div>
         </div>
-
-        <div style={{ padding: 14, borderRadius: 18, background: "#fffbeb", border: "1px solid #fde68a" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#b45309", marginBottom: 8 }}>{t("reason_cautions_title")}</div>
+        <div style={{ padding: "10px 12px", border: "1px solid var(--border)", borderLeft: `3px solid ${cautions.length > 0 ? "var(--orange)" : "var(--border)"}`, borderRadius: 4, background: "var(--bg-card)" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: cautions.length > 0 ? "var(--orange)" : "var(--text-3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("reason_cautions_title")}</div>
           {cautions.length > 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               {cautions.map((item) => (
-                <div key={item.key} style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7 }}>
-                  <strong>{item.label}:</strong> {item.observation}
+                <div key={item.key} style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.55 }}>
+                  <span style={{ fontWeight: 600, color: "var(--text-1)" }}>{item.label}:</span> {item.observation}
                 </div>
               ))}
             </div>
           ) : (
-            <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7 }}>{t("reason_no_cautions")}</div>
+            <div style={{ fontSize: 12, color: "var(--text-3)", lineHeight: 1.55 }}>{t("reason_no_cautions")}</div>
           )}
         </div>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
-        {insights.map((item) => {
-          const palette = toneStyles[item.tone];
-          return (
-            <div key={item.key} style={{ padding: 14, borderRadius: 18, background: palette.bg, border: `1px solid ${palette.border}` }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)" }}>{item.label}</div>
-                <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <div style={{ fontSize: 10, color: palette.label, textTransform: "uppercase", letterSpacing: "0.08em" }}>{t("contribution_label")}</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: palette.value, lineHeight: 1 }}>{item.score.toFixed(1)}</div>
-                </div>
-              </div>
-              <div style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.65, marginBottom: 6 }}>
-                <span style={{ color: palette.label, fontWeight: 600 }}>{t("metric_label")}:</span> {item.metric}
-              </div>
-              <div style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.7 }}>
-                <span style={{ color: palette.label, fontWeight: 600 }}>{t("observation_label")}:</span> {item.observation}
-              </div>
-            </div>
-          );
-        })}
       </div>
     </div>
   );
@@ -755,40 +604,40 @@ function GeneInfoCard({ info }: { info: GeneInfo }) {
   const summaryShort = info.summary.length > 200 ? info.summary.slice(0, 200) + "..." : info.summary;
 
   return (
-    <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-5 mb-5 primer-gene-card">
-      <div className="flex items-start justify-between gap-4 mb-3">
+    <div className="primer-gene-card" style={{ padding: 16, marginBottom: 0 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 12 }}>
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <span className="text-xl font-bold text-slate-900">{info.gene_symbol}</span>
-            {info.full_name && <span className="text-sm text-slate-500">{info.full_name}</span>}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 2 }}>
+            <span style={{ fontSize: 18, fontWeight: 700, color: "var(--text-1)" }}>{info.gene_symbol}</span>
+            {info.full_name && <span style={{ fontSize: 13, color: "var(--text-2)" }}>{info.full_name}</span>}
           </div>
-          <div className="text-xs text-slate-400 italic">{info.organism}</div>
+          <div style={{ fontSize: 12, color: "var(--text-3)", fontStyle: "italic" }}>{info.organism}</div>
         </div>
-        <div className="flex gap-4 text-xs text-center shrink-0">
+        <div style={{ display: "flex", gap: 12, fontSize: 12, flexShrink: 0 }}>
           {info.chromosome && (
-            <div className="bg-white rounded-lg px-3 py-2 border border-slate-100 shadow-sm">
-              <div className="font-bold text-slate-800">Chr {info.chromosome}</div>
-              <div className="text-slate-400">{info.map_location || t("chromosome_short")}</div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontWeight: 700, color: "var(--text-1)" }}>Chr {info.chromosome}</div>
+              <div style={{ color: "var(--text-3)" }}>{info.map_location || t("chromosome_short")}</div>
             </div>
           )}
-          <div className="bg-white rounded-lg px-3 py-2 border border-slate-100 shadow-sm">
-            <div className="font-bold text-slate-800">{info.protein_length}</div>
-            <div className="text-slate-400">aa</div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontWeight: 700, color: "var(--text-1)" }}>{info.protein_length}</div>
+            <div style={{ color: "var(--text-3)" }}>aa</div>
           </div>
-          <div className="bg-white rounded-lg px-3 py-2 border border-slate-100 shadow-sm">
-            <div className="font-bold text-slate-800">{info.exon_count}</div>
-            <div className="text-slate-400">{t("viz_exon")}</div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontWeight: 700, color: "var(--text-1)" }}>{info.exon_count}</div>
+            <div style={{ color: "var(--text-3)" }}>{t("viz_exon")}</div>
           </div>
         </div>
       </div>
 
       {info.summary && info.summary !== "暂无功能摘要" && (
-        <div className="mb-3">
-          <p className="text-sm text-slate-600 leading-relaxed">
+        <div style={{ marginBottom: 10 }}>
+          <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.65 }}>
             {expanded ? info.summary : summaryShort}
           </p>
           {info.summary.length > 200 && (
-            <button onClick={() => setExpanded(!expanded)} className="text-xs text-indigo-500 hover:text-indigo-700 mt-1">
+            <button onClick={() => setExpanded(!expanded)} style={{ fontSize: 12, color: "var(--primer-color)", background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 4 }}>
               {expanded ? t("collapse_summary") : t("expand_summary")}
             </button>
           )}
@@ -796,37 +645,35 @@ function GeneInfoCard({ info }: { info: GeneInfo }) {
       )}
 
       {info.aliases && (
-        <div className="mb-3 text-xs text-slate-500">
-          <span className="font-medium text-slate-600">{t("aliases_label")}</span>{info.aliases}
+        <div style={{ marginBottom: 10, fontSize: 12, color: "var(--text-2)" }}>
+          <span style={{ fontWeight: 600 }}>{t("aliases_label")}</span>{info.aliases}
         </div>
       )}
 
-      <div className="border-t border-indigo-100 my-3" />
-
-      <div className="bg-white rounded-lg p-3 border border-slate-100">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("selected_transcript_used")}</span>
-          <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-mono font-medium">{info.transcript_id}</span>
+      <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("selected_transcript_used")}</span>
+          <span style={{ fontSize: 11, background: "rgba(99,102,241,0.1)", color: "#4338ca", padding: "1px 7px", borderRadius: 4, fontFamily: "monospace", fontWeight: 600 }}>{info.transcript_id}</span>
         </div>
         {info.transcript_description && (
-          <p className="text-xs text-slate-500 mb-2">{info.transcript_description}</p>
+          <p style={{ fontSize: 12, color: "var(--text-3)", marginBottom: 6 }}>{info.transcript_description}</p>
         )}
-        <div className="grid grid-cols-3 gap-3 mb-2 text-xs">
-          <div><span className="text-slate-400">{t("cds_length_label")}：</span><span className="font-medium text-slate-700">{info.cds_length} bp</span></div>
-          <div><span className="text-slate-400">{t("protein_length_label")}：</span><span className="font-medium text-slate-700">{info.protein_length} aa</span></div>
-          <div><span className="text-slate-400">{t("exon_count_label")}：</span><span className="font-medium text-slate-700">{info.exon_count}</span></div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 8, fontSize: 12 }}>
+          <div><span style={{ color: "var(--text-3)" }}>{t("cds_length_label")}：</span><span style={{ fontWeight: 600, color: "var(--text-1)" }}>{info.cds_length} bp</span></div>
+          <div><span style={{ color: "var(--text-3)" }}>{t("protein_length_label")}：</span><span style={{ fontWeight: 600, color: "var(--text-1)" }}>{info.protein_length} aa</span></div>
+          <div><span style={{ color: "var(--text-3)" }}>{t("exon_count_label")}：</span><span style={{ fontWeight: 600, color: "var(--text-1)" }}>{info.exon_count}</span></div>
         </div>
-        <div className="flex items-start gap-1.5 text-xs text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
-          <span className="shrink-0 font-bold">✓ {t("selection_basis")}</span>
+        <div style={{ fontSize: 12, color: "var(--green)", background: "var(--green-soft)", borderRadius: 4, padding: "6px 10px", display: "flex", gap: 6 }}>
+          <span style={{ fontWeight: 700, flexShrink: 0 }}>✓ {t("selection_basis")}</span>
           <span>{info.selection_reason}（{t("total_nm_text", { n: info.total_nm_found })}）</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 mt-3 text-xs text-slate-400">
-        <span>📦 {t("data_source_text")}</span>
-        <span className="font-medium">NCBI Gene</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, fontSize: 11, color: "var(--text-3)" }}>
+        <span>{t("data_source_text")}</span>
+        <span style={{ fontWeight: 600 }}>NCBI Gene</span>
         <span>·</span>
-        <span className="font-medium">NCBI RefSeq</span>
+        <span style={{ fontWeight: 600 }}>NCBI RefSeq</span>
         <span>{t("data_realtime_note")}</span>
       </div>
     </div>
@@ -840,7 +687,7 @@ function TranscriptViz({ seqLen, cdsStart, cdsEnd, exons, pairs }: {
   const W = 620;
   const s = (p: number) => (p / seqLen) * W;
   return (
-    <div className="overflow-x-auto mt-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+    <div className="overflow-x-auto mt-4 p-3 bg-slate-50 rounded border border-slate-200">
       <svg width={W} height={110} className="block">
         <rect x={0} y={30} width={W} height={12} rx={3} fill="#e2e8f0" />
         <rect x={s(cdsStart)} y={26} width={s(cdsEnd - cdsStart)} height={20} rx={3} fill="rgba(99,102,241,0.15)" />
@@ -859,11 +706,14 @@ function TranscriptViz({ seqLen, cdsStart, cdsEnd, exons, pairs }: {
           const rx = s(exons[Math.min(p.exon_span.right_exon ?? exons.length - 1, exons.length - 1)]?.end ?? seqLen);
           return (
             <g key={p.rank}>
+              <rect x={lx} y={y} width={Math.max(1, rx - lx)} height={8} rx={2}
+                fill={color} opacity={0.12} />
               <line x1={lx} y1={y + 4} x2={rx} y2={y + 4} stroke={color} strokeWidth={1.5}
                 strokeDasharray={p.exon_span.spans_junction ? "none" : "4 2"} opacity={0.8} />
               <polygon points={`${lx},${y+1} ${lx+7},${y+4} ${lx},${y+7}`} fill={color} />
               <polygon points={`${rx},${y+1} ${rx-7},${y+4} ${rx},${y+7}`} fill={color} />
               <text x={lx + 2} y={y + 2} fontSize="7" fill={color} fontWeight="600">F{p.rank}</text>
+              <text x={lx + 2} y={y + 8} fontSize="6" fill={color} opacity={0.75}>{p.product_size}bp</text>
             </g>
           );
         })}
@@ -890,7 +740,7 @@ function exportCSV(pairs: ValidatedPrimerPair[], geneName?: string) {
   const a = document.createElement("a"); a.href=url; a.download=`PrimerCat_${geneName||"primers"}_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
 }
 
-function exportHTMLReport(result: PrimerResult) {
+function exportHTMLReport(result: GenePrimerResult) {
   const now = new Date().toLocaleString();
   const pairsHtml = result.primer_pairs.map(p => {
     const tmDiff = Math.abs(p.left_tm - p.right_tm);
@@ -907,6 +757,7 @@ function exportHTMLReport(result: PrimerResult) {
 export default function PrimerPage() {
   const t = useTranslations("primer");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { user } = useAuth();
   const { toast } = useToast();
   const [mode, setMode] = useState<"sequence" | "gene">("gene");
@@ -915,7 +766,7 @@ export default function PrimerPage() {
   const [species, setSpecies] = useState<"human" | "mouse">("human");
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<{ step: number; total: number; msg: string }[]>([]);
-  const [result, setResult] = useState<PrimerResult | null>(null);
+  const [result, setResult] = useState<GenePrimerResult | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
@@ -1019,8 +870,7 @@ export default function PrimerPage() {
 
     const body = mode === "gene" ? { mode: "gene", gene_name: geneName, species } : { mode: "sequence", sequence, species };
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("primercat_token") : null;
-      const res = await fetch(`${API}/gene-primer/design`, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(body), signal: abortRef.current.signal });
+      const res = await fetch(`${API}/gene-primer/design`, { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify(body), signal: abortRef.current.signal });
       if (!res.ok) {
         throw new Error(await res.text());
       }
@@ -1110,7 +960,7 @@ export default function PrimerPage() {
 
   return (
     <div className="page-sidebar-layout primer-page-shell" style={{ display: "flex", gap: 28, alignItems: "flex-start" }}>
-      <aside className="page-sidebar primer-control-panel" style={{ width: 320, flexShrink: 0, position: "sticky", top: 72, background: "#ffffff", borderRadius: "var(--r-lg)", padding: 20, border: "1px solid var(--border)", borderLeft: "3px solid var(--primer-color)", boxShadow: "var(--shadow-xs)" }}>
+      <aside className="page-sidebar primer-control-panel">
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
             <div>
@@ -1195,6 +1045,24 @@ export default function PrimerPage() {
             </div>
           </form>
         </div>
+        {/* Wait time explanation — shown while loading */}
+        {loading && (
+          <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border)", borderLeft: "3px solid var(--primer-color)", background: "var(--bg-card)" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--primer-color)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>{t("wait_title")}</div>
+            <div style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.65, marginBottom: 10 }}>{t("wait_body")}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              {[t("wait_step1"), t("wait_step2"), t("wait_step3"), t("wait_step4")].map((step, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 16, height: 16, borderRadius: 3, background: lastStep && i < lastStep.step ? "var(--primer-color)" : "var(--bg-inset)", border: `1px solid ${lastStep && i < lastStep.step ? "var(--primer-color)" : "var(--border-mid)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {lastStep && i < lastStep.step && <span style={{ fontSize: 9, color: "white", fontWeight: 700 }}>✓</span>}
+                    {lastStep && i === lastStep.step - 1 && loading && <span style={{ fontSize: 8, color: "white", fontWeight: 700 }}>…</span>}
+                  </div>
+                  <span style={{ fontSize: 11, color: lastStep && i < lastStep.step ? "var(--text-1)" : "var(--text-3)", fontWeight: lastStep && i === lastStep.step - 1 ? 600 : 400 }}>{step}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {progress.length > 0 && (
           <div className="card primer-progress-card" style={{ padding: 16, marginBottom: 12 }}>
             {lastStep && (
@@ -1255,14 +1123,17 @@ export default function PrimerPage() {
         )}
         {result && (
           <div className="primer-results-stack">
+            {/* ── Result Hero ── */}
             <div className="primer-result-hero">
-              <div className="primer-result-hero-top">
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
                 <div>
-                  <div className="primer-panel-kicker primer-result-kicker">{t("result_title")}</div>
-                  <h2 className="primer-result-headline">{resultHeadline}</h2>
-                  <p className="primer-result-meta">{resultMeta}</p>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "var(--primer-color)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>{t("result_title")}</div>
+                  <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--text-1)", margin: 0, lineHeight: 1.2 }}>{resultHeadline}</h2>
+                  {result.transcript_id && (
+                    <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 4 }}>{result.transcript_id} · {result.sequence_length} bp · {result.exons.length} {t("viz_exon")}</div>
+                  )}
                 </div>
-                <div className="primer-result-actions">
+                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                   <button onClick={() => exportCSV(result.primer_pairs, result.gene_name)} className="primer-result-btn">
                     {t("export_csv")}
                   </button>
@@ -1271,42 +1142,33 @@ export default function PrimerPage() {
                   </button>
                 </div>
               </div>
-              <div className="primer-result-stats">
+              {/* Stat row */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1, background: "var(--border)", border: "1px solid var(--border)", borderRadius: 6, overflow: "hidden" }}>
                 {[
-                  { label: t("basis_pairs_returned"), value: result.primer_pairs.length, body: result.message },
-                  { label: t("score_total"), value: topScore, body: t("reason_strengths_title") },
-                  { label: t("check_exon"), value: exonPreferredCount, body: t("basis_exon_preference_yes") },
-                  { label: t("score_specificity"), value: validatedPrimerCount, body: specificityScopeLabel },
+                  { label: t("basis_pairs_returned"), value: String(result.primer_pairs.length), sub: result.message },
+                  { label: t("score_total") + " (top)", value: String(topScore), sub: t("reason_strengths_title") },
+                  { label: t("check_exon"), value: String(exonPreferredCount), sub: t("basis_exon_preference_yes") },
+                  { label: t("score_specificity"), value: String(validatedPrimerCount), sub: specificityScopeLabel },
                 ].map((item) => (
-                  <div key={item.label} className="primer-result-stat">
-                    <div className="primer-result-stat-label">{item.label}</div>
-                    <div className="primer-result-stat-value">{item.value}</div>
-                    <div className="primer-result-stat-body">{item.body}</div>
+                  <div key={item.label} style={{ padding: "10px 12px", background: "var(--bg-card)" }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>{item.label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-1)", lineHeight: 1, marginBottom: 3 }}>{item.value}</div>
+                    <div style={{ fontSize: 10, color: "var(--text-3)", lineHeight: 1.4 }}>{item.sub}</div>
                   </div>
                 ))}
               </div>
-              <div className="primer-result-scope">
-                <span>{t("basis_specificity_scope")}: {specificityScopeLabel}</span>
+              <div style={{ marginTop: 10, fontSize: 11, color: "var(--text-3)", display: "flex", gap: 6, alignItems: "center" }}>
+                <span style={{ color: "var(--primer-color)", fontWeight: 600 }}>{t("basis_specificity_scope")}:</span>
+                <span>{specificityScopeLabel}</span>
+                <span style={{ color: "var(--border-mid)" }}>·</span>
                 <span>{t("basis_scope_note_body")}</span>
               </div>
             </div>
+
             {result.gene_info && <GeneInfoCard info={result.gene_info} />}
-            <div style={{ display: "none" }}>
-              <div>
-                <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-1)", marginBottom: 2 }}>{t("result_title")}</h2>
-                <p style={{ fontSize: 12, color: "var(--text-3)" }}>
-                  {result.transcript_id
-                    ? `${result.transcript_id} · ${result.sequence_length} bp · ${result.exons.length} ${t("viz_exon")} · ${result.message}`
-                    : `${result.sequence_length} bp · ${result.message}`}
-                </p>
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => exportCSV(result.primer_pairs, result.gene_name)} className="btn-secondary" style={{ padding: "7px 14px", display: "flex", alignItems: "center", gap: 6 }}>⬇ {t("export_csv")}</button>
-                <button onClick={() => exportHTMLReport(result)} className="btn-ghost" style={{ padding: "7px 14px", display: "flex", alignItems: "center", gap: 6, border: "1px solid var(--accent-soft)", background: "var(--accent-soft)" }}>📄 {t("export_report")}</button>
-              </div>
-            </div>
+
             {blastWarningCount > 0 && (
-              <div className="card primer-alert-card notice" style={{ marginBottom: 16 }}>
+              <div className="card primer-alert-card notice" style={{ marginBottom: 0 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: "#92400e", marginBottom: 4 }}>{t("blast_warning_title")}</p>
                 <p style={{ fontSize: 12, color: "#a16207", lineHeight: 1.6 }}>{t("blast_warning_body", { count: blastWarningCount })}</p>
               </div>
@@ -1318,64 +1180,88 @@ export default function PrimerPage() {
                 <TranscriptViz seqLen={result.sequence_length} cdsStart={result.cds_start} cdsEnd={result.cds_end} exons={result.exons} pairs={result.primer_pairs} />
               </div>
             )}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {result.primer_pairs.map((p, idx) => (
-                <div key={p.rank} className={`card primer-pair-card fade-in-up delay-${Math.min(idx + 1, 5)}`} data-expanded={expandedRow === p.rank ? "true" : "false"} style={{ overflow: "hidden", padding: 0 }}>
-                  <div onClick={() => setExpandedRow(expandedRow === p.rank ? null : p.rank)} className="primer-row primer-row-summary" style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 20px", background: expandedRow === p.rank ? "var(--bg-inset)" : "transparent" }}>
-                    <ScoreRing score={p.score.total} uid={String(p.rank)} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="primer-pair-badges">
-                        <span style={{ fontSize: 12, color: "var(--text-3)", fontWeight: 500 }}>#{p.rank}</span>
-                        {p.is_specific && <span className="badge badge-green">✓ {t("specificity_pass")}</span>}
-                        {p.exon_span.spans_junction && <span className="badge badge-blue">{t("check_exon_spans", { n: p.exon_span.junction_count })}</span>}
-                        {(() => {
-                          const tmDiff = Math.abs(p.left_tm - p.right_tm);
-                          const blastLeftStatus = p.blast_left.status ?? "validated";
-                          const blastRightStatus = p.blast_right.status ?? "validated";
-                          const blastOk = blastLeftStatus === "validated" && blastRightStatus === "validated" && p.is_specific;
-                          const passN = [p.left_tm>=58&&p.left_tm<=62&&p.right_tm>=58&&p.right_tm<=62,tmDiff<2,p.left_gc>=40&&p.left_gc<=60&&p.right_gc>=40&&p.right_gc<=60,(p.left_props?.gc_clamp??0)>=1&&(p.right_props?.gc_clamp??0)>=1,(p.left_props?.hairpin_th??0)<24&&(p.right_props?.hairpin_th??0)<24,(p.left_props?.self_end_th??0)<35&&(p.right_props?.self_end_th??0)<35,blastOk,p.exon_span.spans_junction].filter(Boolean).length;
-                          return <span className={`badge ${passN===8?"badge-green":passN>=6?"badge-blue":"badge-orange"}`}>✓ {passN}/8</span>;
-                        })()}
+
+            {/* ── Primer Pair Cards ── */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 0, border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
+              {result.primer_pairs.map((p, idx) => {
+                const isExpanded = expandedRow === p.rank;
+                const tmDiff2 = Math.abs(p.left_tm - p.right_tm);
+                const blastLS = p.blast_left.status ?? "validated";
+                const blastRS = p.blast_right.status ?? "validated";
+                const blastOk2 = blastLS === "validated" && blastRS === "validated" && p.is_specific;
+                const passN = [p.left_tm>=58&&p.left_tm<=62&&p.right_tm>=58&&p.right_tm<=62, tmDiff2<2, p.left_gc>=40&&p.left_gc<=60&&p.right_gc>=40&&p.right_gc<=60, (p.left_props?.gc_clamp??0)>=1&&(p.right_props?.gc_clamp??0)>=1, (p.left_props?.hairpin_th??0)<24&&(p.right_props?.hairpin_th??0)<24, (p.left_props?.self_end_th??0)<35&&(p.right_props?.self_end_th??0)<35, blastOk2, p.exon_span.spans_junction].filter(Boolean).length;
+                const scoreColor = p.score.total >= 75 ? "var(--green)" : p.score.total >= 50 ? "var(--primer-color)" : "var(--red)";
+                return (
+                  <div key={p.rank} className={`fade-in-up delay-${Math.min(idx + 1, 5)}`} style={{ borderTop: idx > 0 ? "1px solid var(--border)" : undefined, background: isExpanded ? "var(--bg-card)" : "var(--bg-page)" }}>
+                    {/* Summary row */}
+                    <div onClick={() => setExpandedRow(isExpanded ? null : p.rank)} style={{ display: "flex", alignItems: "center", gap: 0, cursor: "pointer", userSelect: "none" }}>
+                      {/* Score box */}
+                      <div style={{ width: 56, flexShrink: 0, padding: "14px 0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRight: "1px solid var(--border)", background: isExpanded ? "var(--bg-inset)" : "var(--bg-card)" }}>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: scoreColor, lineHeight: 1 }}>{p.score.total}</div>
+                        <div style={{ fontSize: 9, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>score</div>
                       </div>
-                      <div className="primer-sequence-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 16px" }}>
-                        <p className="primer-sequence-pill forward" style={{ fontFamily: "monospace", fontSize: 12, color: "#0051a2", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>F: {p.left_primer}</p>
-                        <p className="primer-sequence-pill reverse" style={{ fontFamily: "monospace", fontSize: 12, color: "#1a7a35", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>R: {p.right_primer}</p>
+                      {/* Main content */}
+                      <div style={{ flex: 1, minWidth: 0, padding: "12px 14px" }}>
+                        {/* badges row */}
+                        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 5, marginBottom: 7 }}>
+                          <span style={{ fontSize: 11, color: "var(--text-3)", fontWeight: 700 }}>#{p.rank}</span>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-2)", background: "var(--bg-inset)", border: "1px solid var(--border)", borderRadius: 3, padding: "1px 6px" }}>{p.product_size} bp</span>
+                          <span style={{ fontSize: 11, color: "var(--text-3)" }}>Tm {p.left_tm}° / {p.right_tm}°</span>
+                          <span style={{ fontSize: 11, color: "var(--text-3)" }}>GC {p.left_gc}% / {p.right_gc}%</span>
+                          {p.is_specific && <span className="badge badge-green">✓ {t("specificity_pass")}</span>}
+                          {p.exon_span.spans_junction && <span className="badge badge-blue">{t("check_exon_spans", { n: p.exon_span.junction_count })}</span>}
+                          <span className={`badge ${passN===8?"badge-green":passN>=6?"badge-blue":"badge-orange"}`}>{passN}/8</span>
+                        </div>
+                        {/* Sequences */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 7 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: "#0051a2", minWidth: 10 }}>F</span>
+                            <code style={{ fontSize: 12, color: "#0051a2", fontFamily: "monospace", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.left_primer}</code>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(p.left_primer); }} style={{ fontSize: 10, padding: "1px 6px", borderRadius: 3, border: "1px solid #bfdbfe", background: "#eff6ff", color: "#0051a2", cursor: "pointer", flexShrink: 0 }}>copy</button>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: "#1a7a35", minWidth: 10 }}>R</span>
+                            <code style={{ fontSize: 12, color: "#1a7a35", fontFamily: "monospace", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.right_primer}</code>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(p.right_primer); }} style={{ fontSize: 10, padding: "1px 6px", borderRadius: 3, border: "1px solid #bbf7d0", background: "#f0fdf4", color: "#1a7a35", cursor: "pointer", flexShrink: 0 }}>copy</button>
+                          </div>
+                        </div>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(`F: ${p.left_primer}\nR: ${p.right_primer}`); }} style={{ fontSize: 10, padding: "2px 8px", borderRadius: 3, border: "1px solid var(--border-mid)", background: "var(--bg-inset)", color: "var(--text-3)", cursor: "pointer" }}>Copy Both</button>
                       </div>
+                      <span style={{ fontSize: 11, color: "var(--text-3)", flexShrink: 0, padding: "0 14px" }}>{isExpanded ? "▲" : "▼"}</span>
                     </div>
-                    <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>{p.product_size} bp</p>
-                      <p style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>Tm {p.left_tm}° / {p.right_tm}°</p>
-                    </div>
-                    <span style={{ fontSize: 11, color: "var(--text-3)", marginLeft: 4 }}>{expandedRow === p.rank ? "▲" : "▼"}</span>
-                  </div>
-                  {expandedRow === p.rank && (
-                    <div style={{ borderTop: "1px solid var(--border)" }}>
-                      <PrimerRecommendationCard p={p} />
-                      <div className="primer-tab-strip" style={{ display: "flex", alignItems: "center", background: "var(--bg-inset)", borderBottom: "1px solid var(--border)" }}>
-                        {([{ id: "checklist", label: t("tab_checklist") },{ id: "blast", label: t("tab_blast") },{ id: "props", label: t("tab_props") },{ id: "amplicon", label: t("tab_amplicon") }] as const).map(tab => (
-                          <button key={tab.id} type="button" onClick={e => { e.stopPropagation(); setActiveTab(tab.id); }} className={`primer-tab-button${activeTab === tab.id ? " active" : ""}`}>
-                            {tab.label}
-                          </button>
-                        ))}
-                        <div className="primer-score-chipbar">
-                          {[{ label: "Tm", v: p.score.tm_score },{ label: "GC", v: p.score.gc_score },{ label: t("score_specificity"), v: p.score.specificity_score },{ label: t("score_exon"), v: p.score.exon_score },{ label: t("score_dimer"), v: p.score.dimer_score }].map(s => (
-                            <div key={s.label} className="primer-score-chip" style={{ textAlign: "center" }}>
-                              <div className="primer-score-chip-value">{s.v}</div>
-                              <div className="primer-score-chip-label">{s.label}</div>
-                            </div>
+
+                    {/* Expanded detail */}
+                    {isExpanded && (
+                      <div style={{ borderTop: "1px solid var(--border)" }}>
+                        <PrimerRecommendationCard p={p} />
+                        {/* Tab strip */}
+                        <div style={{ display: "flex", alignItems: "center", background: "var(--bg-inset)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
+                          {([{ id: "checklist", label: t("tab_checklist") },{ id: "blast", label: t("tab_blast") },{ id: "props", label: t("tab_props") },{ id: "amplicon", label: t("tab_amplicon") }] as const).map(tab => (
+                            <button key={tab.id} type="button" onClick={e => { e.stopPropagation(); setActiveTab(tab.id); }} className={`primer-tab-button${activeTab === tab.id ? " active" : ""}`}>
+                              {tab.label}
+                            </button>
                           ))}
+                          <div style={{ flex: 1 }} />
+                          <div style={{ display: "flex", gap: 8, padding: "0 14px" }}>
+                            {[{ label: "Tm", v: p.score.tm_score },{ label: "GC", v: p.score.gc_score },{ label: t("score_specificity"), v: p.score.specificity_score },{ label: t("score_exon"), v: p.score.exon_score },{ label: t("score_dimer"), v: p.score.dimer_score }].map(s => (
+                              <div key={s.label} style={{ textAlign: "center" }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-1)", lineHeight: 1 }}>{s.v}</div>
+                                <div style={{ fontSize: 9, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{s.label}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ padding: "20px 24px" }}>
+                          {activeTab === "checklist" && <ValidationChecklist p={p} />}
+                          {activeTab === "blast" && <BlastHitsTable left={p.blast_left} right={p.blast_right} />}
+                          {activeTab === "props" && <PrimerPropsTable p={p} />}
+                          {activeTab === "amplicon" && <AmpliconViewer pair={p} />}
                         </div>
                       </div>
-                      <div style={{ padding: "20px 24px" }}>
-                        {activeTab === "checklist" && <ValidationChecklist p={p} />}
-                        {activeTab === "blast" && <BlastHitsTable left={p.blast_left} right={p.blast_right} />}
-                        {activeTab === "props" && <PrimerPropsTable p={p} />}
-                        {activeTab === "amplicon" && <AmpliconViewer pair={p} />}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <p className="primer-click-hint">{t("click_hint")}</p>
           </div>

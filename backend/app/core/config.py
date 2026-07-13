@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     NCBI_REQUEST_INTERVAL_WITH_API_KEY_SECONDS: float = 0.11
     NCBI_CACHE_TTL_SECONDS: int = 3600
     NCBI_CACHE_MAXSIZE: int = 256
+    NCBI_CACHE_DIR: str = ""  # set to a writable path to enable shared diskcache (multi-worker)
     BACKEND_CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
     GRNA_OFFTARGET_BACKEND: str = "auto"
     GRNA_ENABLE_NT_BLAST_FALLBACK: bool = True
@@ -25,7 +26,9 @@ class Settings(BaseSettings):
     GRNA_ANNOTATION_GTF_HUMAN: str = ""
     GRNA_ANNOTATION_GTF_MOUSE: str = ""
     GRNA_PROMOTER_WINDOW_BP: int = 2000
-    DEBUG: bool = True
+    DEBUG: bool = False
+    COOKIE_SECURE: bool = False  # Set to True in production (HTTPS required)
+    COOKIE_SAMESITE: str = "lax"
 
     @property
     def cors_origins(self) -> list[str]:

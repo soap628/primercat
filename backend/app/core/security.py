@@ -1,7 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import bcrypt
 from jose import JWTError, jwt
@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.db.session import get_db
 
 ALGORITHM = "HS256"
+_COOKIE_NAME = "primercat_token"
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
@@ -24,8 +25,21 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def create_access_token(user_id: str, expires_delta: Optional[timedelta] = None) -> str:
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
     return jwt.encode({"sub": user_id, "exp": expire}, settings.SECRET_KEY, algorithm=ALGORITHM)
+
+
+def _extract_token(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials],
+) -> Optional[str]:
+    """优先读 httpOnly cookie，回退到 Authorization: Bearer 头。"""
+    cookie_token = request.cookies.get(_COOKIE_NAME)
+    if cookie_token:
+        return cookie_token
+    if credentials:
+        return credentials.credentials
+    return None
 
 
 async def _get_user_by_id(user_id: str, db: AsyncSession):
@@ -35,13 +49,15 @@ async def _get_user_by_id(user_id: str, db: AsyncSession):
 
 
 async def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: AsyncSession = Depends(get_db),
 ):
-    if not credentials:
+    token = _extract_token(request, credentials)
+    if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     try:
-        payload = jwt.decode(credentials.credentials, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         if not user_id:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
@@ -54,13 +70,15 @@ async def get_current_user(
 
 
 async def get_optional_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: AsyncSession = Depends(get_db),
 ):
-    if not credentials:
+    token = _extract_token(request, credentials)
+    if not token:
         return None
     try:
-        payload = jwt.decode(credentials.credentials, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         if not user_id:
             return None

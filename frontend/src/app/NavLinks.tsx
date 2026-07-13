@@ -1,13 +1,121 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { usePathname, useRouter } from "@/navigation";
 import { useAuth } from "@/lib/useAuth";
 
+function useDarkMode() {
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = stored ? stored === "dark" : prefersDark;
+    setDark(isDark);
+    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+  }, []);
+
+  function toggle() {
+    const next = !dark;
+    setDark(next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
+  }
+
+  return { dark, toggle };
+}
+
+function SunIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="4"/>
+      <line x1="12" y1="2" x2="12" y2="4"/>
+      <line x1="12" y1="20" x2="12" y2="22"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="2" y1="12" x2="4" y2="12"/>
+      <line x1="20" y1="12" x2="22" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  );
+}
+
+function GlobeIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="2" y1="12" x2="22" y2="12"/>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+  );
+}
+
+// Small inline cat logo for PrimerCat nav link
+function CatIcon({ size = 13 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" aria-hidden="true">
+      <ellipse cx="11" cy="13.5" rx="7.5" ry="6.8" fill="currentColor" opacity="0.9" />
+      <polygon points="4.2,10 6.5,3.5 9.8,8.8" fill="currentColor" opacity="0.9" />
+      <polygon points="17.8,10 15.5,3.5 12.2,8.8" fill="currentColor" opacity="0.9" />
+      <polygon points="5.4,9.6 7,5.2 9.2,8.8" fill="white" opacity="0.35" />
+      <polygon points="16.6,9.6 15,5.2 12.8,8.8" fill="white" opacity="0.35" />
+      <circle cx="8.2" cy="13" r="1.4" fill="white" opacity="0.85" />
+      <circle cx="13.8" cy="13" r="1.4" fill="white" opacity="0.85" />
+    </svg>
+  );
+}
+
+// BlastIcon — DNA search / magnifier motif
+function BlastIcon({ size = 13 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" aria-hidden="true">
+      <circle cx="9" cy="9" r="6.5" stroke="currentColor" strokeWidth="2" />
+      <line x1="14" y1="14" x2="19" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <line x1="6" y1="9" x2="12" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="9" y1="6" x2="9" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// CrisprCat — visually distinct: rounder, bigger eyes, CRISPR scissors detail
+function CrisprCatIcon({ size = 13 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" aria-hidden="true">
+      {/* rounder body */}
+      <ellipse cx="11" cy="13" rx="8" ry="7.2" fill="currentColor" opacity="0.9" />
+      {/* shorter ears */}
+      <polygon points="4.5,10.5 6.2,5 9.2,9.5" fill="currentColor" opacity="0.9" />
+      <polygon points="17.5,10.5 15.8,5 12.8,9.5" fill="currentColor" opacity="0.9" />
+      {/* inner ear */}
+      <polygon points="5.6,10 6.8,6.5 8.7,9.5" fill="white" opacity="0.3" />
+      <polygon points="16.4,10 15.2,6.5 13.3,9.5" fill="white" opacity="0.3" />
+      {/* bigger eyes */}
+      <circle cx="8" cy="12.5" r="1.8" fill="white" opacity="0.9" />
+      <circle cx="14" cy="12.5" r="1.8" fill="white" opacity="0.9" />
+      {/* pupils */}
+      <ellipse cx="8.4" cy="12.8" rx="0.9" ry="1.1" fill="currentColor" />
+      <ellipse cx="14.4" cy="12.8" rx="0.9" ry="1.1" fill="currentColor" />
+      {/* scissors mark — CRISPR scissors on forehead */}
+      <path d="M9.5 8.8 L11 7.5 L12.5 8.8" stroke="white" strokeWidth="0.7" strokeLinecap="round" strokeLinejoin="round" opacity="0.55" fill="none"/>
+    </svg>
+  );
+}
+
 const COPY = {
   zh: {
-    primer: "qPCR",
+    primer: "PrimerCat",
+    crispr: "CrisprCat",
+    blast: "BLAST",
     methods: "方法",
     validation: "可信度",
     tools: "更多工具",
@@ -17,7 +125,9 @@ const COPY = {
     logout: "退出登录",
   },
   en: {
-    primer: "qPCR",
+    primer: "PrimerCat",
+    crispr: "CrisprCat",
+    blast: "BLAST",
     methods: "Methods",
     validation: "Trust",
     tools: "More Tools",
@@ -36,6 +146,7 @@ export default function NavLinks({ locale }: { locale: string }) {
   const { user, loading, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { dark, toggle } = useDarkMode();
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -48,50 +159,99 @@ export default function NavLinks({ locale }: { locale: string }) {
   }, []);
 
   const links = [
-    { href: "/primer", label: copy.primer, icon: "Q", matchPrefixes: ["/primer"] },
-    { href: "/methods", label: copy.methods, icon: "M", matchPrefixes: ["/methods"] },
-    { href: "/validation", label: copy.validation, icon: "V", matchPrefixes: ["/validation"] },
-    { href: "/tools", label: copy.tools, icon: "+", matchPrefixes: ["/tools", "/grna", "/blast"] },
+    { href: "/primer", label: copy.primer, icon: <CatIcon />, matchPrefixes: ["/primer"], accent: undefined },
+    { href: "/grna", label: copy.crispr, icon: <CrisprCatIcon />, matchPrefixes: ["/grna"], accent: "#539df5" as const },
+    { href: "/blast", label: copy.blast, icon: <BlastIcon />, matchPrefixes: ["/blast"], accent: "#ffa42b" as const },
+    { href: "/methods", label: copy.methods, icon: "M", matchPrefixes: ["/methods"], accent: undefined },
+    { href: "/validation", label: copy.validation, icon: "V", matchPrefixes: ["/validation"], accent: undefined },
+    { href: "/tools", label: copy.tools, icon: "+", matchPrefixes: ["/tools"], accent: undefined },
   ];
 
   function switchLocale() {
-    if (pathname.startsWith(`/${locale}`)) {
-      router.push(pathname.replace(`/${locale}`, `/${otherLocale}`));
-      return;
-    }
-    router.push(`/${otherLocale}${pathname}`);
+    router.push(pathname, { locale: otherLocale });
   }
+
+  const iconBtnStyle: React.CSSProperties = {
+    marginLeft: 4,
+    cursor: "pointer",
+    border: "1px solid rgba(148,163,184,0.3)",
+    borderRadius: 8,
+    padding: "6px 10px",
+    background: "transparent",
+    color: "var(--text-2, #475569)",
+    display: "flex",
+    alignItems: "center",
+    gap: 5,
+    fontSize: 12,
+    fontWeight: 600,
+    letterSpacing: "0.04em",
+    lineHeight: 1,
+  };
 
   return (
     <nav style={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
       {links.map((item) => {
         const href = `/${locale}${item.href}`;
-        const active = item.matchPrefixes.some((prefix) => pathname === `/${locale}${prefix}` || pathname.startsWith(`/${locale}${prefix}/`));
+        const active = item.matchPrefixes.some(
+          (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
+        );
+        const isCrispr = item.href === "/grna";
+        const isBlast = item.href === "/blast";
         return (
-          <Link key={item.href} href={href} className={`nav-link${active ? " nav-link-active" : ""}`}>
-            <span style={{ fontSize: 11, lineHeight: 1, fontWeight: 700 }}>{item.icon}</span>
+          <Link
+            key={item.href}
+            href={href}
+            className={`nav-link${active ? " nav-link-active" : ""}${isCrispr ? " nav-link-crispr" : ""}${isBlast ? " nav-link-blast" : ""}`}
+            style={
+              isCrispr && !active ? { color: "#3b82f6" } :
+              isCrispr && active ? { color: "#539df5" } :
+              isBlast && !active ? { color: "#e07b10" } :
+              isBlast && active ? { color: "#ffa42b" } :
+              undefined
+            }
+          >
+            <span style={{ fontSize: 11, lineHeight: 1, fontWeight: 700, display: "flex", alignItems: "center", color: (isCrispr || isBlast) ? "inherit" : undefined }}>
+              {item.icon}
+            </span>
             {item.label}
+            {isCrispr && (
+              <span style={{
+                fontSize: 9, fontWeight: 700, letterSpacing: "0.06em",
+                padding: "1px 5px", borderRadius: 4,
+                background: active ? "rgba(83,157,245,0.15)" : "rgba(59,130,246,0.1)",
+                color: active ? "#539df5" : "#3b82f6",
+                border: `1px solid ${active ? "rgba(83,157,245,0.3)" : "rgba(59,130,246,0.2)"}`,
+                marginLeft: 2,
+              }}>
+                beta
+              </span>
+            )}
           </Link>
         );
       })}
 
+      {/* Theme toggle — SVG icon */}
+      <button
+        onClick={toggle}
+        className="nav-link"
+        aria-label="Toggle dark mode"
+        style={iconBtnStyle}
+      >
+        {dark ? <SunIcon /> : <MoonIcon />}
+      </button>
+
+      {/* Language switcher — SVG globe + label */}
       <button
         onClick={switchLocale}
         className="nav-link"
         style={{
-          marginLeft: 8,
-          cursor: "pointer",
-          border: "1px solid rgba(148,163,184,0.3)",
-          borderRadius: 8,
-          padding: "5px 12px",
-          fontSize: 12,
-          fontWeight: 600,
-          letterSpacing: "0.04em",
+          ...iconBtnStyle,
+          marginLeft: 4,
           background: "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(241,245,249,0.85))",
           boxShadow: "0 1px 4px rgba(15,23,42,0.06)",
-          color: "#475569",
         }}
       >
+        <GlobeIcon />
         {copy.otherLabel}
       </button>
 
@@ -104,11 +264,11 @@ export default function NavLinks({ locale }: { locale: string }) {
                 className="nav-link"
                 style={{
                   cursor: "pointer",
-                  border: "1px solid rgba(163,31,52,0.2)",
+                  border: "1px solid rgba(255,177,238,0.25)",
                   padding: "5px 12px",
                   fontSize: 12,
                   fontWeight: 600,
-                  background: "linear-gradient(135deg, rgba(163,31,52,0.07), rgba(255,255,255,0.9))",
+                  background: "rgba(255,177,238,0.07)",
                   color: "var(--accent)",
                   maxWidth: 130,
                   overflow: "hidden",
@@ -124,7 +284,7 @@ export default function NavLinks({ locale }: { locale: string }) {
                     position: "absolute",
                     right: 0,
                     top: "calc(100% + 6px)",
-                    background: "#fff",
+                    background: "var(--bg-card)",
                     border: "1px solid var(--border)",
                     borderRadius: "var(--r-lg)",
                     boxShadow: "var(--shadow-lg)",
@@ -166,11 +326,11 @@ export default function NavLinks({ locale }: { locale: string }) {
               className="nav-link"
               style={{
                 marginLeft: 6,
-                border: "1px solid rgba(163,31,52,0.3)",
+                border: "1px solid rgba(255,177,238,0.3)",
                 padding: "5px 12px",
                 fontSize: 12,
                 fontWeight: 600,
-                background: "linear-gradient(135deg, rgba(163,31,52,0.08), rgba(255,255,255,0.9))",
+                background: "rgba(255,177,238,0.07)",
                 color: "var(--accent)",
               }}
             >

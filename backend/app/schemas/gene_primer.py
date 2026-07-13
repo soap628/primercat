@@ -64,7 +64,7 @@ class PrimerProperties(BaseModel):
     self_end_th: float   # 3'端自互补 Tm °C，越低越好，< 35 合格
     hairpin_th: float    # 发卡结构 Tm °C，越低越好，< 24 合格
     gc_clamp: int        # 3'端 5 bp 中 G/C 数量，1-3 最佳
-    start: int           # 在模板中的起始位置
+    pos: int             # 在模板中的位置（左引物：5' 起始；右引物：3' 末端，即 primer3 PRIMER_RIGHT_{i}[0]）
     length: int          # 引物长度
 
 

@@ -17,10 +17,21 @@ pytest-cache-files-*/
 # Node
 node_modules/
 .next/
+*.tsbuildinfo
+
+# Build / OS junk
+.DS_Store
+._*
 
 # Claude
 .claude/
 
-# Misc
+# Standalone prototypes / unrelated projects (not part of PrimerCat)
 fund-calc/
 offshore-hub/
+liquun/
+frontend/spotify/
+
+# Stray duplicate assets at repo root
+/alipay.jpg
+/blackpink.png
