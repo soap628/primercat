@@ -2,7 +2,8 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+# 国内镜像源，加速依赖下载
+RUN npm config set registry https://registry.npmmirror.com && npm install
 
 COPY . .
 
