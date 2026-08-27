@@ -109,7 +109,7 @@ NGINX
   DOMS="-d ${DOMAIN}"
   [ "$WWW_RESOLVES" = "1" ] && DOMS="$DOMS -d www.${DOMAIN}"
   echo "    通过 webroot 签发 Let's Encrypt 证书..."
-  docker compose run --rm certbot \
+  docker compose run --rm --entrypoint certbot certbot \
     certonly --webroot -w /var/www/certbot $DOMS \
     --email "$EMAIL" --agree-tos --no-eff-email --keep-until-expiring
 
