@@ -1,3 +1,5 @@
+name: primercat
+
 services:
   db:
     image: postgres:17-alpine
@@ -16,6 +18,8 @@ services:
 
   backend:
     build: ./backend
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:${POSTGRES_PASSWORD}@db:5432/primercat
       SECRET_KEY: ${SECRET_KEY}
