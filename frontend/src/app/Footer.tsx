@@ -15,9 +15,11 @@ const COPY = {
       { label: "方法说明", href: "/methods" },
       { label: "可信度说明", href: "/validation" },
     ],
-    addOns: "实验室计算",
+    addOns: "实验室工作台",
     addOnLinks: [
       { label: "分子量计算器", href: "/mw-calc" },
+      { label: "溶液配制指南", href: "/solutions" },
+      { label: "试剂安全与毒性", href: "/chemical-safety" },
     ],
     connect: "关于",
     connectLinks: [
@@ -45,9 +47,11 @@ const COPY = {
       { label: "Methods", href: "/methods" },
       { label: "Trust & Limitations", href: "/validation" },
     ],
-    addOns: "Lab Calculators",
+    addOns: "Lab Bench",
     addOnLinks: [
       { label: "MW Calculator", href: "/mw-calc" },
+      { label: "Solution Preparation", href: "/solutions" },
+      { label: "Reagent Safety & Toxicity", href: "/chemical-safety" },
     ],
     connect: "About",
     connectLinks: [

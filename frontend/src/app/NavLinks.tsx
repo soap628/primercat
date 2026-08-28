@@ -214,7 +214,7 @@ export default function NavLinks({ locale }: { locale: string }) {
     { href: "/blast", label: copy.blast, icon: <BlastIcon />, matchPrefixes: ["/blast"], accent: "#ffa42b" as const },
     { href: "/methods", label: copy.methods, icon: "M", matchPrefixes: ["/methods"], accent: undefined },
     { href: "/validation", label: copy.validation, icon: "V", matchPrefixes: ["/validation"], accent: undefined },
-    { href: "/tools", label: copy.tools, icon: "+", matchPrefixes: ["/tools"], accent: undefined },
+    { href: "/tools", label: copy.tools, icon: "+", matchPrefixes: ["/tools", "/mw-calc", "/solutions", "/chemical-safety"], accent: undefined },
   ];
 
   function switchLocale() {

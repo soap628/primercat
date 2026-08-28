@@ -40,6 +40,20 @@ export default async function ToolsPage({ params: { locale } }: { params: { loca
       href: "/mw-calc",
       cta: t("card_mw_cta"),
     },
+    {
+      eyebrow: t("card_solutions_eyebrow"),
+      title: t("card_solutions_title"),
+      body: t("card_solutions_body"),
+      href: "/solutions",
+      cta: t("card_solutions_cta"),
+    },
+    {
+      eyebrow: t("card_safety_eyebrow"),
+      title: t("card_safety_title"),
+      body: t("card_safety_body"),
+      href: "/chemical-safety",
+      cta: t("card_safety_cta"),
+    },
   ];
 
   const whyItems: string[] = t.raw("whyItems") as string[];

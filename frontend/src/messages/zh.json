@@ -703,8 +703,8 @@
     "heroAsideTitle": "当前可用",
     "heroAsideBody": "这里只展示已经上线且可实际使用的工具，不显示占位入口。",
     "heroMetricLabel": "工具数量",
-    "heroMetricValue": "5 项",
-    "heroMetricBody": "4 项核心序列工具 + 1 项实验室计算工具。",
+    "heroMetricValue": "7 项",
+    "heroMetricBody": "4 项核心序列工具 + 3 项实验室工作台工具。",
     "whyLabel": "设计原则",
     "whyTitle": "同一套透明标准",
     "whyItems": [
@@ -733,6 +733,14 @@
     "card_mw_eyebrow": "化学计算",
     "card_mw_title": "分子量计算器",
     "card_mw_body": "解析化学式，计算摩尔质量、元素组成、溶液浓度配制与稀释换算，支持水合物与括号嵌套。",
-    "card_mw_cta": "打开分子量计算器"
+    "card_mw_cta": "打开分子量计算器",
+    "card_solutions_eyebrow": "配方 · 换算 · 来源",
+    "card_solutions_title": "实验室溶液配制",
+    "card_solutions_body": "计算摩尔溶液、储备液稀释和百分浓度，按目标体积缩放 PBS、TAE、TBE、Tris-HCl 与 SDS 配方。",
+    "card_solutions_cta": "打开配制指南",
+    "card_safety_eyebrow": "PubChem LCSS · GHS",
+    "card_safety_title": "试剂安全与毒性",
+    "card_safety_body": "按名称、CAS 或化学式查询常见试剂的危险摘要、代表性 H 代码、操作控制与不相容性，并回链原始来源。",
+    "card_safety_cta": "查询试剂安全"
   }
 }

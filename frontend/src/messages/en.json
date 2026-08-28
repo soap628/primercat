@@ -703,8 +703,8 @@
     "heroAsideTitle": "Available Now",
     "heroAsideBody": "This page lists working tools only, with no placeholder destinations.",
     "heroMetricLabel": "Tool count",
-    "heroMetricValue": "5",
-    "heroMetricBody": "Four core sequence tools plus one laboratory calculator.",
+    "heroMetricValue": "7",
+    "heroMetricBody": "Four core sequence tools plus three lab-bench tools.",
     "whyLabel": "Design Principles",
     "whyTitle": "One transparent standard",
     "whyItems": [
@@ -733,6 +733,14 @@
     "card_mw_eyebrow": "Chemistry",
     "card_mw_title": "MW Calculator",
     "card_mw_body": "Parse chemical formulas, calculate molar mass and elemental composition, prepare solutions, and compute dilutions — all in one place.",
-    "card_mw_cta": "Open MW Calculator"
+    "card_mw_cta": "Open MW Calculator",
+    "card_solutions_eyebrow": "Recipes · conversions · sources",
+    "card_solutions_title": "Solution Preparation",
+    "card_solutions_body": "Calculate molar solutions, stock dilutions, and percentages, then scale sourced PBS, TAE, TBE, Tris-HCl, and SDS recipes to target volume.",
+    "card_solutions_cta": "Open Preparation Guide",
+    "card_safety_eyebrow": "PubChem LCSS · GHS",
+    "card_safety_title": "Reagent Safety & Toxicity",
+    "card_safety_body": "Search common reagents by name, CAS, or formula for hazard summaries, representative H-codes, handling controls, incompatibilities, and original sources.",
+    "card_safety_cta": "Check Reagent Safety"
   }
 }
