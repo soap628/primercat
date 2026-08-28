@@ -6,6 +6,13 @@ export default async function ToolsPage({ params: { locale } }: { params: { loca
 
   const cards = [
     {
+      eyebrow: t("card_pcr_eyebrow"),
+      title: t("card_pcr_title"),
+      body: t("card_pcr_body"),
+      href: "/pcr",
+      cta: t("card_pcr_cta"),
+    },
+    {
       eyebrow: t("card_primer_eyebrow"),
       title: t("card_primer_title"),
       body: t("card_primer_body"),

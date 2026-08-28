@@ -334,6 +334,15 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
       shadowColor: "rgba(255,177,238,0.14)",
     },
     {
+      tag: t("pcr_card_tag"), title: t("pcr_card_title"), desc: t("pcr_card_desc"),
+      href: "/pcr",
+      iconBg: "linear-gradient(135deg,#121212,#19b99a)",
+      tagColor: "#36d7b7", icon: "P",
+      glowColor: "rgba(25,185,154,0.06)",
+      borderHover: "rgba(25,185,154,0.28)",
+      shadowColor: "rgba(25,185,154,0.14)",
+    },
+    {
       tag: t("grna_card_tag"), title: t("grna_card_title"), desc: t("grna_card_desc"),
       href: "/grna",
       iconBg: "linear-gradient(135deg,#121212,#539df5)",

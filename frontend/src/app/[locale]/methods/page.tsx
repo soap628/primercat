@@ -3,9 +3,9 @@ import { Link } from "@/navigation";
 const COPY = {
   zh: {
     badge: "工作原理",
-    title: "你输入基因名，系统帮你做什么",
+    title: "从序列或基因名开始，系统帮你做什么",
     intro:
-      "PrimerCat 包含三个独立工具：qPCR 引物设计、CRISPR gRNA 设计、BLAST 序列比对。每个工具的工作方式都透明可查，结果页会把推理依据一起带回来。",
+      "PrimerCat 包含四个核心序列工具：qPCR 引物设计、常规 PCR 引物设计、CRISPR gRNA 设计与 BLAST 序列比对。每个工具的工作方式都透明可查，结果页会把推理依据和结论边界一起带回来。",
 
     whyTitle: "为什么这里的结果有依据可查",
     whyCards: [
@@ -142,7 +142,7 @@ const COPY = {
     sourceTitle: "数据来源",
     sources: [
       "NCBI RefSeq：转录本和模板序列（引物 + gRNA）",
-      "Primer3：qPCR 引物设计算法",
+      "Primer3：qPCR 与常规 PCR 引物设计算法及热力学结构检查",
       "Bowtie2 + hg38/mm10（配置后）：基因组层面筛查；NCBI BLAST：索引不可用时的转录本或序列相似性初筛",
     ],
 
@@ -155,9 +155,9 @@ const COPY = {
   },
   en: {
     badge: "How It Works",
-    title: "What happens after you enter a gene name",
+    title: "What happens after you provide a sequence or gene name",
     intro:
-      "PrimerCat includes three independent tools: qPCR primer design, CRISPR gRNA design, and BLAST sequence alignment. Each tool is transparent about what it does — and the result page always brings the reasoning back with it.",
+      "PrimerCat includes four core sequence tools: qPCR primer design, endpoint PCR primer design, CRISPR gRNA design, and BLAST sequence alignment. Each tool is transparent about what it does, and each result page states both its reasoning and scope boundary.",
 
     whyTitle: "Why these results come with traceable evidence",
     whyCards: [
@@ -294,7 +294,7 @@ const COPY = {
     sourceTitle: "Data sources",
     sources: [
       "NCBI RefSeq: transcript and template sequences (primers + gRNA)",
-      "Primer3: qPCR primer design algorithm",
+      "Primer3: qPCR and endpoint PCR primer design plus thermodynamic structure checks",
       "Bowtie2 + hg38/mm10 (when configured): genome-level screening; NCBI BLAST: transcript or sequence-similarity screening when an index is unavailable",
     ],
 
@@ -310,10 +310,10 @@ const COPY = {
 export default function MethodsPage({ params: { locale } }: { params: { locale: string } }) {
   const copy = locale === "zh" ? COPY.zh : COPY.en;
 
-  const heroAsideTitle = locale === "zh" ? "三个工具，一套透明逻辑" : "Three tools, one transparent approach";
+  const heroAsideTitle = locale === "zh" ? "四个工具，一套透明逻辑" : "Four tools, one transparent approach";
   const heroAsideBody = locale === "zh"
-    ? "qPCR 引物、CRISPR gRNA、BLAST 比对。每个工具都把工作原理和结论边界写在结果页，不让你猜。"
-    : "qPCR primers, CRISPR gRNAs, BLAST alignment. Each tool returns its reasoning alongside the results.";
+    ? "qPCR 引物、常规 PCR 引物、CRISPR gRNA、BLAST 比对。每个工具都把工作原理和结论边界写在结果页，不让你猜。"
+    : "qPCR primers, endpoint PCR primers, CRISPR gRNAs, and BLAST alignment. Each tool returns its reasoning and scope boundary alongside the results.";
   const heroMetricLabel = locale === "zh" ? "核心流程" : "Core Flow";
   const heroMetricValue = "RefSeq → Design → Screen → Rank";
   const heroMetricBody = locale === "zh"

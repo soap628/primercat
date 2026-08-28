@@ -6,6 +6,7 @@ const COPY = {
     product: "工具",
     productLinks: [
       { label: "qPCR 引物设计 — PrimerCat", href: "/primer" },
+      { label: "常规 PCR 引物设计", href: "/pcr" },
       { label: "gRNA 设计 — CrisprCat", href: "/grna" },
       { label: "BLAST 序列比对", href: "/blast" },
     ],
@@ -35,6 +36,7 @@ const COPY = {
     product: "Tools",
     productLinks: [
       { label: "qPCR Primer Design — PrimerCat", href: "/primer" },
+      { label: "Endpoint PCR Primer Design", href: "/pcr" },
       { label: "gRNA Design — CrisprCat", href: "/grna" },
       { label: "BLAST Sequence Search", href: "/blast" },
     ],

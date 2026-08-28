@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.api.routes import primer, grna, blast, gene_primer
+from app.api.routes import primer, grna, blast, gene_primer, pcr
 from app.api.routes import auth, jobs
 from app.core.config import settings
 import app.db.models  # noqa: F401 — ensure all ORM models are registered in Base.metadata
@@ -12,7 +12,7 @@ logger = logging.getLogger("primercat")
 
 app = FastAPI(
     title="PrimerCat API",
-    description="qPCR 引物设计 & CRISPR gRNA 设计 & BLAST 序列比对平台",
+    description="qPCR / PCR 引物设计 & CRISPR gRNA 设计 & BLAST 序列比对平台",
     version="0.1.0",
 )
 
@@ -35,6 +35,7 @@ app.add_middleware(
 )
 
 app.include_router(primer.router, prefix="/api/v1")
+app.include_router(pcr.router, prefix="/api/v1")
 app.include_router(grna.router, prefix="/api/v1")
 app.include_router(blast.router, prefix="/api/v1")
 app.include_router(gene_primer.router, prefix="/api/v1")

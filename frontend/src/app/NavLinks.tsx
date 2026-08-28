@@ -133,6 +133,7 @@ function CrisprCatIcon({ size = 13 }: { size?: number }) {
 const COPY = {
   zh: {
     primer: "PrimerCat",
+    pcr: "PCR",
     crispr: "CrisprCat",
     blast: "BLAST",
     methods: "方法",
@@ -149,6 +150,7 @@ const COPY = {
   },
   en: {
     primer: "PrimerCat",
+    pcr: "PCR",
     crispr: "CrisprCat",
     blast: "BLAST",
     methods: "Methods",
@@ -207,6 +209,7 @@ export default function NavLinks({ locale }: { locale: string }) {
 
   const links = [
     { href: "/primer", label: copy.primer, icon: <CatIcon />, matchPrefixes: ["/primer"], accent: undefined },
+    { href: "/pcr", label: copy.pcr, icon: "P", matchPrefixes: ["/pcr"], accent: "#19b99a" as const },
     { href: "/grna", label: copy.crispr, icon: <CrisprCatIcon />, matchPrefixes: ["/grna"], accent: "#539df5" as const },
     { href: "/blast", label: copy.blast, icon: <BlastIcon />, matchPrefixes: ["/blast"], accent: "#ffa42b" as const },
     { href: "/methods", label: copy.methods, icon: "M", matchPrefixes: ["/methods"], accent: undefined },
@@ -244,13 +247,16 @@ export default function NavLinks({ locale }: { locale: string }) {
         );
         const isCrispr = item.href === "/grna";
         const isBlast = item.href === "/blast";
+        const isPcr = item.href === "/pcr";
         return (
           <Link
             key={item.href}
             href={href}
             onClick={mobile ? () => setMobileOpen(false) : undefined}
-            className={`nav-link${active ? " nav-link-active" : ""}${isCrispr ? " nav-link-crispr" : ""}${isBlast ? " nav-link-blast" : ""}${mobile ? " mobile-nav-link" : ""}`}
+            className={`nav-link${active ? " nav-link-active" : ""}${isPcr ? " nav-link-pcr" : ""}${isCrispr ? " nav-link-crispr" : ""}${isBlast ? " nav-link-blast" : ""}${mobile ? " mobile-nav-link" : ""}`}
             style={
+              isPcr && !active ? { color: "#0f9f84" } :
+              isPcr && active ? { color: "#19b99a" } :
               isCrispr && !active ? { color: "#3b82f6" } :
               isCrispr && active ? { color: "#539df5" } :
               isBlast && !active ? { color: "#e07b10" } :
@@ -258,7 +264,7 @@ export default function NavLinks({ locale }: { locale: string }) {
               undefined
             }
           >
-            <span style={{ fontSize: 11, lineHeight: 1, fontWeight: 700, display: "flex", alignItems: "center", color: (isCrispr || isBlast) ? "inherit" : undefined }}>
+            <span style={{ fontSize: 11, lineHeight: 1, fontWeight: 700, display: "flex", alignItems: "center", color: (isPcr || isCrispr || isBlast) ? "inherit" : undefined }}>
               {item.icon}
             </span>
             {item.label}

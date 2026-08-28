@@ -45,6 +45,16 @@ export async function designPrimers(payload: PrimerRequest): Promise<PrimerRespo
   return res.json();
 }
 
+export async function designPcr(payload: PCRDesignRequest): Promise<PCRDesignResponse> {
+  const res = await fetchWithTimeout(`${BASE_URL}/pcr/design`, {
+    method: "POST",
+    headers: jsonHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
+  return res.json();
+}
+
 export async function designGrna(payload: GrnaRequest): Promise<GrnaResponse> {
   const res = await fetchWithTimeout(`${BASE_URL}/grna/design`, {
     method: "POST",
@@ -203,6 +213,73 @@ export interface PrimerResponse {
   gene_name?: string;
   sequence_length: number;
   primer_pairs: PrimerPair[];
+  message: string;
+}
+
+export type PCRPreset = "standard" | "colony" | "high_fidelity";
+
+export interface PCRDesignRequest {
+  sequence: string;
+  label?: string;
+  preset?: PCRPreset;
+  product_size_min?: number;
+  product_size_max?: number;
+  primer_tm_min?: number;
+  primer_tm_opt?: number;
+  primer_tm_max?: number;
+  primer_gc_min?: number;
+  primer_gc_max?: number;
+  num_return?: number;
+  target_start?: number;
+  target_end?: number;
+}
+
+export interface PCRPrimerPair {
+  pair_index: number;
+  left_primer: string;
+  right_primer: string;
+  left_tm: number;
+  right_tm: number;
+  left_gc: number;
+  right_gc: number;
+  tm_difference: number;
+  product_size: number;
+  penalty: number;
+  left_start: number;
+  left_end: number;
+  right_start: number;
+  right_end: number;
+  amplicon_start: number;
+  amplicon_end: number;
+  amplicon_sequence: string;
+  left_self_any_th: number;
+  left_self_end_th: number;
+  left_hairpin_th: number;
+  right_self_any_th: number;
+  right_self_end_th: number;
+  right_hairpin_th: number;
+  pair_compl_any_th: number;
+  pair_compl_end_th: number;
+  left_gc_clamp: number;
+  right_gc_clamp: number;
+  annealing_temp_estimate: number;
+  annealing_gradient_low: number;
+  annealing_gradient_high: number;
+  target_included: boolean;
+}
+
+export interface PCRDesignResponse {
+  success: boolean;
+  label?: string;
+  preset: PCRPreset;
+  sequence_length: number;
+  product_size_min: number;
+  product_size_max: number;
+  target_start?: number;
+  target_end?: number;
+  primer_pairs: PCRPrimerPair[];
+  specificity_checked: boolean;
+  primer3_pair_explain: string;
   message: string;
 }
 
