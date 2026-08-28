@@ -512,7 +512,7 @@ def find_grnas(seq: str, cas_type: CasType, num_return: int) -> list[GrnaResult]
     return results[:num_return]
 
 
-def design_grna(req: GrnaDesignRequest) -> GrnaDesignResponse:
+def design_grna(req: GrnaDesignRequest, allow_remote_fallback: bool = True) -> GrnaDesignResponse:
     target_locus = req.target_locus
     fetched_transcript_id: str | None = None
     fetched_transcript_desc: str | None = None
@@ -594,7 +594,11 @@ def design_grna(req: GrnaDesignRequest) -> GrnaDesignResponse:
         req.cas_type,
         req.species.value,
         target_locus=target_locus,
-        fallback_loader=lambda: _batch_screen_off_targets_blast(grna_list, req.cas_type, req.species.value),
+        fallback_loader=(
+            (lambda: _batch_screen_off_targets_blast(grna_list, req.cas_type, req.species.value))
+            if allow_remote_fallback
+            else None
+        ),
     )
 
     for guide, payload in zip(grna_list, screening.payloads):

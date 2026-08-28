@@ -296,7 +296,18 @@ export default function GrnaPage() {
       setResult(response);
       if (user) toast("已保存到历史记录");
     } catch (err: any) {
-      const msg = err?.name === "AbortError" ? "请求超时，请稍后重试" : (err.message || tCommon("request_failed"));
+      const rawMessage = err?.message || "";
+      const normalized = rawMessage.toLowerCase();
+      const isRemoteFailure =
+        normalized.includes("timeout") ||
+        normalized.includes("gateway") ||
+        normalized.includes("upstream service") ||
+        normalized.includes("http 504");
+      const msg = err?.name === "AbortError"
+        ? tCommon("service_unavailable")
+        : isRemoteFailure
+          ? tCommon("service_unavailable")
+          : (rawMessage || tCommon("request_failed"));
       setError(msg);
     } finally {
       setLoading(false);

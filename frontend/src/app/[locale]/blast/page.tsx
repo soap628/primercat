@@ -153,7 +153,10 @@ export default function BlastPage() {
       normalized.includes("ncbi blast") ||
       normalized.includes("qblast") ||
       normalized.includes("timed out") ||
-      normalized.includes("timeout")
+      normalized.includes("timeout") ||
+      normalized.includes("gateway") ||
+      normalized.includes("upstream service") ||
+      normalized.includes("http 504")
     ) {
       return `${t("error_service")} ${tCommon("retry_later")}`;
     }

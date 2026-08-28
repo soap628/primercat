@@ -7,9 +7,10 @@ import primer3
 from app.schemas.gene_primer import (
     GenePrimerRequest, GenePrimerResponse, ValidatedPrimerPair,
     PrimerMode, ExonViz, PrimerProperties, GeneInfo, PrimerDesignBasis,
+    BlastValidation, BlastValidationStatus,
 )
 from app.services.ncbi_fetch import fetch_transcript, fetch_gene_info, TranscriptInfo, ExonInfo, GeneInfoData
-from app.services.primer_blast import blast_primer
+from app.services.primer_blast import blast_primers_batch
 from app.services.primer_bowtie2 import validate_primers_batch, primer_bowtie2_available
 from app.services.primer_scoring import score_primer_pair, detect_exon_span
 
@@ -195,6 +196,7 @@ async def gene_primer_stream(req: GenePrimerRequest) -> AsyncGenerator[str, None
             "msg": f"特异性验证中（{validation_engine}，{n_primers} 条引物，请稍候）..."
         })
 
+        validation_degraded = False
         if use_bowtie2:
             # 所有引物一次性送入 Bowtie2（单进程，~3s 完成全部）
             all_seqs = []
@@ -210,16 +212,34 @@ async def gene_primer_stream(req: GenePrimerRequest) -> AsyncGenerator[str, None
                 yield _sse("error", {"msg": "Bowtie2 验证超时（>60s），请稍后重试"})
                 return
         else:
-            # 回退：并发 NCBI BLAST
-            blast_tasks = []
+            # 回退：将全部短引物合并为一次 NCBI QBlast 请求，避免远程限流。
+            all_seqs = []
             for pair in candidates:
-                blast_tasks.append(loop.run_in_executor(_blast_executor, blast_primer, pair["left"], req.species.value))
-                blast_tasks.append(loop.run_in_executor(_blast_executor, blast_primer, pair["right"], req.species.value))
+                all_seqs.append(pair["left"])
+                all_seqs.append(pair["right"])
             try:
-                blast_results = await asyncio.wait_for(asyncio.gather(*blast_tasks), timeout=120)
+                blast_results = await asyncio.wait_for(
+                    loop.run_in_executor(_blast_executor, blast_primers_batch, all_seqs, req.species.value),
+                    timeout=150,
+                )
             except asyncio.TimeoutError:
-                yield _sse("error", {"msg": "BLAST 验证超时（>120s），NCBI 服务器响应缓慢，请稍后重试"})
-                return
+                validation_degraded = True
+                blast_results = [
+                    BlastValidation(
+                        specific=False,
+                        top_hit_identity=0.0,
+                        off_target_count=0,
+                        top_hits=[],
+                        status=BlastValidationStatus.error,
+                        message="NCBI BLAST validation timed out; specificity was not scored.",
+                    )
+                    for _ in all_seqs
+                ]
+                yield _sse("progress", {
+                    "step": 3,
+                    "total": 4,
+                    "msg": "NCBI BLAST 响应超时；将返回候选引物并明确标记为未完成特异性验证。",
+                })
 
         # 评分
         validated = []
@@ -307,7 +327,11 @@ async def gene_primer_stream(req: GenePrimerRequest) -> AsyncGenerator[str, None
                 protein_length=transcript.protein_length,
                 exon_count=len(transcript.exons),
             ) if gene_info_data and transcript else None,
-            message=f"返回 {len(top)} 对引物（{specific_n} 对通过{'基因组 Bowtie2' if use_bowtie2 else 'RefSeq RNA BLAST'}特异性校验，{exon_n} 对跨外显子）",
+            message=(
+                f"返回 {len(top)} 对引物（{specific_n} 对通过"
+                f"{'基因组 Bowtie2' if use_bowtie2 else 'RefSeq RNA BLAST'}特异性校验，{exon_n} 对跨外显子）"
+                + ("；NCBI BLAST 远程验证超时，本次特异性得分按 0 处理，请重试验证。" if validation_degraded else "")
+            ),
         )
         yield _sse("result", response.model_dump())
 

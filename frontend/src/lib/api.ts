@@ -14,13 +14,34 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 1
   }
 }
 
+async function apiErrorMessage(res: Response): Promise<string> {
+  const raw = (await res.text()).trim();
+  const contentType = res.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json") || raw.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed === "string") return parsed;
+      if (typeof parsed?.detail === "string") return parsed.detail;
+      if (Array.isArray(parsed?.detail) && typeof parsed.detail[0]?.msg === "string") {
+        return parsed.detail[0].msg;
+      }
+    } catch {}
+  }
+
+  if (contentType.includes("text/html") || /^<!doctype html|^<html/i.test(raw)) {
+    return `Upstream service timeout (HTTP ${res.status})`;
+  }
+  return raw || `Request failed (HTTP ${res.status})`;
+}
+
 export async function designPrimers(payload: PrimerRequest): Promise<PrimerResponse> {
   const res = await fetchWithTimeout(`${BASE_URL}/primer/design`, {
     method: "POST",
     headers: jsonHeaders(),
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
   return res.json();
 }
 
@@ -30,13 +51,13 @@ export async function designGrna(payload: GrnaRequest): Promise<GrnaResponse> {
     headers: jsonHeaders(),
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
   return res.json();
 }
 
 export async function getGrnaOfftargetReadiness(species: "human" | "mouse"): Promise<GrnaOfftargetReadiness> {
   const res = await fetchWithTimeout(`${BASE_URL}/grna/offtarget-readiness?species=${species}`, {}, 10_000);
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
   return res.json();
 }
 
@@ -46,7 +67,7 @@ export async function blastSearch(payload: BlastRequest): Promise<BlastResponse>
     headers: jsonHeaders(),
     body: JSON.stringify(payload),
   }, 300_000); // BLAST 最多等 5 分钟
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
   return res.json();
 }
 
@@ -59,7 +80,7 @@ export async function register(email: string, password: string, displayName?: st
     credentials: "include",
     body: JSON.stringify({ email, password, display_name: displayName || "" }),
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
   return res.json();
 }
 
@@ -70,7 +91,7 @@ export async function login(email: string, password: string): Promise<AuthToken>
     credentials: "include",
     body: JSON.stringify({ email, password }),
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
   return res.json();
 }
 
@@ -83,7 +104,7 @@ export async function logoutApi(): Promise<void> {
 
 export async function getMe(): Promise<AuthUser> {
   const res = await fetch(`${BASE_URL}/auth/me`, { credentials: "include" });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
   return res.json();
 }
 
@@ -102,25 +123,25 @@ function jobsQuery(params: JobsParams = {}) {
 
 export async function getPrimerJobs(params: JobsParams = {}): Promise<JobRecord[]> {
   const res = await fetch(`${BASE_URL}/jobs/primer${jobsQuery(params)}`, { credentials: "include" });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
   return res.json();
 }
 
 export async function getGrnaJobs(params: JobsParams = {}): Promise<JobRecord[]> {
   const res = await fetch(`${BASE_URL}/jobs/grna${jobsQuery(params)}`, { credentials: "include" });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
   return res.json();
 }
 
 export async function getBlastJobs(params: JobsParams = {}): Promise<JobRecord[]> {
   const res = await fetch(`${BASE_URL}/jobs/blast${jobsQuery(params)}`, { credentials: "include" });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
   return res.json();
 }
 
 export async function deleteJob(type: "primer" | "grna" | "blast", id: string): Promise<void> {
   const res = await fetch(`${BASE_URL}/jobs/${type}/${id}`, { method: "DELETE", credentials: "include" });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
 }
 
 // ── Auth Types ───────────────────────────────────────────────────────────────

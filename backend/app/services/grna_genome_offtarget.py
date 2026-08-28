@@ -337,6 +337,21 @@ def _load_genome_index(fasta_path: str):
         return index
 
 
+def _clear_genome_index_cache() -> None:
+    with _genome_cache_lock:
+        for _, index in _genome_cache.values():
+            close = getattr(index, "close", None)
+            if callable(close):
+                try:
+                    close()
+                except Exception:
+                    pass
+        _genome_cache.clear()
+
+
+_load_genome_index.cache_clear = _clear_genome_index_cache  # type: ignore[attr-defined]
+
+
 def _pam_length(cas_type: CasType) -> int:
     return 4 if cas_type == CasType.cas12a else (2 if cas_type == CasType.cas9_ng else 3)
 

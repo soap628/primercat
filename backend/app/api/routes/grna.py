@@ -16,6 +16,7 @@ from app.core.rate_limit import rate_limit_dependency
 logger = logging.getLogger("primercat")
 router = APIRouter(prefix="/grna", tags=["CRISPR gRNA Design"])
 _executor = ThreadPoolExecutor(max_workers=4)
+_degraded_executor = ThreadPoolExecutor(max_workers=2)
 
 
 @router.post("/design", response_model=GrnaDesignResponse)
@@ -27,7 +28,17 @@ async def design_guide_rna(
 ):
     try:
         loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(_executor, design_grna, req)
+        try:
+            result = await asyncio.wait_for(
+                loop.run_in_executor(_executor, design_grna, req),
+                timeout=120,
+            )
+        except asyncio.TimeoutError:
+            logger.warning("gRNA remote off-target screening timed out; returning unvalidated candidates")
+            result = await asyncio.wait_for(
+                loop.run_in_executor(_degraded_executor, design_grna, req, False),
+                timeout=30,
+            )
     except Exception as exc:
         logger.exception("design_grna failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc

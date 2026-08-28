@@ -23,6 +23,11 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:${POSTGRES_PASSWORD}@db:5432/primercat
       SECRET_KEY: ${SECRET_KEY}
+      NCBI_CACHE_DIR: /var/cache/primercat/ncbi
+      BACKEND_CORS_ORIGINS: https://primercat.tech,https://www.primercat.tech
+      COOKIE_SECURE: "true"
+    volumes:
+      - ncbi-cache:/var/cache/primercat/ncbi
     depends_on:
       db:
         condition: service_healthy
@@ -37,6 +42,7 @@ services:
 
   nginx:
     image: nginx:alpine
+    command: /bin/sh -c 'while :; do sleep 6h; nginx -s reload; done & nginx -g "daemon off;"'
     ports:
       - "80:80"
       - "443:443"
@@ -62,3 +68,4 @@ volumes:
   pgdata:
   certbot-conf:
   certbot-www:
+  ncbi-cache:

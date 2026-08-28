@@ -13,6 +13,7 @@ __pycache__/
 .pytest_cache/
 pytest-cache-files-*/
 *.egg-info/
+*.idx.db
 
 # Node
 node_modules/

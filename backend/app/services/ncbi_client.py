@@ -12,6 +12,8 @@ from app.core.config import settings
 Entrez.email = settings.NCBI_EMAIL or "primercat@example.com"
 Entrez.tool = settings.NCBI_TOOL
 Entrez.timeout = 60  # Entrez HTTP 请求超时（秒）
+NCBIWWW.email = settings.NCBI_EMAIL or "primercat@example.com"
+NCBIWWW.tool = settings.NCBI_TOOL
 if settings.NCBI_API_KEY:
     Entrez.api_key = settings.NCBI_API_KEY
 

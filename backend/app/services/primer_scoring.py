@@ -56,8 +56,8 @@ def score_primer_pair(
     elif both_validated and (blast_left.specific or blast_right.specific):
         specificity_score = 15.0
     elif either_error:
-        # BLAST 服务暂时不可用，给基础分，不应与真实脱靶一视同仁
-        specificity_score = 10.0
+        # 未完成验证时不能奖励特异性分，避免把“未知”误当成“通过”。
+        specificity_score = 0.0
     else:
         specificity_score = 0.0
     if both_validated:
