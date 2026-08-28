@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useRef, useState } from "react";
+import { Fragment, memo, useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/lib/useAuth";
 import { useToast } from "@/lib/useToast";
@@ -1102,16 +1102,16 @@ export default function PrimerPage() {
                 { n: 2, label: t("workflow_step_2"), hint: t("workflow_step_2_hint") },
                 { n: 3, label: t("workflow_step_3"), hint: t("workflow_step_3_hint") },
               ] as const).map((step, i) => (
-                <>
-                  <div key={step.n} className="primer-workflow-step">
+                <Fragment key={step.n}>
+                  <div className="primer-workflow-step">
                     <div className="primer-workflow-num">{step.n}</div>
                     <div>
                       <div className="primer-workflow-label">{step.label}</div>
                       <div className="primer-workflow-hint">{step.hint}</div>
                     </div>
                   </div>
-                  {i < 2 && <div key={`sep-${i}`} className="primer-workflow-sep">→</div>}
-                </>
+                  {i < 2 && <div className="primer-workflow-sep">→</div>}
+                </Fragment>
               ))}
             </div>
             <div className="primer-feature-grid">
