@@ -60,6 +60,25 @@ function GlobeIcon() {
   );
 }
 
+function MenuIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <line x1="4" y1="7" x2="20" y2="7" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="17" x2="20" y2="17" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <line x1="6" y1="6" x2="18" y2="18" />
+      <line x1="18" y1="6" x2="6" y2="18" />
+    </svg>
+  );
+}
+
 // Small inline cat logo for PrimerCat nav link
 function CatIcon({ size = 13 }: { size?: number }) {
   return (
@@ -123,6 +142,10 @@ const COPY = {
     login: "登录",
     history: "历史记录",
     logout: "退出登录",
+    openMenu: "打开导航菜单",
+    closeMenu: "关闭导航菜单",
+    darkMode: "切换深色模式",
+    lightMode: "切换浅色模式",
   },
   en: {
     primer: "PrimerCat",
@@ -135,6 +158,10 @@ const COPY = {
     login: "Login",
     history: "History",
     logout: "Logout",
+    openMenu: "Open navigation menu",
+    closeMenu: "Close navigation menu",
+    darkMode: "Switch to dark mode",
+    lightMode: "Switch to light mode",
   },
 } as const;
 
@@ -145,7 +172,9 @@ export default function NavLinks({ locale }: { locale: string }) {
   const otherLocale = locale === "zh" ? "en" : "zh";
   const { user, loading, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileRef = useRef<HTMLDivElement>(null);
   const { dark, toggle } = useDarkMode();
 
   useEffect(() => {
@@ -153,10 +182,28 @@ export default function NavLinks({ locale }: { locale: string }) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
       }
+      if (mobileRef.current && !mobileRef.current.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setDropdownOpen(false);
+        setMobileOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
+
+  useEffect(() => {
+    setDropdownOpen(false);
+    setMobileOpen(false);
+  }, [pathname]);
 
   const links = [
     { href: "/primer", label: copy.primer, icon: <CatIcon />, matchPrefixes: ["/primer"], accent: undefined },
@@ -168,6 +215,7 @@ export default function NavLinks({ locale }: { locale: string }) {
   ];
 
   function switchLocale() {
+    setMobileOpen(false);
     router.push(pathname, { locale: otherLocale });
   }
 
@@ -188,9 +236,8 @@ export default function NavLinks({ locale }: { locale: string }) {
     lineHeight: 1,
   };
 
-  return (
-    <nav style={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-      {links.map((item) => {
+  function renderLinks(mobile = false) {
+    return links.map((item) => {
         const href = `/${locale}${item.href}`;
         const active = item.matchPrefixes.some(
           (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
@@ -201,7 +248,8 @@ export default function NavLinks({ locale }: { locale: string }) {
           <Link
             key={item.href}
             href={href}
-            className={`nav-link${active ? " nav-link-active" : ""}${isCrispr ? " nav-link-crispr" : ""}${isBlast ? " nav-link-blast" : ""}`}
+            onClick={mobile ? () => setMobileOpen(false) : undefined}
+            className={`nav-link${active ? " nav-link-active" : ""}${isCrispr ? " nav-link-crispr" : ""}${isBlast ? " nav-link-blast" : ""}${mobile ? " mobile-nav-link" : ""}`}
             style={
               isCrispr && !active ? { color: "#3b82f6" } :
               isCrispr && active ? { color: "#539df5" } :
@@ -228,13 +276,19 @@ export default function NavLinks({ locale }: { locale: string }) {
             )}
           </Link>
         );
-      })}
+      });
+  }
+
+  return (
+    <>
+      <nav className="nav-desktop" aria-label={locale === "zh" ? "主导航" : "Main navigation"}>
+      {renderLinks()}
 
       {/* Theme toggle — SVG icon */}
       <button
         onClick={toggle}
         className="nav-link"
-        aria-label="Toggle dark mode"
+        aria-label={dark ? copy.lightMode : copy.darkMode}
         style={iconBtnStyle}
       >
         {dark ? <SunIcon /> : <MoonIcon />}
@@ -339,6 +393,69 @@ export default function NavLinks({ locale }: { locale: string }) {
           )}
         </>
       )}
-    </nav>
+      </nav>
+
+      <div ref={mobileRef} className="nav-mobile">
+        <button
+          type="button"
+          className="nav-menu-button"
+          aria-label={mobileOpen ? copy.closeMenu : copy.openMenu}
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-navigation-panel"
+          onClick={() => setMobileOpen((open) => !open)}
+        >
+          {mobileOpen ? <CloseIcon /> : <MenuIcon />}
+        </button>
+
+        {mobileOpen && (
+          <nav
+            id="mobile-navigation-panel"
+            className="mobile-nav-panel"
+            aria-label={locale === "zh" ? "移动端导航" : "Mobile navigation"}
+          >
+            <div className="mobile-nav-links">{renderLinks(true)}</div>
+            <div className="mobile-nav-actions">
+              <button
+                type="button"
+                onClick={toggle}
+                className="mobile-nav-action"
+                aria-label={dark ? copy.lightMode : copy.darkMode}
+              >
+                {dark ? <SunIcon /> : <MoonIcon />}
+                <span>{dark ? copy.lightMode : copy.darkMode}</span>
+              </button>
+              <button type="button" onClick={switchLocale} className="mobile-nav-action">
+                <GlobeIcon />
+                <span>{copy.otherLabel}</span>
+              </button>
+            </div>
+
+            {!loading && (
+              <div className="mobile-nav-account">
+                {user ? (
+                  <>
+                    <Link href={`/${locale}/account`} onClick={() => setMobileOpen(false)} className="mobile-nav-account-link">
+                      <span className="mobile-nav-account-name">{user.display_name || user.email.split("@")[0]}</span>
+                      <span>{copy.history}</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => { logout(); setMobileOpen(false); }}
+                      className="mobile-nav-logout"
+                    >
+                      {copy.logout}
+                    </button>
+                  </>
+                ) : (
+                  <Link href={`/${locale}/login`} onClick={() => setMobileOpen(false)} className="mobile-nav-login">
+                    {copy.login}
+                  </Link>
+                )}
+              </div>
+            )}
+          </nav>
+        )}
+      </div>
+    </>
   );
 }

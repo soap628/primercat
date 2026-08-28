@@ -116,7 +116,7 @@ export default function HomeTopBar({ locale }: { locale: string }) {
   }
 
   return (
-    <div style={{
+    <div className="home-topbar" style={{
       position: "absolute",
       top: 0, left: 0, right: 0,
       zIndex: 50,
@@ -128,7 +128,7 @@ export default function HomeTopBar({ locale }: { locale: string }) {
     }}>
 
       {/* Brand pill — left side */}
-      <div style={{
+      <div className="home-topbar-brand" style={{
         display: "flex", alignItems: "center", gap: 10,
         padding: "7px 14px 7px 9px",
         borderRadius: 999,
@@ -145,22 +145,23 @@ export default function HomeTopBar({ locale }: { locale: string }) {
         }}>
           <CatLogo size={15} />
         </div>
-        <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#ffb1ee", boxShadow: "0 0 6px rgba(255,177,238,0.8)", flexShrink: 0 }} />
+        <div className="home-topbar-dot" style={{ width: 5, height: 5, borderRadius: "50%", background: "#ffb1ee", boxShadow: "0 0 6px rgba(255,177,238,0.8)", flexShrink: 0 }} />
         <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", letterSpacing: "0.02em" }}>
           Primer<span style={{ color: "#ffb1ee" }}>Cat</span>
         </span>
-        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.32)", marginLeft: 2 }}>
+        <span className="home-topbar-tagline" style={{ fontSize: 11, color: "rgba(255,255,255,0.32)", marginLeft: 2 }}>
           {locale === "zh" ? "面向科研" : "Built for researchers"}
         </span>
       </div>
 
       {/* Right controls */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div className="home-topbar-actions" style={{ display: "flex", alignItems: "center", gap: 6 }}>
 
       {/* Theme toggle */}
       <button
         onClick={toggle}
         aria-label="Toggle dark mode"
+        className="home-topbar-action"
         style={{ ...btnBase, padding: "7px 10px" }}
       >
         {dark ? <SunIcon /> : <MoonIcon />}
@@ -169,6 +170,7 @@ export default function HomeTopBar({ locale }: { locale: string }) {
       {/* Language */}
       <button
         onClick={switchLocale}
+        className="home-topbar-action"
         style={{ ...btnBase, padding: "7px 12px", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em" }}
       >
         <GlobeIcon />
@@ -180,6 +182,7 @@ export default function HomeTopBar({ locale }: { locale: string }) {
         user ? (
           <Link
             href={`/${locale}/account`}
+            className="home-topbar-action"
             style={{
               ...btnBase,
               padding: "7px 13px",
@@ -196,6 +199,7 @@ export default function HomeTopBar({ locale }: { locale: string }) {
         ) : (
           <Link
             href={`/${locale}/login`}
+            className="home-topbar-action"
             style={{
               ...btnBase,
               padding: "7px 14px",
