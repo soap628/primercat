@@ -266,6 +266,7 @@
     "length_label": "长度",
     "amplicon_copy": "复制",
     "amplicon_copied": "已复制",
+    "copy_pair": "复制引物对",
     "amplicon_forward_legend": "正向引物",
     "amplicon_reverse_legend": "反向引物（反互补）",
     "viz_exon": "外显子",

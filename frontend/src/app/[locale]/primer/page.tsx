@@ -66,12 +66,12 @@ const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: Valida
           {t("pass_badge", { n: passCount, total: items.length })}
         </span>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div className="primer-checklist-list">
         {items.map(item => (
-          <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+          <div key={item.label} className="primer-checklist-item">
             <span style={{ flexShrink: 0, width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 10, fontWeight: 700, background: item.pass ? "#10b981" : "#f87171" }}>{item.pass ? "✓" : "✗"}</span>
-            <span style={{ color: item.pass ? "var(--text-2)" : "var(--red)" }}>{item.label}</span>
-            <span style={{ color: "var(--text-3)", marginLeft: "auto", maxWidth: 260, textAlign: "right", lineHeight: 1.45 }}>{item.detail}</span>
+            <span className="primer-checklist-label" style={{ color: item.pass ? "var(--text-2)" : "var(--red)" }}>{item.label}</span>
+            <span className="primer-checklist-detail">{item.detail}</span>
           </div>
         ))}
       </div>
@@ -135,7 +135,8 @@ const PrimerPropsTable = memo(function PrimerPropsTable({ p }: { p: ValidatedPri
   return (
     <div>
       <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">{t("primer_props_title")}</p>
-      <table className="w-full text-xs">
+      <div className="primer-props-table-wrap">
+      <table className="w-full text-xs primer-props-table">
         <thead>
           <tr className="text-slate-400 border-b border-slate-100">
             <th className="text-left pb-1.5 font-medium">{t("param_label")}</th>
@@ -155,6 +156,7 @@ const PrimerPropsTable = memo(function PrimerPropsTable({ p }: { p: ValidatedPri
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 });
@@ -190,13 +192,13 @@ function AmpliconViewer({ pair }: { pair: ValidatedPrimerPair }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
+      <div className="primer-amplicon-head">
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t("amplicon_label")} ({amplicon.length} bp)</p>
         <button onClick={copy} className="text-xs text-indigo-500 hover:text-indigo-700 transition">
           {copied ? `✓ ${t("amplicon_copied")}` : t("amplicon_copy")}
         </button>
       </div>
-      <div className="bg-slate-50 rounded p-3 font-mono text-xs leading-relaxed break-all border border-slate-200">
+      <div className="bg-slate-50 rounded p-3 font-mono text-xs leading-relaxed break-all border border-slate-200 primer-amplicon-sequence">
         {parts.map((part, i) => (
           <span key={i} className={
             part.type === "left" ? "bg-blue-100 text-blue-700 rounded px-0.5" :
@@ -205,7 +207,7 @@ function AmpliconViewer({ pair }: { pair: ValidatedPrimerPair }) {
           }>{part.text}</span>
         ))}
       </div>
-      <div className="flex gap-4 mt-1.5 text-xs text-slate-400">
+      <div className="flex gap-4 mt-1.5 text-xs text-slate-400 primer-amplicon-legend">
         <span><span className="inline-block w-3 h-3 bg-blue-100 rounded mr-1 align-middle" />{t("amplicon_forward_legend")}</span>
         <span><span className="inline-block w-3 h-3 bg-emerald-100 rounded mr-1 align-middle" />{t("amplicon_reverse_legend")}</span>
       </div>
@@ -388,30 +390,30 @@ function DesignBasisCard({ result }: { result: GenePrimerResult }) {
 
   return (
     <div className="card primer-section-card" style={{ padding: "16px 20px", marginBottom: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 14 }}>
+      <div className="primer-basis-header">
         <div>
           <p className="label-caps" style={{ marginBottom: 4 }}>{t("design_basis_title")}</p>
           <p style={{ fontSize: 12, color: "var(--text-3)", margin: 0 }}>{t("design_basis_intro")}</p>
         </div>
-        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+        <div className="primer-basis-services">
           {["Primer3", "BLAST", "NCBI"].map(s => (
             <span key={s} style={{ fontSize: 10, padding: "2px 7px", borderRadius: 3, background: "var(--bg-inset)", border: "1px solid var(--border)", color: "var(--text-3)", fontWeight: 600 }}>{s}</span>
           ))}
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 1, background: "var(--border)", border: "1px solid var(--border)", borderRadius: 6, overflow: "hidden", marginBottom: 12 }}>
+      <div className="primer-basis-grid">
         {[
           { title: t("basis_template_block"), items: templateItems },
           { title: t("basis_constraints_block"), items: constraintItems },
           { title: t("basis_specificity_block"), items: specificityItems },
           { title: t("basis_screening_block"), items: screeningItems },
         ].map(({ title, items }) => (
-          <div key={title} style={{ padding: "12px 14px", background: "var(--bg-card)" }}>
+          <div key={title} className="primer-basis-column">
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: 8 }}>{title}</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               {items.map((item: { label: string; value: string }) => (
-                <div key={item.label} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 12 }}>
+                <div key={item.label} className="primer-basis-item">
                   <span style={{ color: "var(--text-3)" }}>{item.label}</span>
                   <span style={{ color: "var(--text-1)", fontWeight: 500, textAlign: "right" }}>{item.value}</span>
                 </div>
@@ -421,7 +423,7 @@ function DesignBasisCard({ result }: { result: GenePrimerResult }) {
         ))}
       </div>
 
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 12px", borderRadius: 4, background: "var(--orange-soft)", border: "1px solid rgba(180,83,9,0.15)", marginBottom: 10 }}>
+      <div className="primer-basis-scope-note">
         <span style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", flexShrink: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("basis_scope_note_title")}</span>
         <span style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.65 }}>{t("basis_scope_note_body")}</span>
       </div>
@@ -537,7 +539,7 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
   return (
     <div className="primer-recommendation-card" style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)" }}>
       {/* Header row */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+      <div className="primer-recommendation-head">
         <div>
           <p className="label-caps" style={{ marginBottom: 4 }}>{t("reason_title")}</p>
           <p style={{ fontSize: 12, color: "var(--text-3)", margin: 0 }}>{t("reason_subtitle", { rank: p.rank })}</p>
@@ -549,17 +551,17 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
       </div>
 
       {/* Insights table */}
-      <div style={{ border: "1px solid var(--border)", borderRadius: 6, overflow: "hidden", marginBottom: 12 }}>
+      <div className="primer-insights-table">
         {insights.map((item, i) => (
-          <div key={item.key} style={{ display: "grid", gridTemplateColumns: "120px 56px 1fr", alignItems: "start", gap: 0, borderTop: i > 0 ? "1px solid var(--border)" : undefined, background: "var(--bg-card)" }}>
-            <div style={{ padding: "8px 12px", borderRight: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 6 }}>
+          <div key={item.key} className="primer-insight-row" style={{ borderTop: i > 0 ? "1px solid var(--border)" : undefined }}>
+            <div className="primer-insight-label">
               <span style={{ fontSize: 10, color: toneColor[item.tone] }}>{toneDot[item.tone]}</span>
               <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-1)" }}>{item.label}</span>
             </div>
-            <div style={{ padding: "8px 10px", borderRight: "1px solid var(--border)", textAlign: "right" }}>
+            <div className="primer-insight-score">
               <span style={{ fontSize: 13, fontWeight: 700, color: toneColor[item.tone] }}>{item.score.toFixed(1)}</span>
             </div>
-            <div style={{ padding: "8px 12px" }}>
+            <div className="primer-insight-body">
               <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 2 }}>{item.metric}</div>
               <div style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.55 }}>{item.observation}</div>
             </div>
@@ -568,7 +570,7 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
       </div>
 
       {/* Strengths / Cautions */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+      <div className="primer-strength-grid">
         <div style={{ padding: "10px 12px", border: "1px solid var(--border)", borderLeft: "3px solid var(--green)", borderRadius: 4, background: "var(--bg-card)" }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "var(--green)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("reason_strengths_title")}</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
@@ -605,15 +607,15 @@ function GeneInfoCard({ info }: { info: GeneInfo }) {
 
   return (
     <div className="primer-gene-card" style={{ padding: 16, marginBottom: 0 }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 12 }}>
+      <div className="primer-gene-head">
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 2 }}>
+          <div className="primer-gene-title-row">
             <span style={{ fontSize: 18, fontWeight: 700, color: "var(--text-1)" }}>{info.gene_symbol}</span>
             {info.full_name && <span style={{ fontSize: 13, color: "var(--text-2)" }}>{info.full_name}</span>}
           </div>
           <div style={{ fontSize: 12, color: "var(--text-3)", fontStyle: "italic" }}>{info.organism}</div>
         </div>
-        <div style={{ display: "flex", gap: 12, fontSize: 12, flexShrink: 0 }}>
+        <div className="primer-gene-stats">
           {info.chromosome && (
             <div style={{ textAlign: "center" }}>
               <div style={{ fontWeight: 700, color: "var(--text-1)" }}>Chr {info.chromosome}</div>
@@ -651,25 +653,25 @@ function GeneInfoCard({ info }: { info: GeneInfo }) {
       )}
 
       <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <div className="primer-transcript-row">
           <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("selected_transcript_used")}</span>
           <span style={{ fontSize: 11, background: "rgba(99,102,241,0.1)", color: "#4338ca", padding: "1px 7px", borderRadius: 4, fontFamily: "monospace", fontWeight: 600 }}>{info.transcript_id}</span>
         </div>
         {info.transcript_description && (
           <p style={{ fontSize: 12, color: "var(--text-3)", marginBottom: 6 }}>{info.transcript_description}</p>
         )}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 8, fontSize: 12 }}>
+        <div className="primer-transcript-stats">
           <div><span style={{ color: "var(--text-3)" }}>{t("cds_length_label")}：</span><span style={{ fontWeight: 600, color: "var(--text-1)" }}>{info.cds_length} bp</span></div>
           <div><span style={{ color: "var(--text-3)" }}>{t("protein_length_label")}：</span><span style={{ fontWeight: 600, color: "var(--text-1)" }}>{info.protein_length} aa</span></div>
           <div><span style={{ color: "var(--text-3)" }}>{t("exon_count_label")}：</span><span style={{ fontWeight: 600, color: "var(--text-1)" }}>{info.exon_count}</span></div>
         </div>
-        <div style={{ fontSize: 12, color: "var(--green)", background: "var(--green-soft)", borderRadius: 4, padding: "6px 10px", display: "flex", gap: 6 }}>
+        <div className="primer-selection-basis">
           <span style={{ fontWeight: 700, flexShrink: 0 }}>✓ {t("selection_basis")}</span>
           <span>{info.selection_reason}（{t("total_nm_text", { n: info.total_nm_found })}）</span>
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, fontSize: 11, color: "var(--text-3)" }}>
+      <div className="primer-data-source">
         <span>{t("data_source_text")}</span>
         <span style={{ fontWeight: 600 }}>NCBI Gene</span>
         <span>·</span>
@@ -771,8 +773,17 @@ export default function PrimerPage() {
   const [notice, setNotice] = useState("");
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"checklist" | "blast" | "props" | "amplicon">("checklist");
+  const [copiedPrimer, setCopiedPrimer] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  function copyPrimer(key: string, value: string) {
+    navigator.clipboard.writeText(value);
+    setCopiedPrimer(key);
+    window.setTimeout(() => {
+      setCopiedPrimer((current) => current === key ? null : current);
+    }, 1600);
+  }
 
   useEffect(() => {
     if (!showHelp) return;
@@ -1125,7 +1136,7 @@ export default function PrimerPage() {
           <div className="primer-results-stack">
             {/* ── Result Hero ── */}
             <div className="primer-result-hero">
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
+              <div className="primer-result-hero-top">
                 <div>
                   <div style={{ fontSize: 10, fontWeight: 700, color: "var(--primer-color)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>{t("result_title")}</div>
                   <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--text-1)", margin: 0, lineHeight: 1.2 }}>{resultHeadline}</h2>
@@ -1133,7 +1144,7 @@ export default function PrimerPage() {
                     <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 4 }}>{result.transcript_id} · {result.sequence_length} bp · {result.exons.length} {t("viz_exon")}</div>
                   )}
                 </div>
-                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                <div className="primer-result-actions">
                   <button onClick={() => exportCSV(result.primer_pairs, result.gene_name)} className="primer-result-btn">
                     {t("export_csv")}
                   </button>
@@ -1143,21 +1154,21 @@ export default function PrimerPage() {
                 </div>
               </div>
               {/* Stat row */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1, background: "var(--border)", border: "1px solid var(--border)", borderRadius: 6, overflow: "hidden" }}>
+              <div className="primer-result-stats">
                 {[
                   { label: t("basis_pairs_returned"), value: String(result.primer_pairs.length), sub: result.message },
                   { label: t("score_total") + " (top)", value: String(topScore), sub: t("reason_strengths_title") },
                   { label: t("check_exon"), value: String(exonPreferredCount), sub: t("basis_exon_preference_yes") },
                   { label: t("score_specificity"), value: String(validatedPrimerCount), sub: specificityScopeLabel },
                 ].map((item) => (
-                  <div key={item.label} style={{ padding: "10px 12px", background: "var(--bg-card)" }}>
+                  <div key={item.label} className="primer-result-stat">
                     <div style={{ fontSize: 9, fontWeight: 700, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>{item.label}</div>
                     <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-1)", lineHeight: 1, marginBottom: 3 }}>{item.value}</div>
                     <div style={{ fontSize: 10, color: "var(--text-3)", lineHeight: 1.4 }}>{item.sub}</div>
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop: 10, fontSize: 11, color: "var(--text-3)", display: "flex", gap: 6, alignItems: "center" }}>
+              <div className="primer-result-scope">
                 <span style={{ color: "var(--primer-color)", fontWeight: 600 }}>{t("basis_specificity_scope")}:</span>
                 <span>{specificityScopeLabel}</span>
                 <span style={{ color: "var(--border-mid)" }}>·</span>
@@ -1182,7 +1193,7 @@ export default function PrimerPage() {
             )}
 
             {/* ── Primer Pair Cards ── */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 0, border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
+            <div className="primer-pair-list">
               {result.primer_pairs.map((p, idx) => {
                 const isExpanded = expandedRow === p.rank;
                 const tmDiff2 = Math.abs(p.left_tm - p.right_tm);
@@ -1192,18 +1203,18 @@ export default function PrimerPage() {
                 const passN = [p.left_tm>=58&&p.left_tm<=62&&p.right_tm>=58&&p.right_tm<=62, tmDiff2<2, p.left_gc>=40&&p.left_gc<=60&&p.right_gc>=40&&p.right_gc<=60, (p.left_props?.gc_clamp??0)>=1&&(p.right_props?.gc_clamp??0)>=1, (p.left_props?.hairpin_th??0)<24&&(p.right_props?.hairpin_th??0)<24, (p.left_props?.self_end_th??0)<35&&(p.right_props?.self_end_th??0)<35, blastOk2, p.exon_span.spans_junction].filter(Boolean).length;
                 const scoreColor = p.score.total >= 75 ? "var(--green)" : p.score.total >= 50 ? "var(--primer-color)" : "var(--red)";
                 return (
-                  <div key={p.rank} className={`fade-in-up delay-${Math.min(idx + 1, 5)}`} style={{ borderTop: idx > 0 ? "1px solid var(--border)" : undefined, background: isExpanded ? "var(--bg-card)" : "var(--bg-page)" }}>
+                  <div key={p.rank} className={`primer-pair-result fade-in-up delay-${Math.min(idx + 1, 5)}`} data-expanded={isExpanded ? "true" : "false"} style={{ borderTop: idx > 0 ? "1px solid var(--border)" : undefined, background: isExpanded ? "var(--bg-card)" : "var(--bg-page)" }}>
                     {/* Summary row */}
-                    <div onClick={() => setExpandedRow(isExpanded ? null : p.rank)} style={{ display: "flex", alignItems: "center", gap: 0, cursor: "pointer", userSelect: "none" }}>
+                    <div className="primer-pair-summary" onClick={() => setExpandedRow(isExpanded ? null : p.rank)}>
                       {/* Score box */}
-                      <div style={{ width: 56, flexShrink: 0, padding: "14px 0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRight: "1px solid var(--border)", background: isExpanded ? "var(--bg-inset)" : "var(--bg-card)" }}>
+                      <div className="primer-pair-score" style={{ background: isExpanded ? "var(--bg-inset)" : "var(--bg-card)" }}>
                         <div style={{ fontSize: 18, fontWeight: 700, color: scoreColor, lineHeight: 1 }}>{p.score.total}</div>
                         <div style={{ fontSize: 9, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>score</div>
                       </div>
                       {/* Main content */}
-                      <div style={{ flex: 1, minWidth: 0, padding: "12px 14px" }}>
+                      <div className="primer-pair-main">
                         {/* badges row */}
-                        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 5, marginBottom: 7 }}>
+                        <div className="primer-pair-badges">
                           <span style={{ fontSize: 11, color: "var(--text-3)", fontWeight: 700 }}>#{p.rank}</span>
                           <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-2)", background: "var(--bg-inset)", border: "1px solid var(--border)", borderRadius: 3, padding: "1px 6px" }}>{p.product_size} bp</span>
                           <span style={{ fontSize: 11, color: "var(--text-3)" }}>Tm {p.left_tm}° / {p.right_tm}°</span>
@@ -1213,45 +1224,60 @@ export default function PrimerPage() {
                           <span className={`badge ${passN===8?"badge-green":passN>=6?"badge-blue":"badge-orange"}`}>{passN}/8</span>
                         </div>
                         {/* Sequences */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 7 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: "#0051a2", minWidth: 10 }}>F</span>
-                            <code style={{ fontSize: 12, color: "#0051a2", fontFamily: "monospace", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.left_primer}</code>
-                            <button type="button" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(p.left_primer); }} style={{ fontSize: 10, padding: "1px 6px", borderRadius: 3, border: "1px solid #bfdbfe", background: "#eff6ff", color: "#0051a2", cursor: "pointer", flexShrink: 0 }}>copy</button>
+                        <div className="primer-pair-sequences">
+                          <div className="primer-sequence-row forward">
+                            <span className="primer-sequence-label">F</span>
+                            <code className="primer-sequence-code">{p.left_primer}</code>
+                            <button type="button" aria-label={`${t("amplicon_copy")} ${t("forward")}`} onClick={(e) => { e.stopPropagation(); copyPrimer(`${p.rank}-f`, p.left_primer); }} className="primer-sequence-copy">
+                              {copiedPrimer === `${p.rank}-f` ? `✓ ${t("amplicon_copied")}` : t("amplicon_copy")}
+                            </button>
                           </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: "#1a7a35", minWidth: 10 }}>R</span>
-                            <code style={{ fontSize: 12, color: "#1a7a35", fontFamily: "monospace", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.right_primer}</code>
-                            <button type="button" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(p.right_primer); }} style={{ fontSize: 10, padding: "1px 6px", borderRadius: 3, border: "1px solid #bbf7d0", background: "#f0fdf4", color: "#1a7a35", cursor: "pointer", flexShrink: 0 }}>copy</button>
+                          <div className="primer-sequence-row reverse">
+                            <span className="primer-sequence-label">R</span>
+                            <code className="primer-sequence-code">{p.right_primer}</code>
+                            <button type="button" aria-label={`${t("amplicon_copy")} ${t("reverse")}`} onClick={(e) => { e.stopPropagation(); copyPrimer(`${p.rank}-r`, p.right_primer); }} className="primer-sequence-copy">
+                              {copiedPrimer === `${p.rank}-r` ? `✓ ${t("amplicon_copied")}` : t("amplicon_copy")}
+                            </button>
                           </div>
                         </div>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(`F: ${p.left_primer}\nR: ${p.right_primer}`); }} style={{ fontSize: 10, padding: "2px 8px", borderRadius: 3, border: "1px solid var(--border-mid)", background: "var(--bg-inset)", color: "var(--text-3)", cursor: "pointer" }}>Copy Both</button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); copyPrimer(`${p.rank}-both`, `F: ${p.left_primer}\nR: ${p.right_primer}`); }} className="primer-copy-pair">
+                          {copiedPrimer === `${p.rank}-both` ? `✓ ${t("amplicon_copied")}` : t("copy_pair")}
+                        </button>
                       </div>
-                      <span style={{ fontSize: 11, color: "var(--text-3)", flexShrink: 0, padding: "0 14px" }}>{isExpanded ? "▲" : "▼"}</span>
+                      <button
+                        type="button"
+                        className="primer-expand-button"
+                        aria-label={locale === "zh" ? `${isExpanded ? "收起" : "展开"}第 ${p.rank} 对引物详情` : `${isExpanded ? "Collapse" : "Expand"} primer pair ${p.rank}`}
+                        aria-expanded={isExpanded}
+                        onClick={(e) => { e.stopPropagation(); setExpandedRow(isExpanded ? null : p.rank); }}
+                      >
+                        {isExpanded ? "▲" : "▼"}
+                      </button>
                     </div>
 
                     {/* Expanded detail */}
                     {isExpanded && (
-                      <div style={{ borderTop: "1px solid var(--border)" }}>
+                      <div className="primer-pair-expanded">
                         <PrimerRecommendationCard p={p} />
                         {/* Tab strip */}
-                        <div style={{ display: "flex", alignItems: "center", background: "var(--bg-inset)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
-                          {([{ id: "checklist", label: t("tab_checklist") },{ id: "blast", label: t("tab_blast") },{ id: "props", label: t("tab_props") },{ id: "amplicon", label: t("tab_amplicon") }] as const).map(tab => (
-                            <button key={tab.id} type="button" onClick={e => { e.stopPropagation(); setActiveTab(tab.id); }} className={`primer-tab-button${activeTab === tab.id ? " active" : ""}`}>
-                              {tab.label}
-                            </button>
-                          ))}
-                          <div style={{ flex: 1 }} />
-                          <div style={{ display: "flex", gap: 8, padding: "0 14px" }}>
+                        <div className="primer-tab-strip">
+                          <div className="primer-tab-buttons">
+                            {([{ id: "checklist", label: t("tab_checklist") },{ id: "blast", label: t("tab_blast") },{ id: "props", label: t("tab_props") },{ id: "amplicon", label: t("tab_amplicon") }] as const).map(tab => (
+                              <button key={tab.id} type="button" onClick={e => { e.stopPropagation(); setActiveTab(tab.id); }} className={`primer-tab-button${activeTab === tab.id ? " active" : ""}`}>
+                                {tab.label}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="primer-tab-scores">
                             {[{ label: "Tm", v: p.score.tm_score },{ label: "GC", v: p.score.gc_score },{ label: t("score_specificity"), v: p.score.specificity_score },{ label: t("score_exon"), v: p.score.exon_score },{ label: t("score_dimer"), v: p.score.dimer_score }].map(s => (
-                              <div key={s.label} style={{ textAlign: "center" }}>
+                              <div key={s.label} className="primer-tab-score">
                                 <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-1)", lineHeight: 1 }}>{s.v}</div>
                                 <div style={{ fontSize: 9, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{s.label}</div>
                               </div>
                             ))}
                           </div>
                         </div>
-                        <div style={{ padding: "20px 24px" }}>
+                        <div className="primer-tab-content">
                           {activeTab === "checklist" && <ValidationChecklist p={p} />}
                           {activeTab === "blast" && <BlastHitsTable left={p.blast_left} right={p.blast_right} />}
                           {activeTab === "props" && <PrimerPropsTable p={p} />}

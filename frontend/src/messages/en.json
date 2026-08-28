@@ -266,6 +266,7 @@
     "length_label": "Length",
     "amplicon_copy": "Copy",
     "amplicon_copied": "Copied",
+    "copy_pair": "Copy pair",
     "amplicon_forward_legend": "Forward primer",
     "amplicon_reverse_legend": "Reverse primer (rev-comp)",
     "viz_exon": "Exon",
