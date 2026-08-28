@@ -55,6 +55,18 @@ export async function designPcr(payload: PCRDesignRequest): Promise<PCRDesignRes
   return res.json();
 }
 
+export async function screenPcrSpecificity(
+  payload: PCRPairSpecificityRequest,
+): Promise<PCRPairSpecificityResponse> {
+  const res = await fetchWithTimeout(`${BASE_URL}/pcr/specificity`, {
+    method: "POST",
+    headers: jsonHeaders(),
+    body: JSON.stringify(payload),
+  }, 240_000);
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
+  return res.json();
+}
+
 export async function designGrna(payload: GrnaRequest): Promise<GrnaResponse> {
   const res = await fetchWithTimeout(`${BASE_URL}/grna/design`, {
     method: "POST",
@@ -280,6 +292,58 @@ export interface PCRDesignResponse {
   primer_pairs: PCRPrimerPair[];
   specificity_checked: boolean;
   primer3_pair_explain: string;
+  message: string;
+}
+
+export type PCRSpecificitySpecies = "human" | "mouse";
+export type PCRSpecificityVerdict =
+  | "one_paired_record"
+  | "multiple_paired_records"
+  | "no_paired_records"
+  | "not_checked";
+
+export interface PCRPairSpecificityRequest {
+  pair_index: number;
+  left_primer: string;
+  right_primer: string;
+  species: PCRSpecificitySpecies;
+  min_amplicon_size?: number;
+  max_amplicon_size?: number;
+  expected_product_size?: number;
+}
+
+export interface PCRPairedRecord {
+  accession: string;
+  title: string;
+  start: number;
+  end: number;
+  product_size: number;
+  orientation: "left_plus_right_minus" | "right_plus_left_minus" | string;
+  left_identity: number;
+  right_identity: number;
+  left_mismatches: number;
+  right_mismatches: number;
+  matches_expected_size: boolean;
+}
+
+export interface PCRPairSpecificityResponse {
+  success: boolean;
+  specificity_checked: boolean;
+  status: "completed" | "no_paired_records" | "error";
+  verdict: PCRSpecificityVerdict;
+  pair_index: number;
+  species: PCRSpecificitySpecies;
+  engine: "ncbi_blast_refseq_genomic_pair_screen" | string;
+  database: string;
+  specificity_scope: string;
+  genome_wide_specificity_checked: boolean;
+  left_hit_count: number;
+  right_hit_count: number;
+  paired_record_count: number;
+  returned_record_count: number;
+  search_hit_limit: number;
+  results_may_be_truncated: boolean;
+  paired_records: PCRPairedRecord[];
   message: string;
 }
 

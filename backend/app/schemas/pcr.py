@@ -10,6 +10,24 @@ class PCRPreset(str, Enum):
     high_fidelity = "high_fidelity"
 
 
+class PCRSpecificitySpecies(str, Enum):
+    human = "human"
+    mouse = "mouse"
+
+
+class PCRSpecificityStatus(str, Enum):
+    completed = "completed"
+    no_paired_records = "no_paired_records"
+    error = "error"
+
+
+class PCRSpecificityVerdict(str, Enum):
+    one_paired_record = "one_paired_record"
+    multiple_paired_records = "multiple_paired_records"
+    no_paired_records = "no_paired_records"
+    not_checked = "not_checked"
+
+
 class PCRDesignRequest(BaseModel):
     sequence: str = Field(
         ...,
@@ -88,4 +106,49 @@ class PCRDesignResponse(BaseModel):
     primer_pairs: list[PCRPrimerPair]
     specificity_checked: bool = False
     primer3_pair_explain: str = ""
+    message: str = ""
+
+
+class PCRPairSpecificityRequest(BaseModel):
+    pair_index: int = Field(..., ge=1, le=100)
+    left_primer: str = Field(..., min_length=15, max_length=40, pattern=r"^[ACGTacgt]+$")
+    right_primer: str = Field(..., min_length=15, max_length=40, pattern=r"^[ACGTacgt]+$")
+    species: PCRSpecificitySpecies = PCRSpecificitySpecies.human
+    min_amplicon_size: int = Field(50, ge=20, le=100_000)
+    max_amplicon_size: int = Field(5_000, ge=50, le=100_000)
+    expected_product_size: Optional[int] = Field(None, ge=20, le=100_000)
+
+
+class PCRPairedRecord(BaseModel):
+    accession: str
+    title: str
+    start: int
+    end: int
+    product_size: int
+    orientation: str
+    left_identity: float
+    right_identity: float
+    left_mismatches: int
+    right_mismatches: int
+    matches_expected_size: bool = False
+
+
+class PCRPairSpecificityResponse(BaseModel):
+    success: bool
+    specificity_checked: bool
+    status: PCRSpecificityStatus
+    verdict: PCRSpecificityVerdict
+    pair_index: int
+    species: PCRSpecificitySpecies
+    engine: str = "ncbi_blast_refseq_genomic_pair_screen"
+    database: str = "nt"
+    specificity_scope: str = "species_filtered_refseq_genomic_records_in_ncbi_nt"
+    genome_wide_specificity_checked: bool = False
+    left_hit_count: int = 0
+    right_hit_count: int = 0
+    paired_record_count: int = 0
+    returned_record_count: int = 0
+    search_hit_limit: int = 100
+    results_may_be_truncated: bool = False
+    paired_records: list[PCRPairedRecord] = Field(default_factory=list)
     message: str = ""

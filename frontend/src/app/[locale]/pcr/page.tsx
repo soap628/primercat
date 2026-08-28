@@ -5,9 +5,12 @@ import { useLocale, useTranslations } from "next-intl";
 
 import {
   designPcr,
+  screenPcrSpecificity,
   PCRDesignResponse,
+  PCRPairSpecificityResponse,
   PCRPreset,
   PCRPrimerPair,
+  PCRSpecificitySpecies,
 } from "@/lib/api";
 
 
@@ -92,7 +95,21 @@ function SequenceRow({
   );
 }
 
-function PrimerPairCard({ pair }: { pair: PCRPrimerPair }) {
+function PrimerPairCard({
+  pair,
+  specificityResult,
+  specificityLoading,
+  specificityBusy,
+  specificityError,
+  onScreenSpecificity,
+}: {
+  pair: PCRPrimerPair;
+  specificityResult?: PCRPairSpecificityResponse;
+  specificityLoading: boolean;
+  specificityBusy: boolean;
+  specificityError?: string;
+  onScreenSpecificity: () => void;
+}) {
   const t = useTranslations("pcr");
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -106,6 +123,13 @@ function PrimerPairCard({ pair }: { pair: PCRPrimerPair }) {
   const maxHairpin = Math.max(pair.left_hairpin_th, pair.right_hairpin_th);
   const maxSelfEnd = Math.max(pair.left_self_end_th, pair.right_self_end_th);
   const clampOk = [pair.left_gc_clamp, pair.right_gc_clamp].every((value) => value >= 1 && value <= 3);
+  const specificityTitle = specificityResult?.verdict === "one_paired_record"
+    ? t("specificity_result_single")
+    : specificityResult?.verdict === "multiple_paired_records"
+      ? t("specificity_result_multiple", { count: specificityResult.paired_record_count })
+      : specificityResult?.verdict === "no_paired_records"
+        ? t("specificity_result_none")
+        : t("specificity_result_unavailable");
 
   return (
     <article className="pcr-pair-card">
@@ -155,6 +179,14 @@ function PrimerPairCard({ pair }: { pair: PCRPrimerPair }) {
       <div className="pcr-pair-actions">
         <button
           type="button"
+          className="pcr-specificity-button"
+          onClick={onScreenSpecificity}
+          disabled={specificityBusy}
+        >
+          {specificityLoading ? <><span className="pcr-spinner" />{t("specificity_screening")}</> : t("specificity_screen_button")}
+        </button>
+        <button
+          type="button"
           className="pcr-secondary-button"
           onClick={() => copy(`${pair.left_primer}\n${pair.right_primer}`, "pair")}
         >
@@ -171,6 +203,78 @@ function PrimerPairCard({ pair }: { pair: PCRPrimerPair }) {
           <span aria-hidden="true">{expanded ? "▲" : "▼"}</span>
         </button>
       </div>
+
+      {specificityError && (
+        <div className="pcr-specificity-error" role="alert">
+          <strong>{t("specificity_result_unavailable")}</strong>
+          <span>{specificityError}</span>
+        </div>
+      )}
+
+      {specificityResult && (
+        <section className={`pcr-specificity-result is-${specificityResult.verdict}`}>
+          <div className="pcr-specificity-result-heading">
+            <div aria-hidden="true">
+              {specificityResult.verdict === "multiple_paired_records" ? "!" : specificityResult.verdict === "one_paired_record" ? "1" : "0"}
+            </div>
+            <p>
+              <strong>{specificityTitle}</strong>
+              <span>
+                {specificityResult.verdict === "one_paired_record"
+                  ? t("specificity_result_single_body")
+                  : specificityResult.verdict === "multiple_paired_records"
+                    ? t("specificity_result_multiple_body")
+                    : specificityResult.verdict === "no_paired_records"
+                      ? t("specificity_result_none_body")
+                      : t("specificity_result_unavailable_body")}
+              </span>
+            </p>
+          </div>
+
+          {specificityResult.specificity_checked && (
+            <>
+              <div className="pcr-specificity-metrics">
+                <div><span>{t("specificity_left_hits")}</span><strong>{specificityResult.left_hit_count}</strong></div>
+                <div><span>{t("specificity_right_hits")}</span><strong>{specificityResult.right_hit_count}</strong></div>
+                <div><span>{t("specificity_paired_products")}</span><strong>{specificityResult.paired_record_count}</strong></div>
+                <div><span>{t("specificity_database")}</span><strong>{t("specificity_database_value")}</strong></div>
+              </div>
+
+              {specificityResult.paired_records.length > 0 && (
+                <div className="pcr-specificity-amplicons">
+                  <strong>{t("specificity_candidate_products")}</strong>
+                  <div>
+                    {specificityResult.paired_records.map((record, index) => (
+                      <article key={`${record.accession}-${record.start}-${record.end}-${index}`}>
+                        <header>
+                          <a
+                            href={`https://www.ncbi.nlm.nih.gov/nuccore/${encodeURIComponent(record.accession)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {record.accession}
+                          </a>
+                          <span>{record.product_size} bp</span>
+                          {record.matches_expected_size && <b>{t("specificity_expected_match")}</b>}
+                        </header>
+                        <p>{record.title}</p>
+                        <small>
+                          {record.start}–{record.end} · F {record.left_identity.toFixed(1)}% / R {record.right_identity.toFixed(1)}% · {t("specificity_mismatches")} {record.left_mismatches}/{record.right_mismatches}
+                        </small>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <p className="pcr-specificity-boundary">
+                {t("specificity_scope_note", { limit: specificityResult.search_hit_limit })}
+                {specificityResult.results_may_be_truncated && <> {t("specificity_truncated_note")}</>}
+              </p>
+            </>
+          )}
+        </section>
+      )}
 
       {expanded && (
         <div className="pcr-pair-details">
@@ -217,6 +321,10 @@ export default function PCRPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<PCRDesignResponse | null>(null);
+  const [specificitySpecies, setSpecificitySpecies] = useState<PCRSpecificitySpecies>("human");
+  const [specificityResults, setSpecificityResults] = useState<Record<number, PCRPairSpecificityResponse>>({});
+  const [specificityErrors, setSpecificityErrors] = useState<Record<number, string>>({});
+  const [specificityLoadingPair, setSpecificityLoadingPair] = useState<number | null>(null);
 
   const sequenceLength = useMemo(() => normalizedSequenceLength(sequence), [sequence]);
 
@@ -253,6 +361,9 @@ export default function PCRPage() {
     event.preventDefault();
     setError("");
     setResult(null);
+    setSpecificityResults({});
+    setSpecificityErrors({});
+    setSpecificityLoadingPair(null);
 
     if (!sequence.trim()) {
       setError(t("error_empty"));
@@ -301,18 +412,66 @@ export default function PCRPage() {
     }
   }
 
+  async function handleSpecificity(pair: PCRPrimerPair) {
+    setSpecificityLoadingPair(pair.pair_index);
+    setSpecificityResults((current) => {
+      const next = { ...current };
+      delete next[pair.pair_index];
+      return next;
+    });
+    setSpecificityErrors((current) => {
+      const next = { ...current };
+      delete next[pair.pair_index];
+      return next;
+    });
+
+    try {
+      const response = await screenPcrSpecificity({
+        pair_index: pair.pair_index,
+        left_primer: pair.left_primer,
+        right_primer: pair.right_primer,
+        species: specificitySpecies,
+        min_amplicon_size: 50,
+        max_amplicon_size: 5000,
+        expected_product_size: pair.product_size,
+      });
+      setSpecificityResults((current) => ({ ...current, [pair.pair_index]: response }));
+    } catch (requestError) {
+      setSpecificityErrors((current) => ({
+        ...current,
+        [pair.pair_index]: requestError instanceof Error ? requestError.message : t("specificity_error_ncbi"),
+      }));
+    } finally {
+      setSpecificityLoadingPair(null);
+    }
+  }
+
+  function changeSpecificitySpecies(nextSpecies: PCRSpecificitySpecies) {
+    setSpecificitySpecies(nextSpecies);
+    setSpecificityResults({});
+    setSpecificityErrors({});
+  }
+
   function exportSummary() {
     if (!result) return;
     const header = [
       "Pair", "Forward primer", "Reverse primer", "Forward Tm", "Reverse Tm",
       "Forward GC%", "Reverse GC%", "Product size", "Amplicon start", "Amplicon end",
-      "Annealing estimate", "Primer3 penalty", "Specificity checked",
+      "Annealing estimate", "Primer3 penalty", "NCBI RefSeq genomic pair screen",
+      "NCBI species", "Paired candidates", "Genome-wide specificity checked",
     ];
-    const rows = result.primer_pairs.map((pair) => [
-      pair.pair_index, pair.left_primer, pair.right_primer, pair.left_tm, pair.right_tm,
-      pair.left_gc, pair.right_gc, pair.product_size, pair.amplicon_start, pair.amplicon_end,
-      pair.annealing_temp_estimate, pair.penalty, result.specificity_checked ? "Yes" : "No",
-    ]);
+    const rows = result.primer_pairs.map((pair) => {
+      const specificity = specificityResults[pair.pair_index];
+      return [
+        pair.pair_index, pair.left_primer, pair.right_primer, pair.left_tm, pair.right_tm,
+        pair.left_gc, pair.right_gc, pair.product_size, pair.amplicon_start, pair.amplicon_end,
+        pair.annealing_temp_estimate, pair.penalty,
+        specificity?.specificity_checked ? specificity.verdict : "Not run",
+        specificity?.specificity_checked ? specificity.species : "",
+        specificity?.specificity_checked ? specificity.paired_record_count : "",
+        "No",
+      ];
+    });
     const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
     downloadText(`${result.label || "pcr"}-primer-summary.csv`, csv);
   }
@@ -451,10 +610,31 @@ export default function PCRPage() {
               <section className="pcr-specificity-warning">
                 <div aria-hidden="true">!</div>
                 <p><strong>{t("specificity_title")}</strong><span>{t("specificity_body")}</span></p>
+                <label className="pcr-specificity-species">
+                  <span>{t("specificity_species")}</span>
+                  <select
+                    value={specificitySpecies}
+                    onChange={(event) => changeSpecificitySpecies(event.target.value as PCRSpecificitySpecies)}
+                    disabled={specificityLoadingPair !== null}
+                  >
+                    <option value="human">{t("specificity_species_human")}</option>
+                    <option value="mouse">{t("specificity_species_mouse")}</option>
+                  </select>
+                </label>
               </section>
 
               <div className="pcr-result-list">
-                {result.primer_pairs.map((pair) => <PrimerPairCard key={pair.pair_index} pair={pair} />)}
+                {result.primer_pairs.map((pair) => (
+                  <PrimerPairCard
+                    key={pair.pair_index}
+                    pair={pair}
+                    specificityResult={specificityResults[pair.pair_index]}
+                    specificityLoading={specificityLoadingPair === pair.pair_index}
+                    specificityBusy={specificityLoadingPair !== null}
+                    specificityError={specificityErrors[pair.pair_index]}
+                    onScreenSpecificity={() => handleSpecificity(pair)}
+                  />
+                ))}
               </div>
             </div>
           )}

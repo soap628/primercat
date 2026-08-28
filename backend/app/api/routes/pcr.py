@@ -7,12 +7,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import get_optional_user
 from app.db.models.jobs import PrimerJob
 from app.db.session import get_db
-from app.schemas.pcr import PCRDesignRequest, PCRDesignResponse
+from app.schemas.pcr import (
+    PCRDesignRequest,
+    PCRDesignResponse,
+    PCRPairSpecificityRequest,
+    PCRPairSpecificityResponse,
+)
 from app.services.pcr_design import design_pcr_primers
+from app.services.pcr_specificity import screen_pcr_pair_specificity
 
 
 router = APIRouter(prefix="/pcr", tags=["PCR primer design"])
 _executor = ThreadPoolExecutor(max_workers=4)
+_specificity_executor = ThreadPoolExecutor(max_workers=2)
 
 
 @router.post("/design", response_model=PCRDesignResponse)
@@ -34,3 +41,15 @@ async def design_pcr(
         db.add(job)
         await db.commit()
     return result
+
+
+@router.post("/specificity", response_model=PCRPairSpecificityResponse)
+async def check_pcr_pair_specificity(
+    req: PCRPairSpecificityRequest,
+) -> PCRPairSpecificityResponse:
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(
+        _specificity_executor,
+        screen_pcr_pair_specificity,
+        req,
+    )
