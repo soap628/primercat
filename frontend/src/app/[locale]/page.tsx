@@ -188,13 +188,13 @@ function StepVisual({ step, locale }: { step: number; locale: string }) {
       ? [
           { label: "RefSeq 转录本", done: true, color: "#ffb1ee" },
           { label: "Primer3 设计", done: true, color: "#ffb1ee" },
-          { label: "BLAST 验证", done: true, color: "#539df5" },
+          { label: "BLAST 初筛", done: true, color: "#539df5" },
           { label: "打分排序", done: false, color: "#ffa42b", active: true },
         ]
       : [
           { label: "RefSeq fetch", done: true, color: "#ffb1ee" },
           { label: "Primer3 design", done: true, color: "#ffb1ee" },
-          { label: "BLAST check", done: true, color: "#539df5" },
+          { label: "BLAST screen", done: true, color: "#539df5" },
           { label: "Scoring", done: false, color: "#ffa42b", active: true },
         ];
     return (

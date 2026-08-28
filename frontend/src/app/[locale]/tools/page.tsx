@@ -6,18 +6,25 @@ export default async function ToolsPage({ params: { locale } }: { params: { loca
 
   const cards = [
     {
-      eyebrow: t("card_fund_eyebrow"),
-      title: t("card_fund_title"),
-      body: t("card_fund_body"),
-      href: "/fund-calc",
-      cta: t("card_fund_cta"),
+      eyebrow: t("card_primer_eyebrow"),
+      title: t("card_primer_title"),
+      body: t("card_primer_body"),
+      href: "/primer",
+      cta: t("card_primer_cta"),
     },
     {
-      eyebrow: t("card_offshore_eyebrow"),
-      title: t("card_offshore_title"),
-      body: t("card_offshore_body"),
-      href: "/offshore-hub",
-      cta: t("card_offshore_cta"),
+      eyebrow: t("card_grna_eyebrow"),
+      title: t("card_grna_title"),
+      body: t("card_grna_body"),
+      href: "/grna",
+      cta: t("card_grna_cta"),
+    },
+    {
+      eyebrow: t("card_blast_eyebrow"),
+      title: t("card_blast_title"),
+      body: t("card_blast_body"),
+      href: "/blast",
+      cta: t("card_blast_cta"),
     },
     {
       eyebrow: t("card_mw_eyebrow"),

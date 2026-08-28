@@ -88,12 +88,12 @@ const COPY = {
         body: "基于转录本序列，在 Tm、GC%、产物长度、发卡结构和二聚体风险的约束下批量生成引物，初步按评分过滤。",
       },
       {
-        title: "3. 基因组层面特异性筛查（本地 Bowtie2）",
-        body: "所有候选引物一次性提交到本地 Bowtie2，直接与参考基因组（hg38/mm10）比对，过滤掉在基因组其他位置有高度相似命中的候选。无需 NCBI 网络连接，全程在服务器本地完成。",
+        title: "3. 特异性初筛（按可用后端）",
+        body: "配置了 hg38/mm10 本地索引时，候选引物由 Bowtie2 做基因组层面筛查；索引不可用时，系统将候选批量提交至 NCBI RefSeq RNA BLAST，并在结果中明确标注筛查范围。",
       },
       {
         title: "4. 多维打分 + 推荐理由",
-        body: "引物按 Tm、GC%、基因组特异性状态、跨外显子能力、二聚体风险五个维度综合排序。结果页同时展示每对引物的推荐理由和扩增子信息。",
+        body: "引物按 Tm、GC%、当前特异性证据、跨外显子能力、二聚体风险五个维度综合排序。未完成远程筛查的候选不会获得特异性分。",
       },
     ],
     qpcrReadTitle: "结果页包含",
@@ -105,11 +105,11 @@ const COPY = {
     ],
     qpcrBoundaryTitle: "需要了解的边界",
     qpcrBoundaryBody:
-      "特异性筛查在基因组层面完成（本地 Bowtie2 比对 hg38/mm10），覆盖全部基因组位置，但不等同于实验室 PCR 验证。内含子区的命中会被保守标记——对以 cDNA 为模板的 RT-qPCR 影响有限，建议结合实际实验结果综合判断。",
+      "结果页会注明本次使用的是本地基因组 Bowtie2 还是 RefSeq RNA BLAST。只有前者覆盖完整参考基因组；后者属于转录本层面初筛。两者都不等同于实验室 PCR 验证。",
 
     grnaTitle: "CRISPR gRNA 设计",
     grnaIntro:
-      "输入基因名称或直接粘贴序列，系统扫描全部 PAM 位点、按活性打分排序，并对每条 gRNA 做本地基因组层面脱靶风险筛查。",
+      "输入基因名称或直接粘贴序列，系统扫描全部 PAM 位点、按活性打分排序，并根据当前可用后端执行脱靶风险初筛。",
     grnaSteps: [
       {
         title: "1. 自动获取目标序列",
@@ -124,8 +124,8 @@ const COPY = {
         body: "基于 GC 含量、种子区序列特征、3' 末端偏好等序列特征对每条 gRNA 打分，按预测活性排序，把最有潜力的候选排在前面。",
       },
       {
-        title: "4. 脱靶风险筛查（本地 Bowtie2）",
-        body: "每条 gRNA 经本地 Bowtie2 与参考基因组（hg38/mm10）比对，允许最多 3 个错配，结果标注为低/中/高风险，并显示最高相似性命中和具体比对信息。全程在服务器本地完成，无需 NCBI 网络连接。",
+        title: "4. 脱靶风险初筛（按可用后端）",
+        body: "配置本地基因组索引时执行全基因组候选匹配；否则使用 NCBI BLAST 进行基础筛查。结果会明确显示使用的后端、证据强度与命中详情。",
       },
     ],
     grnaReadTitle: "结果页包含",
@@ -137,13 +137,13 @@ const COPY = {
     ],
     grnaBoundaryTitle: "需要了解的边界",
     grnaBoundaryBody:
-      "活性分数基于序列特征估算，不是经实验验证的预测值。脱靶筛查是初步过滤（基因组层面，≤3 错配），正式 CRISPR 实验前建议进行更严格的全基因组脱靶分析和湿实验验证。",
+      "活性分数基于序列特征估算，不是经实验验证的预测值。BLAST 回退模式不覆盖完整基因组；即使使用本地索引，正式 CRISPR 实验前仍建议进行更严格的脱靶分析和湿实验验证。",
 
     sourceTitle: "数据来源",
     sources: [
       "NCBI RefSeq：转录本和模板序列（引物 + gRNA）",
       "Primer3：qPCR 引物设计算法",
-      "Bowtie2 + hg38/mm10：基因组层面特异性筛查（qPCR）及脱靶初筛（gRNA）",
+      "Bowtie2 + hg38/mm10（配置后）：基因组层面筛查；NCBI BLAST：索引不可用时的转录本或序列相似性初筛",
     ],
 
     ctaTitle: "透明的工作方式，比承诺「准确」更可信",
@@ -240,12 +240,12 @@ const COPY = {
         body: "Primers are generated from the transcript sequence under Tm, GC%, product size, hairpin, and dimer constraints, then pre-filtered by penalty score.",
       },
       {
-        title: "3. Genome-level specificity screen (local Bowtie2)",
-        body: "All candidate primers are submitted in a single batch to a local Bowtie2 instance and aligned against the reference genome (hg38/mm10). Primers with high-similarity hits elsewhere in the genome are filtered out. No NCBI network connection required — the entire screen runs on the server.",
+        title: "3. Specificity screening with the available backend",
+        body: "When an hg38/mm10 local index is configured, Bowtie2 provides genome-level screening. Otherwise, candidates are batched into an NCBI RefSeq RNA BLAST request and the narrower transcript-level scope is labeled in the result.",
       },
       {
         title: "4. Multi-factor ranking with rationale",
-        body: "Primers are ranked across five dimensions — Tm, GC%, genome specificity status, exon-spanning design, and dimer risk. The result page shows the ranking rationale and amplicon details for each pair.",
+        body: "Primers are ranked across five dimensions — Tm, GC%, available specificity evidence, exon-spanning design, and dimer risk. Candidates with an incomplete remote screen receive no specificity points.",
       },
     ],
     qpcrReadTitle: "Every result page includes",
@@ -257,11 +257,11 @@ const COPY = {
     ],
     qpcrBoundaryTitle: "Scope boundary",
     qpcrBoundaryBody:
-      "Specificity screening is genome-level (Bowtie2 against hg38/mm10) and covers the full genome, but is not equivalent to wet-lab PCR validation. Hits in intronic regions are flagged conservatively — this has limited impact for RT-qPCR on cDNA, but experimental confirmation is always recommended.",
+      "The result page states whether local-genome Bowtie2 or RefSeq RNA BLAST was used. Only the former covers the full reference genome; the latter is transcript-level screening. Neither is equivalent to wet-lab PCR validation.",
 
     grnaTitle: "CRISPR gRNA Design",
     grnaIntro:
-      "Enter a gene name or paste a sequence directly. The system scans all PAM sites, ranks candidates by predicted activity, and screens each guide for off-target risk using local genome alignment.",
+      "Enter a gene name or paste a sequence directly. The system scans all PAM sites, ranks candidates by predicted activity, and screens off-target risk using whichever backend is currently available.",
     grnaSteps: [
       {
         title: "1. Automatically fetch the target sequence",
@@ -276,8 +276,8 @@ const COPY = {
         body: "Each guide is scored on GC content, seed-region sequence features, and 3′ nucleotide preferences. Candidates are ranked so the most promising guides appear first.",
       },
       {
-        title: "4. Off-target risk screening (local Bowtie2)",
-        body: "Every guide is aligned against the reference genome (hg38/mm10) via local Bowtie2, allowing up to 3 mismatches. Results are labeled Low / Medium / High risk with top hits and alignment details shown. No NCBI network connection required.",
+        title: "4. Off-target screening with the available backend",
+        body: "A configured local-genome index enables genome-wide candidate matching; otherwise, NCBI BLAST provides a basic screen. The result identifies the backend, evidence strength, and supporting hits.",
       },
     ],
     grnaReadTitle: "Every result page includes",
@@ -289,13 +289,13 @@ const COPY = {
     ],
     grnaBoundaryTitle: "Scope boundary",
     grnaBoundaryBody:
-      "Activity scores are sequence-feature estimates, not validated wet-lab predictions. Off-target screening is a first-pass filter (genome-level, ≤3 mismatches). For formal CRISPR experiments, follow up with rigorous genome-wide off-target analysis and wet-lab confirmation.",
+      "Activity scores are sequence-feature estimates, not validated wet-lab predictions. BLAST fallback mode does not cover the complete genome; even with a local index, formal CRISPR work still requires rigorous off-target analysis and wet-lab confirmation.",
 
     sourceTitle: "Data sources",
     sources: [
       "NCBI RefSeq: transcript and template sequences (primers + gRNA)",
       "Primer3: qPCR primer design algorithm",
-      "Bowtie2 + hg38/mm10: genome-level specificity screening (qPCR) and off-target screening (gRNA)",
+      "Bowtie2 + hg38/mm10 (when configured): genome-level screening; NCBI BLAST: transcript or sequence-similarity screening when an index is unavailable",
     ],
 
     ctaTitle: "Transparency is more credible than overpromising",

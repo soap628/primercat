@@ -14,10 +14,8 @@ const COPY = {
       { label: "方法说明", href: "/methods" },
       { label: "可信度说明", href: "/validation" },
     ],
-    addOns: "附加工具",
+    addOns: "实验室计算",
     addOnLinks: [
-      { label: "经费计算器", href: "/fund-calc" },
-      { label: "离岸通", href: "/offshore-hub" },
       { label: "分子量计算器", href: "/mw-calc" },
     ],
     connect: "关于",
@@ -45,10 +43,8 @@ const COPY = {
       { label: "Methods", href: "/methods" },
       { label: "Trust & Limitations", href: "/validation" },
     ],
-    addOns: "More Tools",
+    addOns: "Lab Calculators",
     addOnLinks: [
-      { label: "Fund Calculator", href: "/fund-calc" },
-      { label: "Offshore Hub", href: "/offshore-hub" },
       { label: "MW Calculator", href: "/mw-calc" },
     ],
     connect: "About",

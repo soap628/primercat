@@ -36,8 +36,8 @@ const COPY = {
       },
       {
         icon: "03",
-        title: "基因组特异性状态",
-        body: "每条引物经 Bowtie2 全基因组比对（hg38/mm10）后的命中情况：唯一命中 / 脱靶命中数 / 无命中，并标注最高相似度百分比。",
+        title: "特异性证据与筛查范围",
+        body: "结果会显示本次使用的筛查后端。本地索引可提供基因组层面命中；未配置索引时使用 RefSeq RNA BLAST，并明确标为转录本层面初筛。",
       },
       {
         icon: "04",
@@ -66,7 +66,7 @@ const COPY = {
         title: "qPCR 引物设计",
         solid: [
           "Primer3 热力学过滤（Tm、GC%、hairpin、二聚体）",
-          "Bowtie2 全基因组唯一性比对（hg38 / mm10，单次批量）",
+          "配置 hg38/mm10 索引时使用 Bowtie2；否则使用批量 RefSeq RNA BLAST 初筛",
           "外显子–外显子跨越检测（基于 RefSeq 注释的外显子坐标）",
           "扩增子大小 80–200 bp（qPCR 优化范围）",
           "综合评分排序（6 子分加权）",
@@ -84,7 +84,7 @@ const COPY = {
         color: "#7c3aed",
         title: "CRISPR gRNA 设计",
         solid: [
-          "Bowtie2 全基因组脱靶筛查（≤3 错配，hg38 / mm10）",
+          "配置本地基因组索引时执行基因组筛查；否则使用明确标注的 BLAST 回退",
           "支持 SpCas9（NGG）、SpCas9-NG（NG）、Cas12a（TTTV）三种 PAM",
           "正反链全覆盖扫描",
           "GC%、种子区连续 G、PAM 临近碱基偏好等序列特征评估",
@@ -102,7 +102,7 @@ const COPY = {
         color: "#3b82f6",
         title: "BLAST 序列比对",
         solid: [
-          "NCBI BLAST（blastn / blastx / tblastx）标准查询",
+          "NCBI BLAST（blastn / blastp / blastx / tblastn）标准查询",
           "E-value、比对得分、覆盖率、Identity% 完整展示",
           "支持自定义序列输入",
           "结果中展示物种来源与 GenBank 登录号",
@@ -134,7 +134,7 @@ const COPY = {
       },
       {
         signal: "— 无命中",
-        meaning: "Bowtie2 在基因组中完全未检测到该序列（允许 ≤2 错配）。可能是序列过短、含大量简单重复，或物种基因组索引不可用。",
+        meaning: "当前筛查后端未返回满足条件的命中。应结合结果中标注的数据库范围解读；BLAST 无命中不能证明全基因组唯一。",
         tone: "amber",
       },
     ],
@@ -160,7 +160,7 @@ const COPY = {
       "Results aren't black-box scores. Every primer pair or gRNA score is traceable on the results page: Tm, GC%, exon-spanning status, Bowtie2 / BLAST hit count… the rationale and design limits are shown together.",
     heroMetricLabel: "Dimensions covered",
     heroMetricValue: "6",
-    heroMetricBody: "Each result covers six dimensions: sequence parameters, thermodynamics, genome specificity, structural risk, exon architecture, and activity estimate.",
+    heroMetricBody: "Each result covers six dimensions: sequence parameters, thermodynamics, specificity evidence, structural risk, exon architecture, and activity estimate.",
 
     evidenceTitle: "What the results page already tells you",
     evidenceIntro:
@@ -178,8 +178,8 @@ const COPY = {
       },
       {
         icon: "03",
-        title: "Genome-level specificity status",
-        body: "Per-primer Bowtie2 whole-genome alignment results (hg38/mm10): unique hit / off-target count / no hit, with the top identity percentage shown.",
+        title: "Specificity evidence and screening scope",
+        body: "The result identifies the backend used. A local index provides genome-level hits; without one, RefSeq RNA BLAST is used and explicitly labeled as transcript-level screening.",
       },
       {
         icon: "04",
@@ -208,7 +208,7 @@ const COPY = {
         title: "qPCR Primer Design",
         solid: [
           "Primer3 thermodynamic filtering (Tm, GC%, hairpin, dimer)",
-          "Bowtie2 whole-genome uniqueness alignment (hg38 / mm10, single batch)",
+          "Bowtie2 when an hg38/mm10 index is configured; otherwise batched RefSeq RNA BLAST screening",
           "Exon–exon junction spanning detection (based on RefSeq exon coordinates)",
           "Amplicon size 80–200 bp (qPCR-optimised range)",
           "Composite score ranking (6 weighted sub-scores)",
@@ -226,7 +226,7 @@ const COPY = {
         color: "#7c3aed",
         title: "CRISPR gRNA Design",
         solid: [
-          "Bowtie2 whole-genome off-target screening (≤3 mismatches, hg38 / mm10)",
+          "Genome screening when a local index is configured; otherwise an explicitly labeled BLAST fallback",
           "Supports SpCas9 (NGG), SpCas9-NG (NG), Cas12a (TTTV) PAMs",
           "Both-strand full-length scanning",
           "GC%, seed-region consecutive-G, PAM-proximal nucleotide preference scoring",
@@ -244,7 +244,7 @@ const COPY = {
         color: "#3b82f6",
         title: "BLAST Sequence Search",
         solid: [
-          "Standard NCBI BLAST queries (blastn / blastx / tblastx)",
+          "Standard NCBI BLAST queries (blastn / blastp / blastx / tblastn)",
           "Full display of E-value, score, coverage, and Identity%",
           "Supports custom sequence input",
           "Species of origin and GenBank accession shown in results",
@@ -276,7 +276,7 @@ const COPY = {
       },
       {
         signal: "— No hit",
-        meaning: "Bowtie2 found no alignment in the genome (within ≤2 mismatches). Possible causes: sequence too short, heavy simple-repeat content, or the species genome index is unavailable.",
+        meaning: "The active screening backend returned no qualifying hit. Interpret this against the database scope shown in the result; no BLAST hit does not prove genome-wide uniqueness.",
         tone: "amber",
       },
     ],

@@ -22,10 +22,10 @@ PrimerCat is a bilingual (English / 中文) web platform that packages several c
 | --- | --- |
 | **qPCR Primer Design** | Design primers with `primer3`, custom scoring, and specificity checking via Bowtie2 / BLAST. |
 | **Gene-based Primer Design** | Enter a gene name — the sequence is fetched automatically from NCBI and primers are designed for you. |
-| **CRISPR gRNA Design** | Guide RNA design with genome-wide off-target analysis and hit annotation. |
+| **CRISPR gRNA Design** | Guide RNA design with local-genome screening when configured and a clearly labeled NCBI BLAST fallback otherwise. |
 | **BLAST Search** | Run BLAST sequence alignment. |
 | **Molecular Weight Calculator** | Quick MW calculation for sequences. |
-| **Lab Utilities** | Extra tools (grant/fund calculator, offshore hub) integrated into the platform. |
+| **Lab Utilities** | Molecular-weight, solution-preparation, and dilution calculations. |
 
 Plus: user accounts (JWT auth), a job history system, full English/中文 i18n, and citation / about / contact / sponsor / legal pages.
 
@@ -117,10 +117,10 @@ PrimerCat 是一个中英双语的在线平台，把几种常用的分子生物�
 | --- | --- |
 | **qPCR 引物设计** | 基于 `primer3` 设计引物，自定义打分，并通过 Bowtie2 / BLAST 做特异性检查。 |
 | **基因引物设计（智能模式）** | 只需输入基因名，自动从 NCBI 获取序列并设计引物。 |
-| **CRISPR gRNA 设计** | gRNA 设计，含全基因组脱靶分析与命中注释。 |
+| **CRISPR gRNA 设计** | gRNA 设计；配置本地基因组索引时执行基因组筛查，否则使用明确标注的 NCBI BLAST 初筛。 |
 | **BLAST 序列比对** | 运行 BLAST 序列比对。 |
 | **分子量计算器** | 快速计算序列分子量。 |
-| **实用小工具** | 平台内集成的额外工具（经费通、离岸通）。 |
+| **实用小工具** | 分子量、溶液配制与稀释计算。 |
 
 此外还有：用户账户（JWT 认证）、任务历史记录、完整的中英双语、引用 / 关于 / 联系 / 赞助 / 法律条款页面。
 
