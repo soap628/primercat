@@ -86,7 +86,7 @@ const COPY = {
     ],
     openGhs: "PubChem GHS 代码表",
     openOsha: "SDS 16 节结构说明",
-    reviewed: "资料复核日期：2026-08-30",
+    reviewed: "资料复核日期：2026-08-31",
     disclaimer: "仅供研究与实验室风险识别参考，不构成医疗建议。紧急情况请联系当地急救、毒物咨询中心和机构 EHS。",
   },
   en: {
@@ -159,7 +159,7 @@ const COPY = {
     ],
     openGhs: "PubChem GHS code table",
     openOsha: "SDS 16-section structure",
-    reviewed: "Content reviewed: 2026-08-30",
+    reviewed: "Content reviewed: 2026-08-31",
     disclaimer: "For research and laboratory hazard recognition only; not medical advice. In an emergency, contact local emergency services, poison control, and institutional EHS.",
   },
 } as const;
