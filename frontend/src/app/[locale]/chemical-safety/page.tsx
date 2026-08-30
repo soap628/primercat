@@ -20,13 +20,13 @@ const COPY = {
     kicker: "Chemical safety · GHS / LCSS",
     title: "实验室试剂安全与毒性查询",
     intro: "按名称、CAS 或化学式快速找到常见试剂的危险摘要、关键控制和不相容性。每条记录链接到 PubChem 原始页面，并明确提醒核对当前产品 SDS。",
-    heroMetric: "V2 生命科学试剂库",
+    heroMetric: "V3 生命科学试剂库",
     reagentUnit: "种常见试剂",
-    heroBody: "覆盖核酸、蛋白、细胞培养、组织学和实验室通用试剂，并把商品混合物与纯物质分开。",
+    heroBody: "覆盖缓冲剂、去污剂、溶剂、染料、筛选药物和高危固定剂，并把商品混合物、浓度相关溶液与纯物质分开。",
     emergencyTitle: "发生暴露或泄漏时",
     emergencyBody: "立即停止操作并启动本实验室应急流程。人员暴露使用洗眼器/安全淋浴并尽快联系现场急救、EHS 或医疗机构；不要依据网页摘要自行处理中毒或大型泄漏。具体措施见该产品 SDS 第 4 节和第 6 节。",
     searchLabel: "搜索试剂",
-    searchPlaceholder: "名称、别名、CAS、化学式，例如：β-ME / EtBr / 593-84-0",
+    searchPlaceholder: "名称、别名、CAS、化学式，例如：DMSO / OsO₄ / 58-58-2",
     useFilterLabel: "按实验用途",
     hazardFilterLabel: "按危险类别",
     allUses: "全部用途",
@@ -93,13 +93,13 @@ const COPY = {
     kicker: "Chemical safety · GHS / LCSS",
     title: "Laboratory reagent safety & toxicity",
     intro: "Search common reagents by name, CAS, or formula for hazard summaries, critical controls, and incompatibilities. Every record links to the source PubChem page and requires checking the current product SDS.",
-    heroMetric: "V2 life-science reagent library",
+    heroMetric: "V3 life-science reagent library",
     reagentUnit: "common reagents",
-    heroBody: "Covers nucleic-acid, protein, cell-culture, histology, and general laboratory reagents while separating commercial mixtures from pure substances.",
+    heroBody: "Covers buffers, detergents, solvents, stains, selection drugs, and high-hazard fixatives while separating mixtures, concentration-specific solutions, and pure substances.",
     emergencyTitle: "If exposure or a spill occurs",
     emergencyBody: "Stop work and activate the laboratory emergency procedure. For personal exposure, use the eyewash/safety shower and promptly contact onsite response, EHS, or medical services. Do not use a web summary to self-treat poisoning or manage a large spill. Follow Sections 4 and 6 of the actual product SDS.",
     searchLabel: "Search reagents",
-    searchPlaceholder: "Name, alias, CAS, or formula — e.g. β-ME / EtBr / 593-84-0",
+    searchPlaceholder: "Name, alias, CAS, or formula — e.g. DMSO / OsO₄ / 58-58-2",
     useFilterLabel: "By laboratory use",
     hazardFilterLabel: "By hazard category",
     allUses: "All uses",
@@ -237,14 +237,14 @@ export default function ChemicalSafetyPage({
       if (filter !== "all" && !record.categories.includes(filter)) return false;
       if (useFilter !== "all" && !(record.uses ?? ["general"]).includes(useFilter)) return false;
       if (!needle) return true;
-      const haystack = [
+      const fields = [
         record.name.zh,
         record.name.en,
         record.cas,
         record.formula,
         ...record.aliases,
-      ].map(normalize).join("|");
-      return haystack.includes(needle);
+      ].map(normalize);
+      return needle.length <= 3 ? fields.includes(needle) : fields.some((field) => field.includes(needle));
     });
   }, [query, filter, useFilter]);
 
