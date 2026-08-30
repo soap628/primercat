@@ -22,6 +22,12 @@ export type SolutionRecipe = {
   sourceLabel: string;
   sourceUrl: string;
   safetyQuery?: string;
+  safety: {
+    additionalChemicalIds?: string[];
+    additionOrder: LocalizedText;
+    incompatibilities: LocalizedText;
+    waste: LocalizedText;
+  };
 };
 
 export const SOLUTION_RECIPES: SolutionRecipe[] = [
@@ -51,6 +57,20 @@ export const SOLUTION_RECIPES: SolutionRecipe[] = [
     ],
     sourceLabel: "Thermo Fisher Scientific · PBS recipe",
     sourceUrl: "https://tools.thermofisher.com/content/sfs/manuals/293ebna_man.pdf",
+    safety: {
+      additionOrder: {
+        zh: "先在约 80% 终体积的水中依次溶解各盐，完全澄清后再测 pH，最后定容。",
+        en: "Dissolve the salts in about 80% of the final water volume, confirm the solution is clear, then measure pH and bring to volume.",
+      },
+      incompatibilities: {
+        zh: "PBS 本身通常为低危水溶液，但加入叠氮化钠、防腐剂、药物或生物样品后必须按完整混合物重新评估。",
+        en: "PBS itself is generally a low-hazard aqueous solution, but azide, preservatives, drugs, or biological samples require reassessment of the complete mixture.",
+      },
+      waste: {
+        zh: "未污染 PBS 的处置遵循本地规定；含细胞、病原体、药物、重金属或叠氮化物时不得沿用普通缓冲液路径。",
+        en: "Follow local rules for uncontaminated PBS; do not use an ordinary-buffer route when it contains cells, pathogens, drugs, heavy metals, or azide.",
+      },
+    },
   },
   {
     id: "tae-50x",
@@ -62,9 +82,9 @@ export const SOLUTION_RECIPES: SolutionRecipe[] = [
     category: "electrophoresis",
     defaultVolumeMl: 1000,
     ingredients: [
-      { name: { zh: "Tris 碱", en: "Tris base" }, amount: 242, unit: "g" },
-      { name: { zh: "冰醋酸", en: "Glacial acetic acid" }, amount: 57.1, unit: "mL" },
-      { name: { zh: "0.5 M EDTA（pH 8.0）", en: "0.5 M EDTA (pH 8.0)" }, amount: 100, unit: "mL" },
+      { name: { zh: "Tris 碱", en: "Tris base" }, amount: 242, unit: "g", chemicalId: "tris-base" },
+      { name: { zh: "冰醋酸", en: "Glacial acetic acid" }, amount: 57.1, unit: "mL", chemicalId: "acetic-acid" },
+      { name: { zh: "0.5 M EDTA（pH 8.0）", en: "0.5 M EDTA (pH 8.0)" }, amount: 100, unit: "mL", chemicalId: "disodium-edta" },
     ],
     steps: [
       { zh: "将 Tris 碱溶于约 60% 终体积的去离子水。", en: "Dissolve Tris base in about 60% of the final volume of deionized water." },
@@ -78,6 +98,20 @@ export const SOLUTION_RECIPES: SolutionRecipe[] = [
     sourceLabel: "Bio-Rad · Bulletin 6205",
     sourceUrl: "https://www.bio-rad.com/webroot/web/pdf/lsr/literature/Bulletin_6205.pdf",
     safetyQuery: "glacial acetic acid",
+    safety: {
+      additionOrder: {
+        zh: "先充分溶解 Tris 并控制温度，再在通风和搅拌下缓慢加入冰醋酸，随后加入 EDTA，最后定容。",
+        en: "Fully dissolve Tris and control temperature first, then slowly add glacial acetic acid with ventilation and stirring, followed by EDTA, before final volume adjustment.",
+      },
+      incompatibilities: {
+        zh: "冰醋酸远离强氧化剂、强碱和次氯酸盐；不要用漂白剂处理成分不明或含染料的 TAE 废液。",
+        en: "Keep glacial acetic acid from strong oxidizers, strong bases, and hypochlorite; do not bleach unidentified or dye-containing TAE waste.",
+      },
+      waste: {
+        zh: "未加样和染料的工作液与含核酸染料、样品或重金属的电泳废液必须分开判断，后者按污染组分进入相应废物流。",
+        en: "Assess unused dye-free working buffer separately from electrophoresis waste containing nucleic-acid stains, samples, or metals; route the latter by its contaminants.",
+      },
+    },
   },
   {
     id: "tbe-10x",
@@ -89,9 +123,9 @@ export const SOLUTION_RECIPES: SolutionRecipe[] = [
     category: "electrophoresis",
     defaultVolumeMl: 1000,
     ingredients: [
-      { name: { zh: "Tris 碱", en: "Tris base" }, amount: 108, unit: "g" },
-      { name: { zh: "硼酸", en: "Boric acid" }, amount: 55, unit: "g" },
-      { name: { zh: "0.5 M EDTA（pH 8.0）", en: "0.5 M EDTA (pH 8.0)" }, amount: 40, unit: "mL" },
+      { name: { zh: "Tris 碱", en: "Tris base" }, amount: 108, unit: "g", chemicalId: "tris-base" },
+      { name: { zh: "硼酸", en: "Boric acid" }, amount: 55, unit: "g", chemicalId: "boric-acid" },
+      { name: { zh: "0.5 M EDTA（pH 8.0）", en: "0.5 M EDTA (pH 8.0)" }, amount: 40, unit: "mL", chemicalId: "disodium-edta" },
     ],
     steps: [
       { zh: "将 Tris 碱和硼酸溶于约 60% 终体积的去离子水。", en: "Dissolve Tris base and boric acid in about 60% of the final volume of deionized water." },
@@ -105,6 +139,20 @@ export const SOLUTION_RECIPES: SolutionRecipe[] = [
     sourceLabel: "Bio-Rad · Bulletin 6205",
     sourceUrl: "https://www.bio-rad.com/webroot/web/pdf/lsr/literature/Bulletin_6205.pdf",
     safetyQuery: "boric acid",
+    safety: {
+      additionOrder: {
+        zh: "先在约 60% 终体积的水中依次溶解 Tris 与硼酸，溶液澄清后加入 EDTA，最后定容。",
+        en: "Dissolve Tris and boric acid in about 60% of the final water volume, add EDTA after the solution clears, then bring to volume.",
+      },
+      incompatibilities: {
+        zh: "避免与强氧化剂混合；含硼酸浓缩液不要与未表征化学废液合并。",
+        en: "Avoid mixing with strong oxidizers and do not combine concentrated borate buffer with uncharacterized chemical waste.",
+      },
+      waste: {
+        zh: "含硼酸废液按机构规定收集；若含 EtBr、PI 等核酸染料或样品污染，按最高危组分升级处置。",
+        en: "Collect borate waste under institutional rules; when EtBr, PI, or sample contamination is present, escalate disposal to the highest-hazard component.",
+      },
+    },
   },
   {
     id: "tris-hcl-1m-ph8",
@@ -113,7 +161,7 @@ export const SOLUTION_RECIPES: SolutionRecipe[] = [
     category: "stock",
     defaultVolumeMl: 1000,
     ingredients: [
-      { name: { zh: "Tris 碱", en: "Tris base" }, amount: 121.14, unit: "g" },
+      { name: { zh: "Tris 碱", en: "Tris base" }, amount: 121.14, unit: "g", chemicalId: "tris-base" },
     ],
     steps: [
       { zh: "将 Tris 碱溶于约 80% 终体积的去离子水。", en: "Dissolve Tris base in about 80% of the final volume of deionized water." },
@@ -127,6 +175,21 @@ export const SOLUTION_RECIPES: SolutionRecipe[] = [
     sourceLabel: "Thermo Fisher Scientific · 1 M Tris buffers",
     sourceUrl: "https://documents.thermofisher.com/TFS-Assets/LSG/manuals/sp_9851.pdf",
     safetyQuery: "HCl",
+    safety: {
+      additionalChemicalIds: ["hydrochloric-acid"],
+      additionOrder: {
+        zh: "先将 Tris 溶于大部分水中并开始搅拌，再把盐酸少量、缓慢加入溶液；冷却并复核 pH 后才定容。",
+        en: "Dissolve Tris in most of the water under stirring, then add hydrochloric acid slowly in small portions; cool and recheck pH before final volume adjustment.",
+      },
+      incompatibilities: {
+        zh: "盐酸不得与漂白剂/次氯酸盐混合，也应远离强碱和活泼金属；调 pH 不是把浓酸一次倒入。",
+        en: "Never mix hydrochloric acid with bleach or hypochlorite and keep it from strong bases and reactive metals; pH adjustment is not a single bulk acid addition.",
+      },
+      waste: {
+        zh: "未污染 Tris-HCl 与含药物、染料、重金属或生物材料的缓冲液分开管理；不得仅凭接近中性就判断可排放。",
+        en: "Manage uncontaminated Tris-HCl separately from buffer containing drugs, dyes, metals, or biological material; near-neutral pH alone does not establish drain suitability.",
+      },
+    },
   },
   {
     id: "sds-10-percent",
@@ -135,7 +198,7 @@ export const SOLUTION_RECIPES: SolutionRecipe[] = [
     category: "stock",
     defaultVolumeMl: 100,
     ingredients: [
-      { name: { zh: "SDS", en: "SDS" }, amount: 10, unit: "g" },
+      { name: { zh: "SDS", en: "SDS" }, amount: 10, unit: "g", chemicalId: "sodium-dodecyl-sulfate" },
     ],
     steps: [
       { zh: "避免扬尘，将 SDS 缓慢加入约 80% 终体积的水中。", en: "Avoid generating dust and slowly add SDS to about 80% of the final volume of water." },
@@ -149,6 +212,171 @@ export const SOLUTION_RECIPES: SolutionRecipe[] = [
     sourceLabel: "Thermo Fisher Scientific · standalone reagent recipes",
     sourceUrl: "https://www.thermofisher.com/us/en/home/life-science/protein-biology/protein-gel-electrophoresis/protein-gels/protein-gel-casting-cassettes.html",
     safetyQuery: "SDS",
+    safety: {
+      additionOrder: {
+        zh: "先加入约 80% 终体积的水并建立轻柔搅拌，再把 SDS 缓慢撒入液面，避免扬尘和大量泡沫，完全溶解后定容。",
+        en: "Start with about 80% of the final water volume under gentle stirring, slowly add SDS at the liquid surface without dust or heavy foam, and bring to volume after dissolution.",
+      },
+      incompatibilities: {
+        zh: "避免强氧化剂；加热会增加泡沫和气溶胶风险，不能用剧烈涡旋代替耐心溶解。",
+        en: "Avoid strong oxidizers; heating can increase foam and aerosol risk, and vigorous vortexing is not a safe substitute for controlled dissolution.",
+      },
+      waste: {
+        zh: "单纯 SDS 溶液与含蛋白、染料、丙烯酰胺单体或生物污染的废液分开判断；按最危险污染物分类。",
+        en: "Assess simple SDS solution separately from waste containing protein, stain, acrylamide monomer, or biological contamination and classify by the most hazardous contaminant.",
+      },
+    },
+  },
+  {
+    id: "edta-0-5m-ph8",
+    title: { zh: "0.5 M EDTA 二钠（pH 8.0）", en: "0.5 M disodium EDTA (pH 8.0)" },
+    subtitle: { zh: "分子生物学常用螯合剂储备液", en: "Common molecular-biology chelator stock" },
+    category: "stock",
+    defaultVolumeMl: 1000,
+    ingredients: [
+      { name: { zh: "EDTA 二钠二水合物", en: "Disodium EDTA dihydrate" }, amount: 186.1, unit: "g", chemicalId: "disodium-edta" },
+      { name: { zh: "NaOH 颗粒（约量，按 pH 滴定）", en: "NaOH pellets (approximate; titrate to pH)" }, amount: 20, unit: "g", chemicalId: "sodium-hydroxide" },
+    ],
+    steps: [
+      { zh: "将 EDTA 二钠二水合物缓慢加入约 80% 终体积的水中并强力搅拌。", en: "Slowly add disodium EDTA dihydrate to about 80% of the final water volume under vigorous stirring." },
+      { zh: "分批缓慢加入 NaOH，将 pH 调至 8.0 ± 0.2；EDTA 会随 pH 升高逐渐溶解。", en: "Add NaOH slowly in portions to pH 8.0 ± 0.2; EDTA will dissolve as the pH rises." },
+      { zh: "待溶液澄清并回到目标温度后复核 pH，再用水定容。", en: "After the solution clears and returns to the target temperature, recheck pH and bring to volume." },
+    ],
+    notes: [
+      { zh: "186.1 g 对应二水合物；使用无水物时质量不同，必须核对 CAS 和摩尔质量。", en: "The 186.1 g mass is for the dihydrate; anhydrous material requires a different mass, so verify CAS and molar mass." },
+      { zh: "约 20 g NaOH 只是来源给出的经验量，不能替代实际 pH 滴定。", en: "Approximately 20 g NaOH is an empirical amount from the source and does not replace actual pH titration." },
+    ],
+    sourceLabel: "Thermo Fisher Scientific · 0.5 M EDTA, pH 8.0",
+    sourceUrl: "https://documents.thermofisher.com/TFS-Assets/LSG/manuals/cms_041364.pdf",
+    safetyQuery: "6381-92-6",
+    safety: {
+      additionOrder: {
+        zh: "先将 EDTA 加入水中并持续搅拌，再把 NaOH 颗粒分小批加入；每批完全溶解、温度稳定后再继续，最后定容。",
+        en: "Add EDTA to water under continuous stirring, then introduce NaOH pellets in small portions; allow each portion to dissolve and temperature to stabilize before continuing, and bring to volume last.",
+      },
+      incompatibilities: {
+        zh: "NaOH 强腐蚀且溶解放热，远离酸和不相容金属；EDTA 会络合金属并改变含金属废液性质。",
+        en: "NaOH is strongly corrosive and releases heat on dissolution; keep it from acids and incompatible metals. EDTA chelates metals and changes metal-containing waste behavior.",
+      },
+      waste: {
+        zh: "含 EDTA 的金属样品或洗脱液不能按普通缓冲液判断，因为络合可能提高金属迁移性；按金属和样品污染物收集。",
+        en: "Do not assess EDTA solutions containing metals as ordinary buffer because chelation can increase metal mobility; collect according to the metals and sample contaminants present.",
+      },
+    },
+  },
+  {
+    id: "tris-glycine-sds-10x",
+    title: { zh: "10× Tris–Glycine–SDS 电泳缓冲液", en: "10× Tris–Glycine–SDS running buffer" },
+    subtitle: { zh: "SDS-PAGE 电极缓冲液浓缩液，约 pH 8.3", en: "Concentrated SDS-PAGE electrode buffer, approximately pH 8.3" },
+    category: "electrophoresis",
+    defaultVolumeMl: 1000,
+    ingredients: [
+      { name: { zh: "Tris 碱", en: "Tris base" }, amount: 30.3, unit: "g", chemicalId: "tris-base" },
+      { name: { zh: "甘氨酸", en: "Glycine" }, amount: 144.1, unit: "g", chemicalId: "glycine" },
+      { name: { zh: "SDS", en: "SDS" }, amount: 10, unit: "g", chemicalId: "sodium-dodecyl-sulfate" },
+    ],
+    steps: [
+      { zh: "先将 Tris 与甘氨酸溶于约 70% 终体积的去离子水。", en: "First dissolve Tris and glycine in about 70% of the final volume of deionized water." },
+      { zh: "降低搅拌强度后缓慢加入 SDS，避免扬尘和泡沫。", en: "Reduce stirring speed and slowly add SDS while preventing dust and foam." },
+      { zh: "用水定容至 1 L；不要用酸或碱调 pH。配制 1× 时按 1:9 稀释。", en: "Bring to 1 L with water; do not adjust pH with acid or base. Dilute 1:9 for 1× buffer." },
+    ],
+    notes: [
+      { zh: "Bio-Rad 配方明确要求不调 pH；异常 pH 应优先检查试剂、水质和称量。", en: "The Bio-Rad formulation explicitly says not to adjust pH; investigate reagents, water, and weighing when pH is abnormal." },
+      { zh: "SDS 会产生泡沫并可造成眼损伤，优先减少粉末处理。", en: "SDS foams and can cause serious eye damage, so minimize powder handling." },
+    ],
+    sourceLabel: "Bio-Rad · Running Buffers Bulletin 6199",
+    sourceUrl: "https://www.bio-rad.com/webroot/web/pdf/lsr/literature/Bulletin_6199.pdf",
+    safetyQuery: "SDS",
+    safety: {
+      additionOrder: {
+        zh: "Tris 和甘氨酸完全溶解后再慢慢加入 SDS；不要在高转速下倾倒 SDS，也不要额外加酸碱调 pH。",
+        en: "Dissolve Tris and glycine completely before slowly adding SDS; do not pour SDS under high-speed stirring or add acid or base for pH adjustment.",
+      },
+      incompatibilities: {
+        zh: "SDS 避免强氧化剂；缓冲液若加入还原剂、染料或样品，必须按新增成分重新评估。",
+        en: "Keep SDS from strong oxidizers; reassess the buffer when reducing agents, stains, or samples are added." },
+      waste: {
+        zh: "未使用浓缩液与实际跑胶废液分开管理；跑胶废液可能含样品、染料和未聚合丙烯酰胺污染，应按最危险成分分类。",
+        en: "Manage unused concentrate separately from spent running buffer, which may contain samples, stains, or unpolymerized acrylamide contamination and must be classified by the highest-hazard component.",
+      },
+    },
+  },
+  {
+    id: "towbin-transfer-buffer-1x",
+    title: { zh: "1× Towbin 转膜液（20% 甲醇）", en: "1× Towbin transfer buffer (20% methanol)" },
+    subtitle: { zh: "Western blot 湿转常用 Tris–Glycine–Methanol 配方", en: "Common Tris–Glycine–Methanol formulation for wet western transfer" },
+    category: "electrophoresis",
+    defaultVolumeMl: 1000,
+    ingredients: [
+      { name: { zh: "Tris 碱", en: "Tris base" }, amount: 3.03, unit: "g", chemicalId: "tris-base" },
+      { name: { zh: "甘氨酸", en: "Glycine" }, amount: 14.4, unit: "g", chemicalId: "glycine" },
+      { name: { zh: "甲醇", en: "Methanol" }, amount: 200, unit: "mL", chemicalId: "methanol" },
+    ],
+    steps: [
+      { zh: "先将 Tris 和甘氨酸溶于约 500 mL 去离子水。", en: "First dissolve Tris and glycine in about 500 mL deionized water." },
+      { zh: "在通风且远离点火源的条件下加入 200 mL 甲醇并混匀。", en: "Add 200 mL methanol with ventilation and away from ignition sources, then mix." },
+      { zh: "用水定容至 1 L；不要用酸或碱调 pH。使用前按实验体系冷却。", en: "Bring to 1 L with water; do not adjust pH with acid or base. Cool as required by the transfer system before use." },
+    ],
+    notes: [
+      { zh: "甲醇高度易燃且可造成严重全身毒性；不能在开放台面大量配制。", en: "Methanol is highly flammable and can cause severe systemic toxicity; do not prepare large volumes on an open bench." },
+      { zh: "膜类型、蛋白大小及是否添加 SDS 会改变转膜效果，应以设备和实验方案为准。", en: "Membrane type, protein size, and SDS addition affect transfer; follow the equipment and experimental protocol." },
+    ],
+    sourceLabel: "Bio-Rad · Transfer Buffer Formulations Bulletin 6211",
+    sourceUrl: "https://www.bio-rad.com/webroot/web/pdf/lsr/literature/Bulletin_6211.pdf",
+    safetyQuery: "methanol",
+    safety: {
+      additionOrder: {
+        zh: "先在水中溶解 Tris 和甘氨酸，再在通风条件下加入甲醇，最后定容；避免把甲醇直接倒在干粉上。",
+        en: "Dissolve Tris and glycine in water first, add methanol under ventilation, and bring to volume last; do not pour methanol directly onto dry powders.",
+      },
+      incompatibilities: {
+        zh: "甲醇远离火焰、热源、火花和强氧化剂；不要与漂白剂或不明氧化性废液混合。",
+        en: "Keep methanol from flames, heat, sparks, and strong oxidizers; do not mix it with bleach or unidentified oxidizing waste." },
+      waste: {
+        zh: "含 20% 甲醇的转膜液按含醇化学废液收集，不因其大部分是水就排入下水道；同时考虑蛋白和染料污染。",
+        en: "Collect 20% methanol transfer buffer as alcohol-containing chemical waste rather than drain-disposing it because it is mostly water; also account for protein and stain contamination.",
+      },
+    },
+  },
+  {
+    id: "ripa-150-triton",
+    title: { zh: "RIPA-150（Triton X-100 版）", en: "RIPA-150 (Triton X-100 version)" },
+    subtitle: { zh: "适用于部分 ChIP/蛋白裂解流程的去污剂缓冲液", en: "Detergent buffer used in selected ChIP and protein-lysis workflows" },
+    category: "buffer",
+    defaultVolumeMl: 100,
+    ingredients: [
+      { name: { zh: "1 M Tris-HCl（pH 8.0）", en: "1 M Tris-HCl (pH 8.0)" }, amount: 5, unit: "mL", chemicalId: "tris-base" },
+      { name: { zh: "5 M NaCl", en: "5 M NaCl" }, amount: 3, unit: "mL" },
+      { name: { zh: "10% Triton X-100", en: "10% Triton X-100" }, amount: 10, unit: "mL", chemicalId: "triton-x-100" },
+      { name: { zh: "10% SDS", en: "10% SDS" }, amount: 1, unit: "mL", chemicalId: "sodium-dodecyl-sulfate" },
+      { name: { zh: "10% 脱氧胆酸钠", en: "10% sodium deoxycholate" }, amount: 1, unit: "mL", chemicalId: "sodium-deoxycholate" },
+      { name: { zh: "0.5 M EDTA（pH 8.0）", en: "0.5 M EDTA (pH 8.0)" }, amount: 0.2, unit: "mL", chemicalId: "disodium-edta" },
+    ],
+    steps: [
+      { zh: "向约 70 mL 冷水中依次加入 Tris-HCl、NaCl 和 EDTA 储备液并混匀。", en: "Add Tris-HCl, NaCl, and EDTA stocks sequentially to about 70 mL cold water and mix." },
+      { zh: "轻柔加入 Triton X-100、SDS 和脱氧胆酸钠储备液，避免泡沫。", en: "Gently add Triton X-100, SDS, and sodium deoxycholate stocks while minimizing foam." },
+      { zh: "用水定容至 100 mL；蛋白酶/磷酸酶抑制剂按产品说明在使用前现加。", en: "Bring to 100 mL with water; add protease or phosphatase inhibitors fresh before use according to product instructions." },
+    ],
+    notes: [
+      { zh: "这是 Abcam ChIP 流程列出的 RIPA-150 变体（0.1% 脱氧胆酸钠），不是所有品牌 RIPA 的通用配方。", en: "This is the RIPA-150 variant listed in an Abcam ChIP protocol (0.1% sodium deoxycholate), not a universal formula for every RIPA product." },
+      { zh: "去污剂可破坏蛋白相互作用；是否适合 IP、膜蛋白或磷酸化蛋白必须由实验目标决定。", en: "Detergents can disrupt protein interactions; suitability for IP, membrane proteins, or phosphoproteins depends on the experimental objective." },
+    ],
+    sourceLabel: "Abcam · Cross-linking ChIP-seq protocol",
+    sourceUrl: "https://www.abcam.com/en-us/technical-resources/protocols/cross-linking-chip-seq",
+    safetyQuery: "Triton X-100",
+    safety: {
+      additionalChemicalIds: ["hydrochloric-acid"],
+      additionOrder: {
+        zh: "先混合全部水相盐和缓冲储备液，再低速加入三种去污剂；抑制剂最后现加，避免泡沫和气溶胶。",
+        en: "Combine aqueous salt and buffer stocks first, add the three detergents under low agitation, and add inhibitors fresh at the end while preventing foam and aerosols.",
+      },
+      incompatibilities: {
+        zh: "避免强氧化剂和成分不明的清洁剂；商品抑制剂可能含 PMSF、叠氮化物或溶剂，必须把其 SDS 纳入完整配方评估。",
+        en: "Avoid strong oxidizers and unidentified cleaners; commercial inhibitor products may contain PMSF, azide, or solvent, whose SDS must be included in the complete formulation assessment." },
+      waste: {
+        zh: "RIPA 废液通常同时含去污剂、样品和抑制剂，按化学/生物混合废物评估；不得仅按普通盐缓冲液处理。",
+        en: "RIPA waste commonly contains detergents, sample, and inhibitors and requires chemical/biological mixed-waste assessment rather than ordinary salt-buffer disposal." },
+    },
   },
 ];
 

@@ -4780,6 +4780,157 @@ button, [role="button"] { cursor: pointer; }
 .lab-ingredient-header { background: var(--bg-card); }
 .lab-ingredient-header > span { color: var(--text-3); font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
 
+.lab-ingredient-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lab-ingredient-name > span { min-width: 0; }
+
+.lab-ingredient-name > a {
+  flex: 0 0 auto;
+  color: var(--lab-blue);
+  font-size: 9px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.lab-recipe-safety-panel {
+  padding: 18px 20px 20px;
+  border-bottom: 1px solid var(--border);
+  background:
+    radial-gradient(circle at 96% 0%, rgba(83, 157, 245, 0.1), transparent 32%),
+    var(--bg-card);
+}
+
+.lab-recipe-safety-panel > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.lab-recipe-safety-panel > header > div:first-child > span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--lab-blue);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.lab-recipe-safety-panel h4 {
+  margin: 0;
+  color: var(--text-1);
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+
+.lab-recipe-safety-metrics {
+  display: flex;
+  align-items: stretch;
+  gap: 7px;
+}
+
+.lab-recipe-safety-metrics > span {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text-3);
+  background: var(--bg-inset);
+  font-size: 9px;
+}
+
+.lab-recipe-safety-metrics > span:last-child { flex-direction: column; align-items: flex-start; gap: 2px; }
+.lab-recipe-safety-metrics b { color: var(--text-1); font-family: var(--font-mono); font-size: 11px; }
+.lab-recipe-safety-metrics small { color: var(--text-3); font-size: 7px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
+.lab-recipe-safety-metrics .lab-concern-critical { color: var(--red); }
+.lab-recipe-safety-metrics .lab-concern-high { color: var(--lab-amber); }
+.lab-recipe-safety-metrics .lab-concern-moderate { color: var(--lab-teal); }
+
+.lab-linked-reagent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 7px;
+  margin-bottom: 12px;
+}
+
+.lab-linked-reagent {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 10px;
+  color: var(--text-1);
+  background: var(--bg-inset);
+  text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.lab-linked-reagent:hover { border-color: var(--lab-blue); transform: translateY(-1px); }
+.lab-linked-reagent-critical { border-left-color: var(--red); }
+.lab-linked-reagent-high { border-left-color: var(--lab-amber); }
+.lab-linked-reagent-moderate { border-left-color: var(--lab-teal); }
+.lab-linked-reagent > span { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.lab-linked-reagent b { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.lab-linked-reagent small { flex: 0 0 auto; color: var(--text-3); font-size: 8px; }
+.lab-linked-reagent em { overflow: hidden; color: var(--text-3); font-size: 8px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+
+.lab-no-linked-records {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border-mid);
+  border-radius: 10px;
+  color: var(--text-3);
+  background: var(--bg-inset);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.lab-recipe-safety-guidance {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.lab-recipe-safety-guidance article {
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr);
+  gap: 8px;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(83, 157, 245, 0.035);
+}
+
+.lab-recipe-safety-guidance article > span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  color: var(--lab-blue);
+  background: var(--lab-blue-soft);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.lab-recipe-safety-guidance h5 { margin: 1px 0 5px; color: var(--text-1); font-size: 9px; letter-spacing: 0.04em; text-transform: uppercase; }
+.lab-recipe-safety-guidance p { margin: 0; color: var(--text-2); font-size: 9px; line-height: 1.65; }
+
 .lab-recipe-sections {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -4975,6 +5126,12 @@ button, [role="button"] { cursor: pointer; }
   .lab-ingredient-row { grid-template-columns: minmax(0, 1fr) 115px; }
   .lab-ingredient-row > span,
   .lab-ingredient-row > strong { padding: 9px 12px; }
+  .lab-ingredient-name { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .lab-recipe-safety-panel { padding: 15px 12px; }
+  .lab-recipe-safety-panel > header { flex-direction: column; gap: 10px; }
+  .lab-recipe-safety-metrics { width: 100%; }
+  .lab-recipe-safety-metrics > span { flex: 1; }
+  .lab-recipe-safety-guidance { grid-template-columns: 1fr; }
   .lab-recipe-sections { grid-template-columns: 1fr; }
   .lab-recipe-sections > section + section { border-top: 1px solid var(--border); border-left: 0; }
   .lab-recipe-actions { flex-direction: column; gap: 8px; }

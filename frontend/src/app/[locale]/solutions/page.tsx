@@ -2,7 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { Link } from "@/navigation";
-import { SOLUTION_RECIPES, type SolutionRecipe } from "@/lib/lab-reference-data";
+import {
+  CHEMICAL_SAFETY_RECORDS,
+  SOLUTION_RECIPES,
+  type ChemicalSafetyRecord,
+  type SolutionRecipe,
+} from "@/lib/lab-reference-data";
 
 type CalculatorMode = "molar" | "dilution" | "percent";
 
@@ -11,9 +16,9 @@ const COPY = {
     kicker: "Lab bench · 配制与换算",
     title: "实验室溶液配制指南",
     intro: "先算清楚，再按可追溯配方操作。通用计算器负责摩尔浓度、稀释和百分浓度；标准配方卡负责组分、步骤、缩放和来源。",
-    heroMetric: "V1 已收录",
-    heroValue: "3 类计算 · 5 个配方",
-    heroBody: "不把经验值伪装成标准答案；水合物、温度、pH 和产品浓度都会被单独提示。",
+    heroMetric: "V2 配制 × 安全联动",
+    heroValue: "3 类计算 · 9 个配方",
+    heroBody: "配方原料直接关联毒性库，并明确显示加料顺序、不相容性和废液边界。",
     calculator: "通用计算器",
     calculatorIntro: "输入数值后即时计算。所有体积均指终体积（final volume），不是简单加入相同体积的水。",
     molar: "摩尔溶液",
@@ -55,6 +60,23 @@ const COPY = {
     notes: "关键边界",
     source: "查看原始来源",
     safety: "查询试剂安全",
+    linkedSafety: "配方安全联动",
+    linkedRecords: "条试剂记录",
+    strongest: "最高关注级别",
+    openRecord: "查看安全卡",
+    noLinkedRecords: "当前配方没有映射到毒性库中的高关注试剂；这不代表所有原料均无危险，仍须核对每个产品 SDS。",
+    additionOrder: "关键加料顺序",
+    incompatibility: "禁配与不相容",
+    waste: "废液判断",
+    critical: "极高关注",
+    high: "高关注",
+    moderate: "常规重点",
+    acute: "急性毒性",
+    corrosive: "腐蚀",
+    flammable: "易燃",
+    oxidizer: "氧化剂",
+    chronic: "长期危害",
+    irritant: "刺激/致敏",
     safetyTitle: "配制前的最低安全检查",
     safetyItems: [
       "核对瓶身化学名称、CAS、浓度/纯度及水合状态，不能只看简称。",
@@ -68,9 +90,9 @@ const COPY = {
     kicker: "Lab bench · preparation & conversion",
     title: "Laboratory solution preparation guide",
     intro: "Calculate first, then work from traceable formulations. General calculators cover molarity, dilution, and percentage solutions; recipe cards provide ingredients, steps, scaling, and sources.",
-    heroMetric: "Included in V1",
-    heroValue: "3 calculators · 5 recipes",
-    heroBody: "Hydration state, temperature, pH, and product concentration are surfaced instead of hiding them behind a single number.",
+    heroMetric: "V2 preparation × safety links",
+    heroValue: "3 calculators · 9 recipes",
+    heroBody: "Recipe ingredients link directly to the safety library, with addition order, incompatibilities, and waste boundaries surfaced in every card.",
     calculator: "General calculators",
     calculatorIntro: "Results update from your inputs. Every volume is a final volume, not an instruction to add that same volume of water.",
     molar: "Molar solution",
@@ -112,6 +134,23 @@ const COPY = {
     notes: "Critical boundaries",
     source: "Open original source",
     safety: "Check reagent safety",
+    linkedSafety: "Recipe safety links",
+    linkedRecords: "linked reagent records",
+    strongest: "Highest concern",
+    openRecord: "Open safety card",
+    noLinkedRecords: "This recipe currently has no high-concern reagent mapped in the safety library. That does not establish every ingredient as hazard-free; check each product SDS.",
+    additionOrder: "Critical addition order",
+    incompatibility: "Do not mix / incompatibilities",
+    waste: "Waste decision",
+    critical: "Critical concern",
+    high: "High concern",
+    moderate: "Routine priority",
+    acute: "Acute toxicity",
+    corrosive: "Corrosive",
+    flammable: "Flammable",
+    oxidizer: "Oxidizer",
+    chronic: "Chronic hazard",
+    irritant: "Irritant / sensitizer",
     safetyTitle: "Minimum safety check before preparation",
     safetyItems: [
       "Confirm chemical name, CAS, concentration/purity, and hydration state from the container—not an abbreviation alone.",
@@ -125,6 +164,8 @@ const COPY = {
 
 const CONCENTRATION_FACTORS: Record<string, number> = { M: 1, mM: 1e-3, "µM": 1e-6 };
 const VOLUME_FACTORS: Record<string, number> = { L: 1, mL: 1e-3, "µL": 1e-6 };
+const CHEMICALS_BY_ID = new Map(CHEMICAL_SAFETY_RECORDS.map((record) => [record.id, record]));
+const CONCERN_RANK: Record<ChemicalSafetyRecord["level"], number> = { moderate: 0, high: 1, critical: 2 };
 
 function positiveNumber(value: string) {
   const parsed = Number(value);
@@ -177,6 +218,13 @@ function RecipeCard({ recipe, zh }: { recipe: SolutionRecipe; zh: boolean }) {
   const [volume, setVolume] = useState(String(recipe.defaultVolumeMl));
   const targetVolume = positiveNumber(volume);
   const scale = targetVolume ? targetVolume / recipe.defaultVolumeMl : null;
+  const linkedRecords = Array.from(new Set([
+    ...recipe.ingredients.flatMap((ingredient) => ingredient.chemicalId ? [ingredient.chemicalId] : []),
+    ...(recipe.safety.additionalChemicalIds ?? []),
+  ])).map((id) => CHEMICALS_BY_ID.get(id)).filter((record): record is ChemicalSafetyRecord => Boolean(record));
+  const strongestRecord = linkedRecords.reduce<ChemicalSafetyRecord | null>((current, record) => (
+    !current || CONCERN_RANK[record.level] > CONCERN_RANK[current.level] ? record : current
+  ), null);
 
   return (
     <article className="lab-recipe-card" id={recipe.id}>
@@ -196,13 +244,38 @@ function RecipeCard({ recipe, zh }: { recipe: SolutionRecipe; zh: boolean }) {
         <div className="lab-ingredient-row lab-ingredient-header" role="row">
           <span role="columnheader">{copy.ingredient}</span><span role="columnheader">{copy.amount}</span>
         </div>
-        {recipe.ingredients.map((ingredient) => (
-          <div className="lab-ingredient-row" role="row" key={`${ingredient.name.en}-${ingredient.unit}`}>
-            <span role="cell">{zh ? ingredient.name.zh : ingredient.name.en}</span>
+        {recipe.ingredients.map((ingredient) => {
+          const linkedRecord = ingredient.chemicalId ? CHEMICALS_BY_ID.get(ingredient.chemicalId) : undefined;
+          return <div className="lab-ingredient-row" role="row" key={`${ingredient.name.en}-${ingredient.unit}`}>
+            <span className="lab-ingredient-name" role="cell">
+              <span>{zh ? ingredient.name.zh : ingredient.name.en}</span>
+              {linkedRecord && <Link href={`/chemical-safety?q=${encodeURIComponent(linkedRecord.cas)}`}>{copy.openRecord} →</Link>}
+            </span>
             <strong role="cell">{scale ? `${compactNumber(ingredient.amount * scale)} ${ingredient.unit}` : "—"}</strong>
-          </div>
-        ))}
+          </div>;
+        })}
       </div>
+
+      <section className="lab-recipe-safety-panel">
+        <header>
+          <div><span>Safety link</span><h4>{copy.linkedSafety}</h4></div>
+          <div className="lab-recipe-safety-metrics">
+            <span><b>{linkedRecords.length}</b>{copy.linkedRecords}</span>
+            {strongestRecord && <span><small>{copy.strongest}</small><b className={`lab-concern-${strongestRecord.level}`}>{copy[strongestRecord.level]}</b></span>}
+          </div>
+        </header>
+        {linkedRecords.length ? <div className="lab-linked-reagent-grid">
+          {linkedRecords.map((record) => <Link key={record.id} href={`/chemical-safety?q=${encodeURIComponent(record.cas)}`} className={`lab-linked-reagent lab-linked-reagent-${record.level}`}>
+            <span><b>{zh ? record.name.zh : record.name.en}</b><small>{copy[record.level]}</small></span>
+            <em>{record.categories.slice(0, 3).map((category) => copy[category]).join(" · ") || (zh ? "核对产品 SDS" : "Check product SDS")}</em>
+          </Link>)}
+        </div> : <p className="lab-no-linked-records">{copy.noLinkedRecords}</p>}
+        <div className="lab-recipe-safety-guidance">
+          <article><span>01</span><div><h5>{copy.additionOrder}</h5><p>{zh ? recipe.safety.additionOrder.zh : recipe.safety.additionOrder.en}</p></div></article>
+          <article><span>02</span><div><h5>{copy.incompatibility}</h5><p>{zh ? recipe.safety.incompatibilities.zh : recipe.safety.incompatibilities.en}</p></div></article>
+          <article><span>03</span><div><h5>{copy.waste}</h5><p>{zh ? recipe.safety.waste.zh : recipe.safety.waste.en}</p></div></article>
+        </div>
+      </section>
 
       <div className="lab-recipe-sections">
         <section>
