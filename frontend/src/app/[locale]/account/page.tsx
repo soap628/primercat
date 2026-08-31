@@ -375,6 +375,7 @@ export default function AccountPage({ params: { locale } }: { params: { locale: 
       <div className="account-search-v8" style={{ marginBottom: 16 }}>
         <input
           className="input"
+          aria-label={t("search_placeholder")}
           placeholder={t("search_placeholder")}
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}

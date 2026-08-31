@@ -207,6 +207,15 @@ export default function NavLinks({ locale }: { locale: string }) {
     setMobileOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileOpen]);
+
   const links = [
     { href: "/primer", label: copy.primer, icon: <CatIcon />, matchPrefixes: ["/primer"] },
     { href: "/pcr", label: copy.pcr, icon: "P", matchPrefixes: ["/pcr"] },
@@ -236,6 +245,7 @@ export default function NavLinks({ locale }: { locale: string }) {
             key={item.href}
             href={href}
             onClick={mobile ? () => setMobileOpen(false) : undefined}
+            aria-current={active ? "page" : undefined}
             className={`nav-link${active ? " nav-link-active" : ""}${isPcr ? " nav-link-pcr" : ""}${isCrispr ? " nav-link-crispr" : ""}${isBlast ? " nav-link-blast" : ""}${mobile ? " mobile-nav-link" : ""}`}
           >
             <span className="nav-product-icon">{item.icon}</span>
@@ -255,6 +265,7 @@ export default function NavLinks({ locale }: { locale: string }) {
 
       {/* Theme toggle — SVG icon */}
       <button
+        type="button"
         onClick={toggle}
         className="nav-link nav-icon-button"
         aria-label={dark ? copy.lightMode : copy.darkMode}
@@ -264,8 +275,10 @@ export default function NavLinks({ locale }: { locale: string }) {
 
       {/* Language switcher — SVG globe + label */}
       <button
+        type="button"
         onClick={switchLocale}
         className="nav-link nav-utility-button nav-language-button"
+        aria-label={locale === "zh" ? "Switch to English" : "切换到中文"}
       >
         <GlobeIcon />
         {copy.otherLabel}
@@ -274,56 +287,33 @@ export default function NavLinks({ locale }: { locale: string }) {
       {!loading && (
         <>
           {user ? (
-            <div ref={dropdownRef} style={{ position: "relative", marginLeft: 6 }}>
+            <div ref={dropdownRef} className="nav-account-wrap">
               <button
+                type="button"
                 onClick={() => setDropdownOpen((v) => !v)}
                 className="nav-link nav-account-button"
-                style={{
-                  cursor: "pointer",
-                  maxWidth: 130,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
+                aria-expanded={dropdownOpen}
+                aria-haspopup="true"
+                aria-controls="account-navigation-panel"
               >
                 {user.display_name || user.email.split("@")[0]} ▾
               </button>
               {dropdownOpen && (
                 <div
-                  style={{
-                    position: "absolute",
-                    right: 0,
-                    top: "calc(100% + 6px)",
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--r-lg)",
-                    boxShadow: "var(--shadow-lg)",
-                    minWidth: 148,
-                    zIndex: 100,
-                    overflow: "hidden",
-                  }}
+                  id="account-navigation-panel"
+                  className="nav-account-menu"
                 >
                   <Link
                     href={`/${locale}/account`}
                     onClick={() => setDropdownOpen(false)}
-                    style={{ display: "block", padding: "10px 16px", fontSize: 13, color: "var(--text-1)", textDecoration: "none" }}
+                    className="nav-account-menu-link"
                   >
                     {copy.history}
                   </Link>
                   <button
+                    type="button"
                     onClick={() => { logout(); setDropdownOpen(false); }}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "10px 16px",
-                      fontSize: 13,
-                      color: "var(--red)",
-                      background: "none",
-                      border: "none",
-                      borderTop: "1px solid var(--border)",
-                      cursor: "pointer",
-                    }}
+                    className="nav-account-menu-logout"
                   >
                     {copy.logout}
                   </button>
@@ -371,7 +361,12 @@ export default function NavLinks({ locale }: { locale: string }) {
                 {dark ? <SunIcon /> : <MoonIcon />}
                 <span>{dark ? copy.lightMode : copy.darkMode}</span>
               </button>
-              <button type="button" onClick={switchLocale} className="mobile-nav-action">
+              <button
+                type="button"
+                onClick={switchLocale}
+                className="mobile-nav-action"
+                aria-label={locale === "zh" ? "Switch to English" : "切换到中文"}
+              >
                 <GlobeIcon />
                 <span>{copy.otherLabel}</span>
               </button>

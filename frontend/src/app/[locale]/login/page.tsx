@@ -42,11 +42,13 @@ export default function LoginPage({ params: { locale } }: { params: { locale: st
     >
         <form className="auth-form-v8" onSubmit={handleSubmit}>
           <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6, color: "var(--text-2)" }}>
+            <label htmlFor="login-email" style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6, color: "var(--text-2)" }}>
               {t("email")}
             </label>
             <input
+              id="login-email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -55,11 +57,13 @@ export default function LoginPage({ params: { locale } }: { params: { locale: st
             />
           </div>
           <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6, color: "var(--text-2)" }}>
+            <label htmlFor="login-password" style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6, color: "var(--text-2)" }}>
               {t("password")}
             </label>
             <input
+              id="login-password"
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

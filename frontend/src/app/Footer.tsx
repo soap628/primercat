@@ -78,25 +78,16 @@ export default function Footer({ locale }: { locale: string }) {
 
   return (
     <footer className="site-footer">
-      <div style={{ height: 1, background: "linear-gradient(90deg, transparent, var(--border-mid) 30%, var(--border-mid) 70%, transparent)" }} />
-
       <div className="footer-grid-wrap">
         <div className="footer-grid">
           {/* Brand column */}
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <div
-                style={{
-                  width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-                  background: "var(--bg-inset)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 0 0 1px var(--border)",
-                }}
-              >
+          <div className="footer-brand">
+            <div className="footer-brand-lockup">
+              <div className="footer-brand-mark">
                 <svg width="18" height="18" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-                  <ellipse cx="11" cy="13.5" rx="7.5" ry="6.8" fill="white" opacity="0.96" />
-                  <polygon points="4.2,10 6.5,3.5 9.8,8.8" fill="white" opacity="0.96" />
-                  <polygon points="17.8,10 15.5,3.5 12.2,8.8" fill="white" opacity="0.96" />
+                  <ellipse cx="11" cy="13.5" rx="7.5" ry="6.8" fill="currentColor" opacity="0.96" />
+                  <polygon points="4.2,10 6.5,3.5 9.8,8.8" fill="currentColor" opacity="0.96" />
+                  <polygon points="17.8,10 15.5,3.5 12.2,8.8" fill="currentColor" opacity="0.96" />
                   <polygon points="5.4,9.6 7,5.2 9.2,8.8" fill="#fca5a5" opacity="0.65" />
                   <polygon points="16.6,9.6 15,5.2 12.8,8.8" fill="#fca5a5" opacity="0.65" />
                   <circle cx="8.2" cy="13" r="1.4" fill="var(--accent)" />
@@ -104,32 +95,25 @@ export default function Footer({ locale }: { locale: string }) {
                   <ellipse cx="11" cy="16.2" rx="0.9" ry="0.65" fill="#fca5a5" opacity="0.9" />
                 </svg>
               </div>
-              <span style={{ fontSize: 15, fontWeight: 700, color: "var(--text-1)", letterSpacing: "-0.01em" }}>
-                Primer<span style={{ color: "var(--accent)" }}>Cat</span>
+              <span className="footer-brand-name">
+                Primer<strong>Cat</strong>
               </span>
             </div>
-            <p style={{ fontSize: 12, lineHeight: 1.75, maxWidth: 230, color: "var(--text-2)" }}>
+            <p className="footer-brand-description">
               {copy.brandDesc}
             </p>
-            <p style={{ fontSize: 11, lineHeight: 1.6, maxWidth: 230, color: "var(--text-3)", marginTop: 10, fontStyle: "italic" }}>
+            <p className="footer-disclaimer">
               {copy.disclaimer}
             </p>
           </div>
 
           {/* Link columns */}
           {sections.map((section) => (
-            <div key={section.title}>
-              <div
-                style={{
-                  fontSize: 11, fontWeight: 600, letterSpacing: "0.09em",
-                  textTransform: "uppercase", color: "var(--text-3)",
-                  marginBottom: 14, paddingBottom: 8,
-                  borderBottom: "1px solid var(--border)",
-                }}
-              >
+            <div className="footer-section" key={section.title}>
+              <h2 className="footer-section-title">
                 {section.title}
-              </div>
-              <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 9 }}>
+              </h2>
+              <ul className="footer-link-list">
                 {section.links.map((link) => (
                   <li key={link.label}>
                     <Link href={`/${locale}${link.href}`} className="footer-link">
@@ -144,23 +128,22 @@ export default function Footer({ locale }: { locale: string }) {
       </div>
 
       <div className="footer-bottom">
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-          <span style={{ fontSize: 12, color: "var(--text-3)" }}>{copy.copyright}</span>
-          <div style={{ display: "flex", gap: 20, fontSize: 12 }}>
-            <Link href={`/${locale}/privacy`} style={{ color: "var(--text-3)", textDecoration: "none" }}>
+        <div className="footer-bottom-inner">
+          <span>{copy.copyright}</span>
+          <div className="footer-legal-links">
+            <Link href={`/${locale}/privacy`}>
               {copy.privacy}
             </Link>
-            <Link href={`/${locale}/terms`} style={{ color: "var(--text-3)", textDecoration: "none" }}>
+            <Link href={`/${locale}/terms`}>
               {copy.terms}
             </Link>
           </div>
         </div>
-        <div style={{ maxWidth: 1100, margin: "8px auto 0", textAlign: "center" }}>
+        <div className="footer-icp">
           <a
             href="https://beian.miit.gov.cn/"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ fontSize: 11, color: "var(--text-3)", opacity: 0.5, textDecoration: "none" }}
           >
             晋ICP备2025066604号
           </a>

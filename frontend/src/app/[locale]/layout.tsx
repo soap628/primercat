@@ -39,9 +39,12 @@ export default async function LocaleLayout({
           <AuthProvider>
             <ToastProvider>
             <div className="site-shell">
+              <a className="skip-link" href="#main-content">
+                {locale === "zh" ? "跳到主要内容" : "Skip to main content"}
+              </a>
               <SiteHeader locale={locale} />
 
-              <main className="site-main">{children}</main>
+              <main id="main-content" className="site-main">{children}</main>
 
               <Footer locale={locale} />
             </div>

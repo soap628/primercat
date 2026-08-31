@@ -48,22 +48,22 @@ export default function RegisterPage({ params: { locale } }: { params: { locale:
     >
         <form className="auth-form-v8" onSubmit={handleSubmit}>
           <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6, color: "var(--text-2)" }}>
+            <label htmlFor="register-email" style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6, color: "var(--text-2)" }}>
               {t("email")}
             </label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="input" placeholder="you@example.com" />
+            <input id="register-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="input" placeholder="you@example.com" />
           </div>
           <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6, color: "var(--text-2)" }}>
+            <label htmlFor="register-password" style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6, color: "var(--text-2)" }}>
               {t("password")}
             </label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="input" placeholder="••••••••" />
+            <input id="register-password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required className="input" placeholder="••••••••" />
           </div>
           <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6, color: "var(--text-2)" }}>
+            <label htmlFor="register-name" style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6, color: "var(--text-2)" }}>
               {t("display_name")}
             </label>
-            <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="input" placeholder={locale === "zh" ? "如：张三" : "e.g. Jane"} />
+            <input id="register-name" type="text" autoComplete="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="input" placeholder={locale === "zh" ? "如：张三" : "e.g. Jane"} />
           </div>
 
           {error && (
