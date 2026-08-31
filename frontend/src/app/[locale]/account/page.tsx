@@ -58,7 +58,7 @@ function PrimerExpandedDetail({ result }: { result: Record<string, unknown> }) {
         const blastL = p.blast_left as Record<string, unknown> | null;
         const blastR = p.blast_right as Record<string, unknown> | null;
         return (
-          <div key={i} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", padding: "12px 14px", fontSize: 12 }}>
+          <div key={i} className="account-result-row-v8" style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", padding: "12px 14px", fontSize: 12 }}>
             {/* 头部：排名、产物大小、综合评分 */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <span style={{ fontWeight: 700, color: "var(--text-1)" }}>Pair {(p.rank as number ?? i + 1)}</span>
@@ -133,7 +133,7 @@ function GrnaExpandedDetail({ result }: { result: Record<string, unknown> }) {
   return (
     <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
       {list.slice(0, 5).map((g, i) => (
-        <div key={i} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", padding: "8px 12px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+        <div key={i} className="account-result-row-v8" style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", padding: "8px 12px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <span style={{ fontWeight: 600, color: "var(--text-2)", flexShrink: 0 }}>#{g.rank as number}</span>
           <span style={mono}>{g.guide_with_pam as string}</span>
           <CopyBtn text={g.guide_with_pam as string} />
@@ -153,7 +153,7 @@ function BlastExpandedDetail({ result }: { result: Record<string, unknown> }) {
       {hits.slice(0, 5).map((h, i) => {
         const hsp = h.best_hsp as Record<string, unknown>;
         return (
-          <div key={i} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", padding: "8px 12px", fontSize: 12 }}>
+          <div key={i} className="account-result-row-v8" style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", padding: "8px 12px", fontSize: 12 }}>
             <div style={{ fontWeight: 500, color: "var(--text-1)", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.title as string}</div>
             <span style={{ color: "var(--text-3)" }}>{h.accession as string} · 同一性 {(hsp?.identity_pct as number)?.toFixed(1)}% · 比对长度 {hsp?.align_length as number} bp</span>
           </div>
@@ -181,7 +181,7 @@ function JobCard({ job, type, onDelete, tDelete }: {
     : `${job.program} / ${job.database} · ${Array.isArray(res.hits) ? (res.hits as unknown[]).length : 0} 条命中 · ${formatDate(job.created_at)}`;
 
   return (
-    <div className="card card-hover" style={{ overflow: "hidden" }}>
+    <article className="card card-hover account-job-card-v8" style={{ overflow: "hidden" }}>
       <div style={{ padding: "14px 16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: "var(--text-1)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -225,13 +225,13 @@ function JobCard({ job, type, onDelete, tDelete }: {
         </div>
       </div>
       {expanded && (
-        <div style={{ borderTop: "1px solid var(--border)", padding: "12px 16px", background: "var(--bg-inset)" }}>
+        <div className="account-job-expanded-v8" style={{ borderTop: "1px solid var(--border)", padding: "12px 16px", background: "var(--bg-inset)" }}>
           {type === "primer" && <PrimerExpandedDetail result={res} />}
           {type === "grna" && <GrnaExpandedDetail result={res} />}
           {type === "blast" && <BlastExpandedDetail result={res} />}
         </div>
       )}
-    </div>
+    </article>
   );
 }
 
@@ -246,7 +246,7 @@ function JobList({ jobs, type, onDelete, tDelete, tEmpty }: {
     return <p style={{ color: "var(--text-3)", fontSize: 14, marginTop: 24 }}>{tEmpty}</p>;
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
+    <div className="account-job-list-v8" style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
       {jobs.map((job) => (
         <JobCard key={job.id} job={job} type={type} onDelete={() => onDelete(job.id)} tDelete={tDelete} />
       ))}
@@ -341,11 +341,15 @@ export default function AccountPage({ params: { locale } }: { params: { locale: 
   const hasMore = currentJobs.length === PAGE_SIZE;
 
   return (
-    <div style={{ maxWidth: 700, margin: "48px auto", padding: "0 16px" }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-1)", marginBottom: 8 }}>{t("title")}</h1>
-      <p style={{ fontSize: 13, color: "var(--text-2)", marginBottom: 24 }}>{user.email}</p>
+    <main className="account-page-v8" style={{ maxWidth: 700, margin: "48px auto", padding: "0 16px" }}>
+      <header className="account-header-v8">
+        <div>{locale === "zh" ? "科研记录" : "Research history"}</div>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-1)", marginBottom: 8 }}>{t("title")}</h1>
+        <p style={{ fontSize: 13, color: "var(--text-2)", marginBottom: 24 }}>{user.email}</p>
+        <p>{locale === "zh" ? "按工具查看、检索和管理已保存的设计结果。" : "Review, search, and manage saved design results by tool."}</p>
+      </header>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: "1px solid var(--border)", paddingBottom: 0 }}>
+      <nav className="account-tabs-v8" aria-label={locale === "zh" ? "结果类型" : "Result type"} style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: "1px solid var(--border)", paddingBottom: 0 }}>
         {tabs.map(({ key, label }) => (
           <button
             key={key}
@@ -365,10 +369,10 @@ export default function AccountPage({ params: { locale } }: { params: { locale: 
             {label}
           </button>
         ))}
-      </div>
+      </nav>
 
       {/* 搜索框 */}
-      <div style={{ marginBottom: 16 }}>
+      <div className="account-search-v8" style={{ marginBottom: 16 }}>
         <input
           className="input"
           placeholder={t("search_placeholder")}
@@ -414,6 +418,6 @@ export default function AccountPage({ params: { locale } }: { params: { locale: 
           )}
         </>
       )}
-    </div>
+    </main>
   );
 }
