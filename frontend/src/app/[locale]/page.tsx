@@ -19,41 +19,44 @@ function PrimerCatMascot() {
         </linearGradient>
       </defs>
 
-      <ellipse className="home-mascot-shadow" cx="88" cy="157" rx="47" ry="6" />
-      <path className="home-mascot-tail" d="M112 116c25-4 45 7 44 23-.8 12-13 17-25 9-6-4-8-11-6-17" stroke="url(#mascotTail)" strokeWidth="11" strokeLinecap="round" />
+      <ellipse className="home-mascot-shadow" cx="91" cy="157" rx="45" ry="5.5" />
+      <path className="home-mascot-tail" d="M110 119c24-8 45 1 47 16 2 13-10 23-23 18-10-4-14-14-8-22 4-6 12-6 18-2" stroke="url(#mascotTail)" strokeWidth="10" strokeLinecap="round" />
 
       <g className="home-mascot-body">
-        <path className="home-mascot-torso" d="M66 79c-13 10-19 29-17 53 1 17 10 26 26 26h34c15 0 23-8 21-20-2-12-9-18-18-22 2-18-3-31-15-38L66 79Z" fill="url(#mascotCoat)" />
-        <path className="home-mascot-chest" d="M72 88c-9 15-10 36-5 61h19c-2-22 0-43 8-64-7-2-15-1-22 3Z" />
-        <path className="home-mascot-haunch" d="M108 116c12 4 20 12 22 23 2 11-6 19-20 19H96c12-9 16-23 12-42Z" />
-        <path className="home-mascot-paw" d="M66 118v31m22-33v34" />
-        <path className="home-mascot-paw-toes" d="M59 150h15m7 0h15" />
+        <path className="home-mascot-torso" d="M68 82c-12 9-18 28-16 49 1 19 10 28 27 28h30c15 0 23-8 20-20-2-11-9-18-19-22 3-15-2-28-13-36-8-5-20-5-29 1Z" fill="url(#mascotCoat)" />
+        <path className="home-mascot-chest" d="M72 91c-8 15-9 36-4 59 4 5 10 7 18 7h5c-5-24-2-47 7-68-9-4-18-3-26 2Z" />
+        <path className="home-mascot-haunch" d="M108 116c13 4 20 12 22 23 2 11-7 19-21 19H96c11-9 15-23 12-42Z" />
+        <path className="home-mascot-paw" d="M69 119c-1 12-1 22 1 31m20-34c-2 13-2 24 0 34" />
+        <path className="home-mascot-paw-toes" d="M62 151c5-2 10-2 15 0m6 0c5-2 10-2 15 0" />
       </g>
 
       <g className="home-mascot-head">
-        <path className="home-mascot-face" d="M46 59c0-10 3-18 9-25L52 12l22 15a49 49 0 0 1 28 0l23-15-4 23c6 7 9 15 9 24 0 23-18 38-42 38S46 82 46 59Z" fill="url(#mascotCoat)" />
-        <path className="home-mascot-ear-inner" d="m58 24 13 9-11 7-2-16Zm54 9 9-9-2 16-7-7Z" />
-        <path className="home-mascot-brow" d="M63 53c5-4 11-4 16-1m18 0c5-3 11-3 16 1" />
+        <path className="home-mascot-face" d="M47 60c0-10 3-19 10-26L54 13l21 14c9-4 20-4 29 0l21-13-4 23c6 7 8 15 8 24-1 22-18 36-41 36-24 0-41-15-41-37Z" fill="url(#mascotCoat)" />
+        <path className="home-mascot-ear-inner" d="m59 24 13 9-11 7-2-16Zm53 9 9-8-2 16-7-8Z" />
+        <path className="home-mascot-face-highlight" d="M82 28c4-2 9-2 13 0-2 8-4 14-6 21-2-7-4-14-7-21Z" />
+        <path className="home-mascot-brow" d="M63 54c5-3 11-3 16 0m18 0c5-3 11-3 15 0" />
         <g className="home-mascot-eyes">
-          <ellipse cx="71" cy="61" rx="7" ry="8" className="home-mascot-eye-white" />
-          <ellipse cx="105" cy="61" rx="7" ry="8" className="home-mascot-eye-white" />
-          <ellipse cx="72" cy="62" rx="2.4" ry="4.5" className="home-mascot-iris" />
-          <ellipse cx="106" cy="62" rx="2.4" ry="4.5" className="home-mascot-iris" />
-          <circle cx="70.8" cy="60.2" r="1" className="home-mascot-eye-glint" />
-          <circle cx="104.8" cy="60.2" r="1" className="home-mascot-eye-glint" />
+          <path d="M62 62c4-6 12-6 17 0-4 6-12 6-17 0Z" className="home-mascot-eye-white" />
+          <path d="M97 62c4-6 12-6 17 0-4 6-12 6-17 0Z" className="home-mascot-eye-white" />
+          <ellipse cx="71" cy="62" rx="1.8" ry="4" className="home-mascot-iris" />
+          <ellipse cx="106" cy="62" rx="1.8" ry="4" className="home-mascot-iris" />
+          <circle cx="70.5" cy="60.8" r=".8" className="home-mascot-eye-glint" />
+          <circle cx="105.5" cy="60.8" r=".8" className="home-mascot-eye-glint" />
         </g>
-        <path className="home-mascot-muzzle" d="M75 73c4-4 9-4 13 0 4-4 9-4 13 0-2 10-9 14-13 14s-11-4-13-14Z" />
-        <path className="home-mascot-nose" d="m84 72 4-2 4 2-4 4-4-4Z" />
-        <path className="home-mascot-mouth" d="M88 76v4m0 0c-3 3-6 3-8 1m8-1c3 3 6 3 8 1" />
+        <ellipse className="home-mascot-cheek" cx="82" cy="75" rx="8" ry="6" />
+        <ellipse className="home-mascot-cheek" cx="95" cy="75" rx="8" ry="6" />
+        <path className="home-mascot-chin" d="M82 80c2 6 10 7 13 0-4 2-9 2-13 0Z" />
+        <path className="home-mascot-nose" d="m85 72 3.5-1.6L92 72l-3.5 3.4L85 72Z" />
+        <path className="home-mascot-mouth" d="M88.5 75v4m0 0c-3 3-6 3-8 1m8-1c3 3 6 3 8 1" />
         <g className="home-mascot-whiskers">
-          <path d="M71 75 43 70m29 10-31 2m64-7 28-5m-29 10 31 2" />
+          <path d="M72 75 44 70m29 10-31 2m63-7 28-5m-29 10 31 2" />
         </g>
       </g>
 
       <g className="home-mascot-collar">
-        <path d="M67 91c14 6 28 6 42 0" />
-        <circle cx="88" cy="97" r="5" />
-        <path d="m86 97 2-2 2 2-2 2-2-2Z" />
+        <path d="M68 91c13 6 28 6 41 0" />
+        <circle cx="88.5" cy="97" r="4.5" />
+        <path d="m86.5 97 2-2 2 2-2 2-2-2Z" />
       </g>
     </svg>
   );
