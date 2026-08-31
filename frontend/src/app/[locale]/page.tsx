@@ -395,12 +395,6 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
     partyTimeout.current = setTimeout(() => setParty(false), 5000);
   });
 
-  const stats = [
-    { value: t("stat_primers_value"), label: t("stat_primers_label") },
-    { value: t("stat_users_value"),   label: t("stat_users_label") },
-    { value: t("stat_species_value"), label: t("stat_species_label") },
-  ];
-
   const steps = [
     {
       num: "01", title: t("how_step1_title"), desc: t("how_step1_desc"),
@@ -511,7 +505,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
             {locale === "zh" ? (
               <>
                 <span style={{ color: "#ffffff" }}>引物</span><span style={{ color: "#ffb1ee" }}>猫</span>
-                <span style={{ fontWeight: 300, color: "rgba(255,255,255,0.85)" }}>{" — "}{t("page_headline_2")}</span>
+                <span style={{ fontWeight: 300, color: "rgba(255,255,255,0.85)" }}>：{t("page_headline_2")}</span>
               </>
             ) : (
               <>
@@ -561,24 +555,6 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
               <div key={f} className="hero-pill">
                 <div className="hero-pill-dot" />
                 {f}
-              </div>
-            ))}
-          </div>
-
-          {/* stats */}
-          <div className="hero-stats">
-            {stats.map((s, idx) => (
-              <div key={s.label} className="hero-stat">
-                {idx === 2 ? (
-                  <div className="hero-stat-species">
-                    {s.value.split(" · ").map((sp) => (
-                      <span key={sp} className="hero-stat-species-pill">{sp}</span>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="hero-stat-value">{s.value}</div>
-                )}
-                <div className="hero-stat-label">{s.label}</div>
               </div>
             ))}
           </div>
