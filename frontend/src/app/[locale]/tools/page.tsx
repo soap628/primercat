@@ -58,80 +58,92 @@ export default async function ToolsPage({ params: { locale } }: { params: { loca
 
   const whyItems: string[] = t.raw("whyItems") as string[];
 
+  const sections = [
+    {
+      number: "01",
+      title: locale === "zh" ? "核心序列设计" : "Core sequence design",
+      body: locale === "zh"
+        ? "从端点 PCR、qPCR 到 gRNA 与序列检索，集中处理高频分子设计任务。"
+        : "Handle everyday molecular design work, from endpoint PCR and qPCR to gRNA and sequence search.",
+      cards: cards.slice(0, 4),
+      startIndex: 0,
+    },
+    {
+      number: "02",
+      title: locale === "zh" ? "实验室工作台" : "Laboratory workbench",
+      body: locale === "zh"
+        ? "配制、计算和化学品安全资料，放在实验操作触手可及的位置。"
+        : "Preparation, calculation, and chemical-safety references kept within reach at the bench.",
+      cards: cards.slice(4),
+      startIndex: 4,
+    },
+  ];
+
   return (
-    <div className="story-page">
-      <section
-        className="story-hero"
-        style={{
-          padding: "34px clamp(22px, 4vw, 40px)",
-          borderRadius: 34,
-          background:
-            "radial-gradient(circle at top right, rgba(83,157,245,0.16), transparent 30%), linear-gradient(135deg, #0a1628 0%, #0f1f3d 58%, #0f3460 100%)",
-          color: "#fff",
-          boxShadow: "0 28px 64px rgba(15,23,42,0.18)",
-        }}
-      >
-        <div className="story-hero-grid">
-          <div className="story-hero-panel">
-            <div className="story-kicker">{t("badge")}</div>
-            <h1 className="story-display" style={{ margin: "16px 0 14px", maxWidth: 920 }}>
-              {t("title")}
-            </h1>
-            <p className="story-copy" style={{ color: "rgba(255,255,255,0.84)", maxWidth: 920 }}>{t("intro")}</p>
-            <div style={{ marginTop: 18, fontSize: 13, lineHeight: 1.8, color: "rgba(255,255,255,0.7)", maxWidth: 760 }}>{t("note")}</div>
+    <div className="tools-directory-v4">
+      <section className="tools-directory-hero">
+        <div className="tools-directory-intro">
+          <div className="tools-directory-kicker">{t("badge")}</div>
+          <h1>{t("title")}</h1>
+          <p>{t("intro")}</p>
+          <div className="tools-directory-note">{t("note")}</div>
+        </div>
+
+        <aside className="tools-directory-summary">
+          <div className="tools-directory-summary-label">{t("heroAsideTitle")}</div>
+          <p>{t("heroAsideBody")}</p>
+          <div className="tools-directory-metric">
+            <span>{t("heroMetricLabel")}</span>
+            <strong>{t("heroMetricValue")}</strong>
+            <p>{t("heroMetricBody")}</p>
           </div>
-
-          <aside className="story-hero-aside">
-            <div className="story-mini-label">{t("heroAsideTitle")}</div>
-            <div className="story-mini-body" style={{ marginTop: 10 }}>{t("heroAsideBody")}</div>
-            <div className="story-mini-metric">
-              <div className="story-mini-label">{t("heroMetricLabel")}</div>
-              <div className="story-mini-value">{t("heroMetricValue")}</div>
-              <div className="story-mini-body">{t("heroMetricBody")}</div>
-            </div>
-          </aside>
-        </div>
+        </aside>
       </section>
 
-      <section className="story-card-grid">
-        {cards.map((card) => (
-          <Link key={card.title} href={card.href} style={{ textDecoration: "none" }}>
-            <div className="tool-card story-card" style={{ height: "100%" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 10 }}>
-                {card.eyebrow}
+      {sections.map((section) => (
+        <section key={section.number} className="tools-directory-section">
+          <header className="tools-directory-section-head">
+            <span>{section.number}</span>
+            <div>
+              <h2>{section.title}</h2>
+              <p>{section.body}</p>
+            </div>
+          </header>
+
+          <div className="tools-directory-list">
+            {section.cards.map((card, index) => (
+              <Link key={card.title} href={card.href} className="tools-directory-item">
+                <span className="tools-directory-index">
+                  {String(section.startIndex + index + 1).padStart(2, "0")}
+                </span>
+                <div className="tools-directory-item-copy">
+                  <div className="tools-directory-eyebrow">{card.eyebrow}</div>
+                  <h3>{card.title}</h3>
+                  <p>{card.body}</p>
+                </div>
+                <span className="tools-directory-cta">{card.cta} →</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
+
+      <section className="tools-directory-principles">
+        <div className="tools-directory-principles-copy">
+          <div className="tools-directory-kicker">{t("whyLabel")}</div>
+          <h2>{t("whyTitle")}</h2>
+          <div className="tools-directory-principle-list">
+            {whyItems.map((item, index) => (
+              <div key={item} className="tools-directory-principle">
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <p>{item}</p>
               </div>
-              <div className="story-card-title" style={{ fontSize: 20 }}>{card.title}</div>
-              <p className="story-card-copy" style={{ marginBottom: 14 }}>{card.body}</p>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>{card.cta}</div>
-            </div>
-          </Link>
-        ))}
-      </section>
-
-      <section
-        className="story-surface"
-        style={{
-          padding: "24px clamp(20px, 4vw, 30px)",
-        }}
-      >
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: 10 }}>
-          {t("whyLabel")}
+            ))}
+          </div>
         </div>
-        <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.04em", color: "var(--text-1)", marginBottom: 12 }}>{t("whyTitle")}</div>
-        <div className="story-bullet-list">
-          {whyItems.map((item) => (
-            <div key={item} className="story-bullet">
-              {item}
-            </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
-          <Link href="/primer">
-            <button className="hero-btn-primary">{t("primaryCta")}</button>
-          </Link>
-          <Link href="/methods">
-            <button className="hero-btn-secondary">{t("secondaryCta")}</button>
-          </Link>
+        <div className="tools-directory-actions">
+          <Link href="/primer" className="tools-directory-action-primary">{t("primaryCta")}</Link>
+          <Link href="/methods" className="tools-directory-action-secondary">{t("secondaryCta")}</Link>
         </div>
       </section>
     </div>

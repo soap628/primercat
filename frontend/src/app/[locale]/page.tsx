@@ -377,7 +377,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
   const whyLabel  = t("why_label");
 
   return (
-    <div>
+    <div className="home-page-v4">
       {/* ── Easter egg: Cat Party overlay ── */}
       {party && (
         <div className="cat-party-overlay" aria-hidden="true">
@@ -510,7 +510,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
             >
               {/* text side */}
               <div>
-                <div style={{
+                <div className="home-how-step-number" style={{
                   fontSize: 64, fontWeight: 900, letterSpacing: "-0.04em",
                   lineHeight: 1, marginBottom: 8,
                   background: `linear-gradient(135deg, ${step.ca}, ${step.cb})`,
