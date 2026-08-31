@@ -222,7 +222,7 @@ export default function NavLinks({ locale }: { locale: string }) {
     { href: "/grna", label: copy.crispr, icon: <CrisprCatIcon />, matchPrefixes: ["/grna"] },
     { href: "/blast", label: copy.blast, icon: <BlastIcon />, matchPrefixes: ["/blast"] },
     { href: "/methods", label: copy.methods, icon: "M", matchPrefixes: ["/methods", "/validation"] },
-    { href: "/tools", label: copy.tools, icon: "+", matchPrefixes: ["/tools", "/mw-calc", "/solutions", "/chemical-safety"] },
+    { href: "/tools", label: copy.tools, icon: "+", matchPrefixes: ["/tools", "/mw-calc", "/solutions", "/fund-calc", "/chemical-safety"] },
   ];
 
   function switchLocale() {

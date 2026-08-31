@@ -19,6 +19,7 @@ const COPY = {
     addOnLinks: [
       { label: "分子量计算器", href: "/mw-calc" },
       { label: "溶液配制指南", href: "/solutions" },
+      { label: "科研经费分配", href: "/fund-calc" },
       { label: "试剂安全与毒性", href: "/chemical-safety" },
     ],
     connect: "关于",
@@ -51,6 +52,7 @@ const COPY = {
     addOnLinks: [
       { label: "MW Calculator", href: "/mw-calc" },
       { label: "Solution Preparation", href: "/solutions" },
+      { label: "Research Fund Planner", href: "/fund-calc" },
       { label: "Reagent Safety & Toxicity", href: "/chemical-safety" },
     ],
     connect: "About",

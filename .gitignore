@@ -28,7 +28,7 @@ node_modules/
 .claude/
 
 # Standalone prototypes / unrelated projects (not part of PrimerCat)
-fund-calc/
+/fund-calc/
 offshore-hub/
 liquun/
 frontend/spotify/
