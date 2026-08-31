@@ -859,6 +859,54 @@ export default function PrimerPage() {
     }
   }
 
+  function getProgressMessage(entry: { step: number; msg: string }) {
+    if (locale === "zh") return entry.msg;
+
+    if (entry.step === 1) {
+      if (entry.msg.includes("转录本：")) return t("progress_detail_transcript");
+      if (entry.msg.includes("自定义序列")) return t("progress_detail_custom_sequence");
+      return t("progress_detail_fetch");
+    }
+    if (entry.step === 2) {
+      return entry.msg.includes("设计出")
+        ? t("progress_detail_candidates_ready")
+        : t("progress_detail_design");
+    }
+    if (entry.step === 3) {
+      return entry.msg.includes("超时")
+        ? t("progress_detail_screening_timeout")
+        : t("progress_detail_screening");
+    }
+    if (entry.step === 4) {
+      return entry.msg.includes("返回")
+        ? t("progress_detail_complete")
+        : t("progress_detail_rank");
+    }
+    return t("progress_live");
+  }
+
+  function localizeResultMessage(data: GenePrimerResult) {
+    if (locale === "zh") return data.message;
+
+    const pairs = data.primer_pairs ?? [];
+    const incomplete = pairs.some((pair) =>
+      (pair.blast_left.status ?? "validated") !== "validated" ||
+      (pair.blast_right.status ?? "validated") !== "validated"
+    );
+    const exonCount = pairs.filter((pair) => pair.exon_span.spans_junction).length;
+    if (incomplete) {
+      return t("result_summary_incomplete", { count: pairs.length, exon: exonCount });
+    }
+    const specificCount = pairs.filter((pair) => pair.is_specific).length;
+    const screening = data.design_basis?.genome_wide_specificity_checked ? "Bowtie2" : "RefSeq RNA BLAST";
+    return t("result_summary", {
+      count: pairs.length,
+      specific: specificCount,
+      screening,
+      exon: exonCount,
+    });
+  }
+
   function extractServerMessage(raw: string) {
     const value = raw.trim();
     if (!value) return "";
@@ -950,9 +998,14 @@ export default function PrimerPage() {
           if (ev === "progress") pushProgress(data);
           else if (ev === "result") {
             gotResult = true;
-            setResult(data);
-            pushProgress({ step: 4, total: 4, msg: data.message || t("progress_rank") });
-            if (user && data.success) toast("已保存到历史记录");
+            const localizedData = { ...data, message: localizeResultMessage(data) } as GenePrimerResult;
+            setResult(localizedData);
+            pushProgress({
+              step: 4,
+              total: 4,
+              msg: locale === "zh" ? (data.message || t("progress_rank")) : t("progress_detail_complete"),
+            });
+            if (user && data.success) toast(t("saved_history"));
           }
           else if (ev === "error") {
             gotError = true;
@@ -1146,7 +1199,7 @@ export default function PrimerPage() {
               {progress.map((p, i) => (
                 <div key={i} style={{ display: "flex", gap: 8 }}>
                   <span style={{ color: "var(--text-3)", minWidth: 76 }}>[{getProgressLabel(p.step)}]</span>
-                  <span>{p.msg}</span>
+                  <span>{getProgressMessage(p)}</span>
                 </div>
               ))}
               {loading && <div style={{ color: "#d97706" }}>{t("progress_live")}</div>}
