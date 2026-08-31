@@ -348,9 +348,23 @@ export default function GrnaPage() {
   ];
 
   return (
-    <div className="page-sidebar-layout" style={{ display: "flex", gap: 28, alignItems: "flex-start" }}>
+    <div className="sequence-workspace-v5 grna-workspace-v5">
+      <section className="sequence-workspace-hero">
+        <div>
+          <div className="sequence-workspace-kicker">CrisprCat / gRNA design</div>
+          <h1>{t("title")}</h1>
+          <p>{t("subtitle")}</p>
+        </div>
+        <div className="sequence-workspace-flow" aria-label={locale === "zh" ? "设计流程" : "Design workflow"}>
+          <span><b>01</b>{locale === "zh" ? "Cas 核酸酶" : "Cas nuclease"}</span>
+          <span><b>02</b>{locale === "zh" ? "靶序列" : "Target sequence"}</span>
+          <span><b>03</b>{locale === "zh" ? "脱靶筛查" : "Off-target screen"}</span>
+        </div>
+      </section>
+
+      <div className="page-sidebar-layout sequence-workspace-grid" style={{ display: "flex", gap: 28, alignItems: "flex-start" }}>
       <aside
-        className="page-sidebar grna-sidebar"
+        className="page-sidebar grna-sidebar sequence-control-panel"
         style={{
           width: 336,
           flexShrink: 0,
@@ -363,43 +377,13 @@ export default function GrnaPage() {
           boxShadow: "var(--shadow-lg)",
         }}
       >
-        <div style={{ marginBottom: 20 }}>
-          {/* CrisprCat brand mark */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 12, flexShrink: 0,
-              background: "linear-gradient(135deg, #1a3a6b 0%, #1e5ba8 100%)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 0 0 1px rgba(83,157,245,0.3), 0 4px 12px rgba(83,157,245,0.2)",
-            }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                {/* Scissors / CRISPR scissors icon */}
-                <circle cx="6" cy="6" r="2.5" stroke="#539df5" strokeWidth="1.5" />
-                <circle cx="6" cy="18" r="2.5" stroke="#539df5" strokeWidth="1.5" />
-                <path d="M8.5 8L18.5 18" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M8.5 16L18.5 6" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round" />
-                <circle cx="19" cy="12" r="1.5" fill="#539df5" />
-              </svg>
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-0.01em" }}>
-                Crispr<span style={{ color: "#539df5" }}>Cat</span>
-              </div>
-              <div style={{ fontSize: 10, color: "var(--text-3)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                {t("badge")}
-              </div>
-            </div>
-          </div>
-          <h1 className="grna-page-headline">{t("title")}</h1>
-          <p className="grna-panel-subtitle">{t("subtitle")}</p>
-          <div className="primer-panel-chips">
-            {["SpCas9", "Cas12a", "Off-target Check"].map((item) => (
-              <span key={item} className="primer-panel-chip">{item}</span>
-            ))}
-          </div>
+        <div className="sequence-control-head">
+          <span>01 / {locale === "zh" ? "输入" : "Input"}</span>
+          <h2>{locale === "zh" ? "设计参数" : "Design parameters"}</h2>
+          <p>SpCas9 · SpCas9-NG · Cas12a</p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <form className="sequence-control-form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div>
             <label className="label-caps" style={{ display: "block", marginBottom: 8 }}>
               {t("cas_label")}
@@ -462,6 +446,7 @@ export default function GrnaPage() {
           </div>
 
           <div
+            className="grna-readiness-v5"
             style={{
               padding: "12px 14px",
               borderRadius: 14,
@@ -566,7 +551,7 @@ export default function GrnaPage() {
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary"
+            className="btn-primary sequence-submit"
             style={{
               width: "100%",
               padding: "11px 0",
@@ -589,7 +574,7 @@ export default function GrnaPage() {
         </form>
 
         <div
-          className="card-sm"
+          className="card-sm sequence-caution-note"
           style={{
             marginTop: 14,
             padding: "14px 15px",
@@ -623,10 +608,10 @@ export default function GrnaPage() {
         ) : null}
       </aside>
 
-      <main className="grna-main-panel" style={{ flex: 1, minWidth: 0 }}>
+      <main className="grna-main-panel sequence-result-panel" style={{ flex: 1, minWidth: 0 }}>
         {!result && !loading ? (
           <div
-            className="grna-empty-state"
+            className="grna-empty-state sequence-empty-state"
             style={{
               minHeight: 520,
               padding: "40px clamp(24px, 4vw, 48px)",
@@ -676,7 +661,7 @@ export default function GrnaPage() {
               />
             </svg>
 
-            <div style={{
+            <div className="sequence-empty-kicker" style={{
               display: "inline-flex", padding: "6px 14px", borderRadius: 999,
               background: "rgba(83,157,245,0.14)", border: "1px solid rgba(83,157,245,0.25)",
               color: "#539df5", fontSize: 11, fontWeight: 700,
@@ -684,15 +669,15 @@ export default function GrnaPage() {
             }}>
               ✂️ &nbsp;{t("badge")}
             </div>
-            <h2 style={{
+            <h2 className="sequence-empty-title" style={{
               fontSize: "clamp(32px, 4vw, 52px)",
               lineHeight: 1.04, letterSpacing: "-0.04em",
               color: "var(--text-1)", marginBottom: 14, maxWidth: 640,
             }}>
               {t("empty_title")}
             </h2>
-            <p style={{ fontSize: 15, lineHeight: 1.8, color: "var(--text-2)", maxWidth: 580 }}>{t("empty_subtitle")}</p>
-            <div style={{
+            <p className="sequence-empty-copy" style={{ fontSize: 15, lineHeight: 1.8, color: "var(--text-2)", maxWidth: 580 }}>{t("empty_subtitle")}</p>
+            <div className="sequence-feature-grid" style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
               gap: 14, width: "100%", marginTop: 32,
@@ -704,7 +689,7 @@ export default function GrnaPage() {
               ].map((feature) => (
                 <div
                   key={feature.title}
-                  className="tool-card"
+                  className="tool-card sequence-feature-item"
                   style={{
                     padding: 20,
                     borderRadius: 24,
@@ -729,7 +714,7 @@ export default function GrnaPage() {
         ) : null}
 
         {loading ? (
-          <div style={{
+          <div className="sequence-loading-state" style={{
             minHeight: 420,
             display: "flex", flexDirection: "column", justifyContent: "center",
             padding: "36px clamp(24px, 4vw, 42px)",
@@ -1465,6 +1450,7 @@ export default function GrnaPage() {
           </div>
         ) : null}
       </main>
+      </div>
     </div>
   );
 }

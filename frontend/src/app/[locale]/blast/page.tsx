@@ -210,9 +210,23 @@ export default function BlastPage() {
   }
 
   return (
-    <div className="page-sidebar-layout" style={{ display: "flex", gap: 28, alignItems: "flex-start" }}>
+    <div className="sequence-workspace-v5 blast-workspace-v5">
+      <section className="sequence-workspace-hero">
+        <div>
+          <div className="sequence-workspace-kicker">NCBI BLAST / sequence search</div>
+          <h1>{t("title")}</h1>
+          <p>{t("subtitle")}</p>
+        </div>
+        <div className="sequence-workspace-flow" aria-label={locale === "zh" ? "检索流程" : "Search workflow"}>
+          <span><b>01</b>{locale === "zh" ? "程序" : "Program"}</span>
+          <span><b>02</b>{locale === "zh" ? "数据库" : "Database"}</span>
+          <span><b>03</b>{locale === "zh" ? "比对结果" : "Alignments"}</span>
+        </div>
+      </section>
+
+      <div className="page-sidebar-layout sequence-workspace-grid" style={{ display: "flex", gap: 28, alignItems: "flex-start" }}>
       <aside
-        className="page-sidebar"
+        className="page-sidebar sequence-control-panel blast-control-panel"
         style={{
           width: 320,
           flexShrink: 0,
@@ -226,14 +240,13 @@ export default function BlastPage() {
           boxShadow: "var(--shadow-xs)",
         }}
       >
-        <div style={{ marginBottom: 20 }}>
-          <h1 className="page-title" style={{ marginBottom: 4 }}>
-            {t("title")}
-          </h1>
-          <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.5 }}>{t("subtitle")}</p>
+        <div className="sequence-control-head">
+          <span>01 / {locale === "zh" ? "查询" : "Query"}</span>
+          <h2>{locale === "zh" ? "检索参数" : "Search parameters"}</h2>
+          <p>blastn · blastp · blastx · tblastn</p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <form className="sequence-control-form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div>
             <label className="label-caps" style={{ display: "block", marginBottom: 8 }}>
               {t("program_label")}
@@ -244,6 +257,8 @@ export default function BlastPage() {
                   key={item.value}
                   type="button"
                   onClick={() => handleProgramChange(item.value)}
+                  className="blast-program-choice"
+                  data-selected={program === item.value ? "true" : "false"}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -333,6 +348,7 @@ export default function BlastPage() {
           <button
             type="submit"
             disabled={loading}
+            className="sequence-submit blast-submit"
             style={{
               width: "100%",
               padding: "10px 0",
@@ -384,15 +400,15 @@ export default function BlastPage() {
         )}
       </aside>
 
-      <main style={{ flex: 1, minWidth: 0 }}>
+      <main className="sequence-result-panel blast-result-panel" style={{ flex: 1, minWidth: 0 }}>
         {!result && !loading && (
-          <div className="empty-state">
+          <div className="empty-state sequence-empty-state blast-empty-state-v5">
             <div className="empty-state-icon">BLAST</div>
-            <p style={{ fontSize: 17, fontWeight: 600, color: "var(--text-1)", marginBottom: 8 }}>{t("empty_title")}</p>
-            <p style={{ fontSize: 13, color: "var(--text-2)", maxWidth: 320, lineHeight: 1.65, marginBottom: 24 }}>
+            <p className="sequence-empty-title" style={{ fontSize: 17, fontWeight: 600, color: "var(--text-1)", marginBottom: 8 }}>{t("empty_title")}</p>
+            <p className="sequence-empty-copy" style={{ fontSize: 13, color: "var(--text-2)", maxWidth: 320, lineHeight: 1.65, marginBottom: 24 }}>
               {t("empty_subtitle")}
             </p>
-            <div style={{ display: "flex", gap: 24 }}>
+            <div className="sequence-empty-features" style={{ display: "flex", gap: 24 }}>
               {[
                 { label: t("feat_programs") },
                 { label: t("feat_identity") },
@@ -411,7 +427,7 @@ export default function BlastPage() {
 
         {loading && (
           <div
-            className="card"
+            className="card sequence-loading-state blast-loading-state"
             style={{
               padding: 24,
               minHeight: 300,
@@ -439,6 +455,9 @@ export default function BlastPage() {
                 return (
                   <div
                     key={stage.id}
+                    className="blast-loading-stage"
+                    data-active={active ? "true" : "false"}
+                    data-current={current ? "true" : "false"}
                     style={{
                       display: "flex",
                       alignItems: "flex-start",
@@ -481,8 +500,8 @@ export default function BlastPage() {
         )}
 
         {result && (
-          <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <div className="blast-results-v5">
+            <div className="sequence-results-head" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <div>
                 <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-1)", marginBottom: 4 }}>{t("result_title")}</h2>
                 <p style={{ fontSize: 12, color: "var(--text-3)" }}>
@@ -518,15 +537,15 @@ export default function BlastPage() {
                 <p style={{ color: "var(--text-3)", fontSize: 14 }}>{t("no_hits")}</p>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="blast-result-list" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {result.hits.map((hit, idx) => {
                   const identityColor =
                     hit.best_hsp.identity_pct >= 99 ? "var(--green)" : hit.best_hsp.identity_pct >= 90 ? "var(--accent)" : "var(--text-3)";
                   const isSelected = selectedHit?.rank === hit.rank;
                   return (
-                    <div key={hit.rank} className={`fade-in-up delay-${Math.min(idx + 1, 5)}`}>
+                    <div key={hit.rank} className={`blast-result-item fade-in-up delay-${Math.min(idx + 1, 5)}`}>
                       <div
-                        className="card tool-card"
+                        className="card tool-card blast-hit-card"
                         onClick={() => setSelectedHit(isSelected ? null : hit)}
                         style={{
                           padding: "13px 18px",
@@ -602,7 +621,7 @@ export default function BlastPage() {
 
                       {isSelected && (
                         <div
-                          className="fade-in-up"
+                          className="fade-in-up blast-hit-detail"
                           style={{
                             marginTop: 4,
                             borderRadius: "var(--r-md)",
@@ -651,6 +670,7 @@ Sbjct  ${String(hit.best_hsp.subject_start).padEnd(6)} ${hit.best_hsp.subject_se
           </div>
         )}
       </main>
+      </div>
     </div>
   );
 }
