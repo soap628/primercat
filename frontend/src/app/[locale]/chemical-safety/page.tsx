@@ -63,6 +63,7 @@ const COPY = {
     special: "容易误判的边界",
     source: "PubChem LCSS 原始记录",
     expand: "展开完整安全卡",
+    collapse: "收起安全卡",
     noGhs: "该来源未给出适用于所有形态/浓度的统一 H 代码；请打开来源并核对当前产品 SDS。",
     interactionKicker: "Known incompatibilities · 非穷尽清单",
     interactionTitle: "高危组合提醒",
@@ -136,6 +137,7 @@ const COPY = {
     special: "Boundary commonly missed",
     source: "Open PubChem LCSS record",
     expand: "Expand full safety card",
+    collapse: "Collapse safety card",
     noGhs: "This source does not provide one set of H-codes that applies to every form or concentration. Open the source and check the current product SDS.",
     interactionKicker: "Known incompatibilities · not exhaustive",
     interactionTitle: "High-risk combination alerts",
@@ -176,6 +178,7 @@ function ChemicalCard({ record, zh }: { record: ChemicalSafetyRecord; zh: boolea
   return (
     <details className="chem-card" id={record.id}>
       <summary>
+        <span className={`chem-record-mark chem-record-mark-${record.level}`} aria-hidden="true" />
         <div className="chem-card-summary-main">
           <div className="chem-title-row">
             <h2>{zh ? record.name.zh : record.name.en}</h2>
@@ -188,10 +191,12 @@ function ChemicalCard({ record, zh }: { record: ChemicalSafetyRecord; zh: boolea
             <span>{copy.signal} <b>{zh ? record.signal.zh : record.signal.en}</b></span>
           </div>
           <p>{zh ? record.summary.zh : record.summary.en}</p>
-          <div className="chem-use-row">{(record.uses ?? ["general"]).map((use) => <span key={use}>{copy[use]}</span>)}</div>
-          <div className="chem-category-row">{record.categories.map((category) => <span key={category}>{copy[category]}</span>)}</div>
+          <div className="chem-record-tags">
+            <div className="chem-use-row">{(record.uses ?? ["general"]).map((use) => <span key={use}>{copy[use]}</span>)}</div>
+            <div className="chem-category-row">{record.categories.map((category) => <span key={category}>{copy[category]}</span>)}</div>
+          </div>
         </div>
-        <span className="chem-expand-label">{copy.expand}<b>＋</b></span>
+        <span className="chem-expand-label"><span className="chem-expand-open">{copy.expand}</span><span className="chem-expand-close">{copy.collapse}</span><b>＋</b></span>
       </summary>
       <div className="chem-card-detail">
         <section>
@@ -252,14 +257,14 @@ export default function ChemicalSafetyPage({
   const useFilters: UseFilter[] = ["all", "nucleic-acid", "protein", "cell-culture", "histology", "general", "cleaning"];
 
   return (
-    <div className="lab-page chemical-safety-page">
-      <section className="lab-hero chem-hero">
+    <div className="lab-page chemical-safety-page chemical-safety-visual-v2">
+      <section className="chemical-hero">
         <div>
           <span className="lab-kicker">{copy.kicker}</span>
           <h1>{copy.title}</h1>
           <p>{copy.intro}</p>
         </div>
-        <aside>
+        <aside className="chemical-hero-meta">
           <span>{copy.heroMetric}</span>
           <strong>{CHEMICAL_SAFETY_RECORDS.length} {copy.reagentUnit}</strong>
           <p>{copy.heroBody}</p>
@@ -273,9 +278,12 @@ export default function ChemicalSafetyPage({
 
       <section className="chem-interaction-section">
         <header>
-          <span className="lab-kicker">{copy.interactionKicker}</span>
-          <h2>{copy.interactionTitle}</h2>
-          <p>{copy.interactionIntro}</p>
+          <span className="chemical-section-number">01</span>
+          <div>
+            <span className="lab-kicker">{copy.interactionKicker}</span>
+            <h2>{copy.interactionTitle}</h2>
+            <p>{copy.interactionIntro}</p>
+          </div>
         </header>
         <div className="chem-interaction-grid">
           {CHEMICAL_INTERACTION_ALERTS.map((alert) => <article key={alert.id}>
@@ -289,6 +297,10 @@ export default function ChemicalSafetyPage({
       </section>
 
       <section className="chem-browser">
+        <header className="chemical-library-header">
+          <div><span className="chemical-section-number">02</span><h2>{copy.searchLabel}</h2></div>
+          <span><strong>{records.length}</strong> {copy.results}</span>
+        </header>
         <div className="chem-search-block">
           <label htmlFor="chemical-search">{copy.searchLabel}</label>
           <div className="chem-search-input"><span aria-hidden="true">⌕</span><input id="chemical-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.searchPlaceholder} autoComplete="off" /></div>
@@ -305,8 +317,6 @@ export default function ChemicalSafetyPage({
             {filters.map((item) => <button key={item} type="button" data-active={filter === item} onClick={() => setFilter(item)}>{copy[item]}</button>)}
           </div>
         </div>
-        <div className="chem-results-count"><strong>{records.length}</strong> {copy.results}</div>
-
         <div className="chem-record-list">
           {records.length ? records.map((record) => <ChemicalCard key={record.id} record={record} zh={zh} />) : <div className="chem-no-results">{copy.noResults}</div>}
         </div>

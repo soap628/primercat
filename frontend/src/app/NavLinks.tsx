@@ -208,36 +208,19 @@ export default function NavLinks({ locale }: { locale: string }) {
   }, [pathname]);
 
   const links = [
-    { href: "/primer", label: copy.primer, icon: <CatIcon />, matchPrefixes: ["/primer"], accent: undefined },
-    { href: "/pcr", label: copy.pcr, icon: "P", matchPrefixes: ["/pcr"], accent: "#19b99a" as const },
-    { href: "/grna", label: copy.crispr, icon: <CrisprCatIcon />, matchPrefixes: ["/grna"], accent: "#539df5" as const },
-    { href: "/blast", label: copy.blast, icon: <BlastIcon />, matchPrefixes: ["/blast"], accent: "#ffa42b" as const },
-    { href: "/methods", label: copy.methods, icon: "M", matchPrefixes: ["/methods"], accent: undefined },
-    { href: "/validation", label: copy.validation, icon: "V", matchPrefixes: ["/validation"], accent: undefined },
-    { href: "/tools", label: copy.tools, icon: "+", matchPrefixes: ["/tools", "/mw-calc", "/solutions", "/chemical-safety"], accent: undefined },
+    { href: "/primer", label: copy.primer, icon: <CatIcon />, matchPrefixes: ["/primer"] },
+    { href: "/pcr", label: copy.pcr, icon: "P", matchPrefixes: ["/pcr"] },
+    { href: "/grna", label: copy.crispr, icon: <CrisprCatIcon />, matchPrefixes: ["/grna"] },
+    { href: "/blast", label: copy.blast, icon: <BlastIcon />, matchPrefixes: ["/blast"] },
+    { href: "/methods", label: copy.methods, icon: "M", matchPrefixes: ["/methods"] },
+    { href: "/validation", label: copy.validation, icon: "V", matchPrefixes: ["/validation"] },
+    { href: "/tools", label: copy.tools, icon: "+", matchPrefixes: ["/tools", "/mw-calc", "/solutions", "/chemical-safety"] },
   ];
 
   function switchLocale() {
     setMobileOpen(false);
     router.push(pathname, { locale: otherLocale });
   }
-
-  const iconBtnStyle: React.CSSProperties = {
-    marginLeft: 4,
-    cursor: "pointer",
-    border: "1px solid rgba(148,163,184,0.3)",
-    borderRadius: 8,
-    padding: "6px 10px",
-    background: "transparent",
-    color: "var(--text-2, #475569)",
-    display: "flex",
-    alignItems: "center",
-    gap: 5,
-    fontSize: 12,
-    fontWeight: 600,
-    letterSpacing: "0.04em",
-    lineHeight: 1,
-  };
 
   function renderLinks(mobile = false) {
     return links.map((item) => {
@@ -254,31 +237,11 @@ export default function NavLinks({ locale }: { locale: string }) {
             href={href}
             onClick={mobile ? () => setMobileOpen(false) : undefined}
             className={`nav-link${active ? " nav-link-active" : ""}${isPcr ? " nav-link-pcr" : ""}${isCrispr ? " nav-link-crispr" : ""}${isBlast ? " nav-link-blast" : ""}${mobile ? " mobile-nav-link" : ""}`}
-            style={
-              isPcr && !active ? { color: "#0f9f84" } :
-              isPcr && active ? { color: "#19b99a" } :
-              isCrispr && !active ? { color: "#3b82f6" } :
-              isCrispr && active ? { color: "#539df5" } :
-              isBlast && !active ? { color: "#e07b10" } :
-              isBlast && active ? { color: "#ffa42b" } :
-              undefined
-            }
           >
-            <span style={{ fontSize: 11, lineHeight: 1, fontWeight: 700, display: "flex", alignItems: "center", color: (isPcr || isCrispr || isBlast) ? "inherit" : undefined }}>
-              {item.icon}
-            </span>
+            <span className="nav-product-icon">{item.icon}</span>
             {item.label}
             {isCrispr && (
-              <span style={{
-                fontSize: 9, fontWeight: 700, letterSpacing: "0.06em",
-                padding: "1px 5px", borderRadius: 4,
-                background: active ? "rgba(83,157,245,0.15)" : "rgba(59,130,246,0.1)",
-                color: active ? "#539df5" : "#3b82f6",
-                border: `1px solid ${active ? "rgba(83,157,245,0.3)" : "rgba(59,130,246,0.2)"}`,
-                marginLeft: 2,
-              }}>
-                beta
-              </span>
+              <span className="nav-beta">beta</span>
             )}
           </Link>
         );
@@ -293,9 +256,8 @@ export default function NavLinks({ locale }: { locale: string }) {
       {/* Theme toggle — SVG icon */}
       <button
         onClick={toggle}
-        className="nav-link"
+        className="nav-link nav-icon-button"
         aria-label={dark ? copy.lightMode : copy.darkMode}
-        style={iconBtnStyle}
       >
         {dark ? <SunIcon /> : <MoonIcon />}
       </button>
@@ -303,13 +265,7 @@ export default function NavLinks({ locale }: { locale: string }) {
       {/* Language switcher — SVG globe + label */}
       <button
         onClick={switchLocale}
-        className="nav-link"
-        style={{
-          ...iconBtnStyle,
-          marginLeft: 4,
-          background: "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(241,245,249,0.85))",
-          boxShadow: "0 1px 4px rgba(15,23,42,0.06)",
-        }}
+        className="nav-link nav-utility-button nav-language-button"
       >
         <GlobeIcon />
         {copy.otherLabel}
@@ -321,15 +277,9 @@ export default function NavLinks({ locale }: { locale: string }) {
             <div ref={dropdownRef} style={{ position: "relative", marginLeft: 6 }}>
               <button
                 onClick={() => setDropdownOpen((v) => !v)}
-                className="nav-link"
+                className="nav-link nav-account-button"
                 style={{
                   cursor: "pointer",
-                  border: "1px solid rgba(255,177,238,0.25)",
-                  padding: "5px 12px",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  background: "rgba(255,177,238,0.07)",
-                  color: "var(--accent)",
                   maxWidth: 130,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -383,16 +333,7 @@ export default function NavLinks({ locale }: { locale: string }) {
           ) : (
             <Link
               href={`/${locale}/login`}
-              className="nav-link"
-              style={{
-                marginLeft: 6,
-                border: "1px solid rgba(255,177,238,0.3)",
-                padding: "5px 12px",
-                fontSize: 12,
-                fontWeight: 600,
-                background: "rgba(255,177,238,0.07)",
-                color: "var(--accent)",
-              }}
+              className="nav-link nav-account-button"
             >
               {copy.login}
             </Link>
