@@ -64,6 +64,34 @@ function PrimerCatMascot() {
 
 function ProductEvidenceGraphic({ locale }: { locale: string }) {
   const isZh = locale === "zh";
+  const mascotNotes = isZh
+    ? [
+        "转录本已就位，开始找引物。",
+        "ΔTm 0.3 °C，这一对很合拍。",
+        "跨外显子设计，可以少走弯路。",
+        "BLAST 初筛通过，猫爪盖章。",
+        "94 分。记得实验验证，别只信我。",
+      ]
+    : [
+        "Transcript ready. Let’s find the primers.",
+        "ΔTm 0.3 °C — a nicely matched pair.",
+        "Exon-spanning design. Fewer detours.",
+        "BLAST screen passed. Paw-stamped.",
+        "Score 94. Still verify it at the bench.",
+      ];
+  const [noteIndex, setNoteIndex] = useState(0);
+  const [notePaused, setNotePaused] = useState(false);
+
+  useEffect(() => {
+    if (notePaused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => {
+      setNoteIndex((current) => (current + 1) % mascotNotes.length);
+    }, 4600);
+    return () => window.clearInterval(timer);
+  }, [mascotNotes.length, notePaused]);
+
+  const showNextNote = () => setNoteIndex((current) => (current + 1) % mascotNotes.length);
+
   return (
     <div className="home-evidence" aria-label={isZh ? "PrimerCat 产品结果示意预览" : "PrimerCat product result preview"}>
       <div className="home-evidence-topline">
@@ -74,14 +102,28 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
         <span className="home-evidence-status"><i />{isZh ? "RNA 特异性通过" : "RNA specificity passed"}</span>
       </div>
 
-      <div className="home-evidence-track" aria-hidden="true">
-        <div className="home-evidence-axis"><span>5′</span><span>3′</span></div>
-        <div className="home-evidence-gene">
+      <div className="home-evidence-track">
+        <div className="home-evidence-axis" aria-hidden="true"><span>5′</span><span>3′</span></div>
+        <div className="home-evidence-gene" aria-hidden="true">
           <span className="exon exon-1" /><span className="exon exon-2" /><span className="exon exon-3" /><span className="exon exon-4" />
         </div>
+        <button
+          type="button"
+          className="home-mascot-note"
+          onClick={showNextNote}
+          onMouseEnter={() => setNotePaused(true)}
+          onMouseLeave={() => setNotePaused(false)}
+          onFocus={() => setNotePaused(true)}
+          onBlur={() => setNotePaused(false)}
+          aria-label={isZh ? `猫咪助手：${mascotNotes[noteIndex]}。点击切换文案` : `Cat assistant: ${mascotNotes[noteIndex]}. Click for another note`}
+        >
+          <span className="home-mascot-note-kicker"><i />{isZh ? "猫咪实验助手" : "PRIMERCAT LAB NOTE"}</span>
+          <strong key={`${locale}-${noteIndex}`} className="home-mascot-note-copy">{mascotNotes[noteIndex]}</strong>
+          <span className="home-mascot-note-action">{isZh ? "点我换一句" : "Another note"}<b aria-hidden="true">↻</b></span>
+        </button>
         <PrimerCatMascot />
-        <div className="home-evidence-primer forward"><b>F</b><span>AGGCTGCTCCCC...</span></div>
-        <div className="home-evidence-primer reverse"><span>CGTGCAAGTCAC...</span><b>R</b></div>
+        <div className="home-evidence-primer forward" aria-hidden="true"><b>F</b><span>AGGCTGCTCCCC...</span></div>
+        <div className="home-evidence-primer reverse" aria-hidden="true"><span>CGTGCAAGTCAC...</span><b>R</b></div>
       </div>
 
       <div className="home-evidence-metrics">
