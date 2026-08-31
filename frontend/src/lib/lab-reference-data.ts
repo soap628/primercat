@@ -791,6 +791,331 @@ export const SOLUTION_RECIPES: SolutionRecipe[] = [
       },
     },
   },
+  {
+    id: "sodium-acetate-3m-ph52",
+    title: { zh: "3 M 醋酸钠（pH 5.2）", en: "3 M sodium acetate (pH 5.2)" },
+    subtitle: { zh: "核酸乙醇沉淀常用的酸性盐储备液", en: "Acidic salt stock commonly used for alcohol precipitation of nucleic acids" },
+    category: "stock",
+    defaultVolumeMl: 100,
+    ingredients: [
+      { name: { zh: "醋酸钠三水合物", en: "Sodium acetate trihydrate" }, amount: 40.824, unit: "g", chemicalId: "sodium-acetate" },
+    ],
+    steps: [
+      { zh: "将醋酸钠三水合物溶于约 70% 终体积的无核酸酶水。", en: "Dissolve sodium acetate trihydrate in nuclease-free water at about 70% of the final volume." },
+      { zh: "在搅拌下用冰醋酸少量调至 pH 5.2，待温度稳定后复核。", en: "With stirring, adjust to pH 5.2 using small additions of glacial acetic acid, then recheck after the temperature stabilizes." },
+      { zh: "用无核酸酶水定容；按用途进行经验证的过滤除菌并规范标注。", en: "Bring to volume with nuclease-free water; use a validated sterile-filtration process when required and label clearly." },
+    ],
+    notes: [
+      { zh: "40.824 g/100 mL 按醋酸钠三水合物（MW 136.08）计算；无水醋酸钠不能照抄此质量。", en: "The 40.824 g/100 mL value uses sodium acetate trihydrate (MW 136.08); do not reuse this mass for anhydrous sodium acetate." },
+      { zh: "残留醋酸盐可能影响部分下游 PCR；沉淀、洗涤和重悬步骤应按具体流程验证。", en: "Residual acetate can interfere with some downstream PCR workflows; validate precipitation, washing, and resuspension for the specific protocol." },
+    ],
+    sourceLabel: "Thermo Fisher Scientific · 3 M sodium acetate, pH 5.2",
+    sourceUrl: "https://www.thermofisher.com/order/catalog/product/R1181",
+    safetyQuery: "6131-90-4",
+    safety: {
+      additionalChemicalIds: ["acetic-acid"],
+      additionOrder: {
+        zh: "先把醋酸钠溶于大部分水，再在搅拌和通风下少量加入冰醋酸调 pH；复核 pH 后才定容。",
+        en: "Dissolve sodium acetate in most of the water first, then add glacial acetic acid in small portions with stirring and ventilation; verify pH before final volume adjustment.",
+      },
+      incompatibilities: {
+        zh: "冰醋酸远离强氧化剂、强碱和次氯酸盐；不要把酸性醋酸盐废液与漂白剂或成分不明废液混合。",
+        en: "Keep glacial acetic acid away from strong oxidizers, strong bases, and hypochlorite; do not mix acidic acetate waste with bleach or uncharacterized waste.",
+      },
+      waste: {
+        zh: "未污染醋酸钠溶液按本地规定判断；含核酸染料、酚、胍盐或生物材料时按最严格污染组分收集。",
+        en: "Assess uncontaminated sodium acetate solution under local rules; when nucleic-acid stains, phenol, guanidinium salts, or biological material are present, collect by the most restrictive contaminant.",
+      },
+    },
+  },
+  {
+    id: "sodium-chloride-5m",
+    title: { zh: "5 M 氯化钠", en: "5 M sodium chloride" },
+    subtitle: { zh: "核酸沉淀、杂交与蛋白纯化常用高盐储备液", en: "High-salt stock for nucleic-acid precipitation, hybridization, and protein purification" },
+    category: "stock",
+    defaultVolumeMl: 100,
+    ingredients: [
+      { name: { zh: "氯化钠", en: "Sodium chloride" }, amount: 29.22, unit: "g", chemicalId: "sodium-chloride" },
+    ],
+    steps: [
+      { zh: "将氯化钠缓慢加入约 70% 终体积的水中并充分搅拌。", en: "Slowly add sodium chloride to about 70% of the final water volume with thorough stirring." },
+      { zh: "完全溶解并回到室温后，用水定容。", en: "After complete dissolution and return to room temperature, bring to final volume with water." },
+      { zh: "按实验用途选择过滤除菌，并标注浓度、日期和无菌状态。", en: "Filter-sterilize when required by the application and label concentration, date, and sterility status." },
+    ],
+    notes: [
+      { zh: "高浓度盐溶液不能用“溶质质量 + 加水体积”推算终体积，必须溶解后定容。", en: "Do not infer final volume by adding solute mass to water volume for concentrated salt solutions; dissolve first and then bring to volume." },
+      { zh: "大体积 5 M NaCl 盐负荷高，排放和废液容器选择须遵循机构规定。", en: "Large volumes of 5 M NaCl have a high salt load; follow institutional rules for disposal and waste-container selection." },
+    ],
+    sourceLabel: "Thermo Fisher Scientific · Ni-NTA purification system recipes",
+    sourceUrl: "https://tools.thermofisher.com/content/sfs/manuals/ninta_system_man.pdf",
+    safety: {
+      additionOrder: {
+        zh: "先加入大部分水，再分批加入氯化钠；确认晶体完全溶解和温度稳定后定容。",
+        en: "Start with most of the water, add sodium chloride in portions, and bring to volume only after all crystals dissolve and temperature stabilizes.",
+      },
+      incompatibilities: {
+        zh: "普通 NaCl 储备液通常反应性低，但与强酸、强氧化剂或含活性药物/重金属体系混合后必须重新评估。",
+        en: "An ordinary NaCl stock is generally low-reactivity, but mixtures with strong acids, oxidizers, active drugs, or heavy metals require reassessment.",
+      },
+      waste: {
+        zh: "高盐水溶液是否可排放取决于规模和本地限值；含生物样品、药物、染料或金属时按污染组分收集。",
+        en: "Drain suitability of high-salt aqueous solution depends on scale and local limits; collect by contaminant when biological samples, drugs, dyes, or metals are present.",
+      },
+    },
+  },
+  {
+    id: "magnesium-chloride-1m",
+    title: { zh: "1 M 氯化镁（六水合物）", en: "1 M magnesium chloride (hexahydrate)" },
+    subtitle: { zh: "酶反应、培养基和分子克隆常用二价离子储备液", en: "Divalent-ion stock used in enzyme reactions, media, and molecular cloning" },
+    category: "stock",
+    defaultVolumeMl: 100,
+    ingredients: [
+      { name: { zh: "氯化镁六水合物（MgCl₂·6H₂O）", en: "Magnesium chloride hexahydrate (MgCl₂·6H₂O)" }, amount: 20.33, unit: "g", chemicalId: "magnesium-chloride" },
+    ],
+    steps: [
+      { zh: "快速称量吸湿性的 MgCl₂·6H₂O，并加入约 80% 终体积的高纯水中。", en: "Weigh hygroscopic MgCl₂·6H₂O promptly and add it to high-purity water at about 80% of the final volume." },
+      { zh: "搅拌至澄清，用水定容。", en: "Stir until clear and bring to final volume with water." },
+      { zh: "按用途过滤除菌并分装；培养基配制时通常在基础培养基灭菌冷却后无菌加入。", en: "Filter-sterilize and aliquot as required; for media, it is commonly added aseptically after the base medium has been sterilized and cooled." },
+    ],
+    notes: [
+      { zh: "20.33 g/100 mL 仅适用于六水合物（MW 203.30）；无水 MgCl₂ 的称量质量不同。", en: "The 20.33 g/100 mL value applies only to the hexahydrate (MW 203.30); anhydrous MgCl₂ requires a different mass." },
+      { zh: "镁盐与磷酸盐在高浓度或加热条件下可能沉淀，因此不要默认与培养基共同高压灭菌。", en: "Magnesium salts can precipitate with phosphate at high concentration or during heating, so do not assume they can be autoclaved together with the medium." },
+    ],
+    sourceLabel: "Thermo Fisher Scientific · competent-cell media guidance",
+    sourceUrl: "https://www.thermofisher.com/sa/en/home/technical-resources/technical-reference-library/cloning-technical-support-center/comp-cells/comp-cells-getting-started.html",
+    safetyQuery: "7791-18-6",
+    safety: {
+      additionOrder: {
+        zh: "先加入大部分水，再缓慢加入吸湿性六水合物；溶液澄清后定容，避免把镁盐直接加入高浓度磷酸盐。",
+        en: "Start with most of the water, slowly add the hygroscopic hexahydrate, and bring to volume after the solution clears; avoid adding magnesium directly to concentrated phosphate.",
+      },
+      incompatibilities: {
+        zh: "强氧化剂；高浓度磷酸盐、碳酸盐或碱性体系可产生沉淀，具体以配方和产品 SDS 为准。",
+        en: "Strong oxidizers; concentrated phosphate, carbonate, or alkaline systems can precipitate magnesium, subject to the formulation and product SDS.",
+      },
+      waste: {
+        zh: "未污染镁盐水溶液按本地盐负荷规定判断；含培养物、药物或重金属时按污染组分升级。",
+        en: "Assess uncontaminated magnesium-salt solution under local salt-load rules; escalate by contaminant when cultures, drugs, or heavy metals are present.",
+      },
+    },
+  },
+  {
+    id: "urea-8m",
+    title: { zh: "8 M 尿素", en: "8 M urea" },
+    subtitle: { zh: "蛋白变性、包涵体溶解与变性纯化常用储备液", en: "Denaturant stock for proteins, inclusion bodies, and denaturing purification" },
+    category: "stock",
+    defaultVolumeMl: 100,
+    ingredients: [
+      { name: { zh: "尿素", en: "Urea" }, amount: 48.05, unit: "g", chemicalId: "urea" },
+    ],
+    steps: [
+      { zh: "把尿素分批加入约 60% 终体积的水中，持续搅拌；必要时仅温和加热帮助溶解。", en: "Add urea in portions to about 60% of the final water volume with continuous stirring; use only gentle warming if needed." },
+      { zh: "完全溶解后冷却至室温，再用水定容。", en: "After complete dissolution, cool to room temperature before bringing to final volume with water." },
+      { zh: "按实验流程过滤并记录配制日期；不要高压灭菌。", en: "Filter as required by the workflow, record the preparation date, and do not autoclave." },
+    ],
+    notes: [
+      { zh: "Thermo Fisher 的变性结合缓冲液使用 48.1 g/100 mL；本卡按纯尿素 8 M 的摩尔质量换算为 48.05 g。", en: "Thermo Fisher's denaturing binding buffer uses 48.1 g/100 mL; this card reports 48.05 g from the molar mass of pure urea for 8 M." },
+      { zh: "尿素溶液会随时间产生氰酸盐并可能使蛋白氨甲酰化；避免过热，按具体实验要求使用新鲜或合格试剂。", en: "Urea solutions can generate cyanate over time and carbamylate proteins; avoid overheating and use fresh or qualified reagent as the protocol requires." },
+    ],
+    sourceLabel: "Thermo Fisher Scientific · ProBond purification recipes",
+    sourceUrl: "https://assets.thermofisher.com/TFS-Assets/LSG/manuals/xprpur_man.pdf",
+    safety: {
+      additionOrder: {
+        zh: "先加入部分水，再分批加入大量尿素并控制温度；溶解、冷却后才定容。",
+        en: "Start with part of the water, add the large urea mass in portions while controlling temperature, and bring to volume only after dissolution and cooling.",
+      },
+      incompatibilities: {
+        zh: "远离强氧化剂和亚硝酸盐；不要长时间强烈加热或与成分不明废液混合。",
+        en: "Keep away from strong oxidizers and nitrites; avoid prolonged strong heating and mixing with uncharacterized waste.",
+      },
+      waste: {
+        zh: "纯尿素溶液与含蛋白、重金属、咪唑、染料或生物污染的变性缓冲液分开判断，后者按最高危组分收集。",
+        en: "Assess plain urea separately from denaturing buffer containing protein, metals, imidazole, dyes, or biological contamination; collect the latter by the highest-hazard component.",
+      },
+    },
+  },
+  {
+    id: "guanidine-hydrochloride-6m",
+    title: { zh: "6 M 盐酸胍", en: "6 M guanidine hydrochloride" },
+    subtitle: { zh: "蛋白强变性、包涵体溶解与部分核酸纯化用高浓度离液剂", en: "Concentrated chaotrope for protein denaturation, inclusion bodies, and selected nucleic-acid workflows" },
+    category: "stock",
+    defaultVolumeMl: 100,
+    ingredients: [
+      { name: { zh: "盐酸胍", en: "Guanidine hydrochloride" }, amount: 57.32, unit: "g", chemicalId: "guanidine-hydrochloride" },
+    ],
+    steps: [
+      { zh: "在通风和防尘条件下，将盐酸胍分批加入约 60% 终体积的水中。", en: "With ventilation and dust control, add guanidine hydrochloride in portions to about 60% of the final water volume." },
+      { zh: "持续搅拌至完全溶解；必要时按产品说明使用温和加热。", en: "Stir until fully dissolved; use gentle warming only when allowed by the product instructions." },
+      { zh: "冷却至室温后用水定容；按具体流程过滤，不要高压灭菌。", en: "Cool to room temperature and bring to volume with water; filter when required by the workflow and do not autoclave." },
+    ],
+    notes: [
+      { zh: "该卡为单一盐酸胍储备液；商品核酸裂解液常含异硫氰酸胍、去污剂或其他组分，不能互换。", en: "This card is for a single guanidine-hydrochloride stock; commercial nucleic-acid lysis buffers can contain guanidine thiocyanate, detergents, or other components and are not interchangeable." },
+      { zh: "盐酸胍与异硫氰酸胍不是同一物质；是否可接触漂白剂必须以实际混合物 SDS 和机构流程为准。", en: "Guanidine hydrochloride is not guanidine thiocyanate; bleach compatibility must be determined from the actual mixture SDS and institutional procedure." },
+    ],
+    sourceLabel: "Thermo Fisher Scientific · ProBond purification recipes",
+    sourceUrl: "https://assets.thermofisher.com/TFS-Assets/LSG/manuals/xprpur_man.pdf",
+    safetyQuery: "50-01-1",
+    safety: {
+      additionOrder: {
+        zh: "先加入部分水，再分批加入盐酸胍并控制粉尘和溶解温度；完全澄清和冷却后定容。",
+        en: "Start with part of the water, add guanidine hydrochloride in portions while controlling dust and temperature, and bring to volume only after clearing and cooling.",
+      },
+      incompatibilities: {
+        zh: "远离强氧化剂；不要凭“胍盐”统称判断与漂白剂的相容性，任何含胍商品裂解液必须查其 SDS。",
+        en: "Keep from strong oxidizers; do not infer bleach compatibility from the generic term guanidinium, and check the SDS for every commercial guanidinium lysis mixture.",
+      },
+      waste: {
+        zh: "含胍废液单独标识并按实际配方收集；含酚、硫氰酸盐、酒精或生物样品时不得按单一盐酸胍处理。",
+        en: "Label and collect guanidinium waste by its actual formulation; mixtures containing phenol, thiocyanate, alcohol, or biological samples must not be treated as plain guanidine hydrochloride.",
+      },
+    },
+  },
+  {
+    id: "imidazole-2m-ph74",
+    title: { zh: "2 M 咪唑（pH 7.4）", en: "2 M imidazole (pH 7.4)" },
+    subtitle: { zh: "His 标签亲和纯化结合、洗涤和洗脱缓冲液用浓缩储备液", en: "Concentrated stock for His-tag affinity binding, wash, and elution buffers" },
+    category: "stock",
+    defaultVolumeMl: 100,
+    ingredients: [
+      { name: { zh: "咪唑", en: "Imidazole" }, amount: 13.616, unit: "g", chemicalId: "imidazole" },
+    ],
+    steps: [
+      { zh: "在局部排风下将咪唑缓慢加入约 70% 终体积的水中，搅拌至溶解。", en: "Under local exhaust, slowly add imidazole to about 70% of the final water volume and stir until dissolved." },
+      { zh: "用 HCl 少量调至 pH 7.4，待温度稳定后复核。", en: "Adjust to pH 7.4 with small additions of HCl and recheck after the temperature stabilizes." },
+      { zh: "用水定容并按纯化体系要求过滤；明确标注腐蚀和生殖毒性关注。", en: "Bring to volume with water and filter as required by the purification system; label corrosive and reproductive-toxicity concerns clearly." },
+    ],
+    notes: [
+      { zh: "不同树脂和目标蛋白需要不同咪唑工作浓度；2 M 仅是便于配制的储备液，不是通用工作液。", en: "Different resins and target proteins require different working concentrations; 2 M is a convenient stock, not a universal working buffer." },
+      { zh: "调 pH 所需 HCl 体积取决于实际滴定，不在定量组分中预设。", en: "The HCl volume depends on actual titration and is intentionally not prescribed as a quantitative ingredient." },
+    ],
+    sourceLabel: "Cytiva · His Buffer Kit / histidine-tag purification guidance",
+    sourceUrl: "https://cdn.cytivalifesciences.com/api/public/content/digi-13753-pdf",
+    safetyQuery: "288-32-4",
+    safety: {
+      additionalChemicalIds: ["hydrochloric-acid"],
+      additionOrder: {
+        zh: "先在大部分水中溶解咪唑，再在搅拌和通风下少量加 HCl 调 pH；冷却复核后定容。",
+        en: "Dissolve imidazole in most of the water first, then adjust pH with small HCl additions under stirring and ventilation; cool, recheck, and bring to volume.",
+      },
+      incompatibilities: {
+        zh: "远离强酸、强氧化剂和次氯酸盐；调 pH 使用的盐酸不得与漂白剂接触。",
+        en: "Keep away from strong acids, strong oxidizers, and hypochlorite; hydrochloric acid used for pH adjustment must not contact bleach.",
+      },
+      waste: {
+        zh: "含咪唑的 Ni/Co 亲和纯化废液还可能含重金属和蛋白样品，应按金属及生物污染的完整混合物收集。",
+        en: "Ni/Co affinity waste containing imidazole may also contain metals and protein samples; collect it as the complete metal- and biologically contaminated mixture.",
+      },
+    },
+  },
+  {
+    id: "dtt-1m",
+    title: { zh: "1 M DTT", en: "1 M DTT" },
+    subtitle: { zh: "蛋白样品和核酸相关体系常用还原剂储备液", en: "Reducing-agent stock for protein samples and selected nucleic-acid workflows" },
+    category: "stock",
+    defaultVolumeMl: 10,
+    ingredients: [
+      { name: { zh: "二硫苏糖醇（DTT）", en: "Dithiothreitol (DTT)" }, amount: 1.5425, unit: "g", chemicalId: "dithiothreitol" },
+    ],
+    steps: [
+      { zh: "避免扬尘，将 DTT 加入约 80% 终体积的高纯水中并轻柔混匀。", en: "Avoid dust, add DTT to high-purity water at about 80% of the final volume, and mix gently." },
+      { zh: "完全溶解后用水定容，立即小份分装。", en: "After complete dissolution, bring to volume with water and aliquot immediately into small portions." },
+      { zh: "按产品说明冷冻、减少反复冻融，并记录配制日期。", en: "Freeze according to the product instructions, minimize freeze-thaw cycles, and record the preparation date." },
+    ],
+    notes: [
+      { zh: "DTT 水溶液易被氧化；是否仍可使用应依据储存条件、时间和实验性能验证，而不是只看外观。", en: "Aqueous DTT oxidizes readily; fitness for use depends on storage, time, and assay performance rather than appearance alone." },
+      { zh: "1 M 是高浓度储备液，实际工作浓度必须按具体蛋白、酶或试剂盒说明确定。", en: "1 M is a concentrated stock; determine the working concentration from the specific protein, enzyme, or kit instructions." },
+    ],
+    sourceLabel: "Abcam · buffers and stock solutions",
+    sourceUrl: "https://www.abcam.com/ps/pdf/protocols/buffers%20and%20stock%20solutions.pdf",
+    safetyQuery: "3483-12-3",
+    safety: {
+      additionOrder: {
+        zh: "先加入大部分水，再缓慢加入 DTT 固体并控制粉尘；溶解后定容并立即分装。",
+        en: "Start with most of the water, slowly add solid DTT while controlling dust, then bring to volume and aliquot immediately after dissolution.",
+      },
+      incompatibilities: {
+        zh: "远离强氧化剂；不要把高浓度还原剂与成分不明、含过氧化物或次氯酸盐的废液混合。",
+        en: "Keep away from strong oxidizers; do not mix concentrated reducing agent with uncharacterized, peroxide-containing, or hypochlorite waste.",
+      },
+      waste: {
+        zh: "DTT 储备液和含 DTT 样品缓冲液按还原剂及其所有污染组分收集，不因失活或氧化就自动转为普通水性废液。",
+        en: "Collect DTT stock and DTT-containing sample buffer by the reducing agent and all contaminants; inactivation or oxidation does not automatically make it ordinary aqueous waste.",
+      },
+    },
+  },
+  {
+    id: "pmsf-100mm-isopropanol",
+    title: { zh: "100 mM PMSF（无水异丙醇）", en: "100 mM PMSF in anhydrous isopropanol" },
+    subtitle: { zh: "蛋白裂解液现用现加的丝氨酸蛋白酶抑制剂储备液", en: "Serine-protease inhibitor stock added fresh to protein lysis buffers" },
+    category: "stock",
+    defaultVolumeMl: 10,
+    ingredients: [
+      { name: { zh: "PMSF", en: "PMSF" }, amount: 0.1742, unit: "g", chemicalId: "pmsf" },
+      { name: { zh: "无水异丙醇（定容至终体积）", en: "Anhydrous isopropanol (bring to final volume)" }, amount: 10, unit: "mL", chemicalId: "isopropanol" },
+    ],
+    steps: [
+      { zh: "在通风柜和远离点火源的条件下，将 PMSF 加入约 80% 终体积的无水异丙醇。", en: "In a fume hood and away from ignition sources, add PMSF to anhydrous isopropanol at about 80% of the final volume." },
+      { zh: "轻柔混匀；如产品资料允许，可使用受控温和加热帮助溶解，禁止明火。", en: "Mix gently; if allowed by the product instructions, use controlled gentle warming to aid dissolution, never an open flame." },
+      { zh: "用无水异丙醇定容、小份分装，并同时标注急性毒性、腐蚀性和易燃溶剂。", en: "Bring to volume with anhydrous isopropanol, aliquot, and label acute toxicity, corrosivity, and flammable solvent together." },
+    ],
+    notes: [
+      { zh: "PMSF 在水中快速失活，通常在使用前加入裂解液；失活速度随 pH 和温度变化。", en: "PMSF rapidly loses activity in water and is usually added immediately before use; the rate depends on pH and temperature." },
+      { zh: "Merck/Sigma 推荐 100 mM 无水异丙醇或无水乙醇储备液；95% 乙醇不能视为无水溶剂。", en: "Merck/Sigma recommends a 100 mM stock in anhydrous isopropanol or anhydrous ethanol; 95% ethanol is not an anhydrous solvent." },
+    ],
+    sourceLabel: "Merck / Sigma-Aldrich · PMSF product information",
+    sourceUrl: "https://www.sigmaaldrich.com/deepweb/assets/sigmaaldrich/product/documents/389/090/78830dat.pdf",
+    safetyQuery: "329-98-6",
+    safety: {
+      additionOrder: {
+        zh: "先在通风柜内量取大部分无水异丙醇，再加入 PMSF 固体；溶解后用同一溶剂定容，全程控制粉尘和点火源。",
+        en: "In a fume hood, measure most of the anhydrous isopropanol first, add solid PMSF, and bring to volume with the same solvent while controlling dust and ignition sources.",
+      },
+      incompatibilities: {
+        zh: "远离强碱、强氧化剂、水分、热源、火花和明火；不可与漂白剂或普通水性废液混合。",
+        en: "Keep away from strong bases, oxidizers, moisture, heat, sparks, and flames; do not mix with bleach or ordinary aqueous waste.",
+      },
+      waste: {
+        zh: "按含急性毒性/腐蚀性活性物质的易燃有机废液收集；进入裂解液后还应计入样品和其他抑制剂。",
+        en: "Collect as flammable organic waste containing an acutely toxic/corrosive active substance; once added to lysis buffer, also account for sample and other inhibitors.",
+      },
+    },
+  },
+  {
+    id: "iptg-100mm",
+    title: { zh: "100 mM IPTG", en: "100 mM IPTG" },
+    subtitle: { zh: "蓝白斑筛选与 lac 系统蛋白诱导常用储备液", en: "Stock for blue-white screening and lac-system protein induction" },
+    category: "stock",
+    defaultVolumeMl: 10,
+    ingredients: [
+      { name: { zh: "IPTG", en: "IPTG" }, amount: 0.2383, unit: "g", chemicalId: "iptg" },
+    ],
+    steps: [
+      { zh: "避免粉尘，将 IPTG 溶于约 80% 终体积的无菌水。", en: "Avoid dust and dissolve IPTG in sterile water at about 80% of the final volume." },
+      { zh: "用无菌水定容，并通过经验证的 0.2 µm 过滤流程除菌。", en: "Bring to volume with sterile water and sterilize through a validated 0.2 µm filtration process." },
+      { zh: "小份分装并按产品说明冷冻，尽量限制冻融次数。", en: "Aliquot and freeze according to the product instructions, limiting freeze-thaw cycles." },
+    ],
+    notes: [
+      { zh: "Thermo Fisher 给出的常见储备液范围为 0.1–0.84 M；本卡使用其蓝白斑筛选示例中的 100 mM 配方。", en: "Thermo Fisher lists a typical stock range of 0.1–0.84 M; this card uses the 100 mM formulation from its blue-white screening example." },
+      { zh: "诱导浓度取决于菌株、载体、目标蛋白和温度；100 mM 储备液不意味着统一的工作浓度。", en: "Induction concentration depends on strain, vector, target protein, and temperature; a 100 mM stock does not imply one universal working concentration." },
+    ],
+    sourceLabel: "Thermo Fisher Scientific · IPTG guidelines for use",
+    sourceUrl: "https://documents.thermofisher.com/TFS-Assets/LSG/manuals/4386632.pdf",
+    safetyQuery: "367-93-1",
+    safety: {
+      additionOrder: {
+        zh: "先加入大部分无菌水，再缓慢加入 IPTG 固体并控制粉尘；溶解后定容和过滤。",
+        en: "Start with most of the sterile water, slowly add solid IPTG while controlling dust, and bring to volume and filter after dissolution.",
+      },
+      incompatibilities: {
+        zh: "避免强氧化剂；与抗生素、X-Gal、培养基或生物样品混合后按完整体系重新评估。",
+        en: "Avoid strong oxidizers; reassess the complete system when mixed with antibiotics, X-Gal, media, or biological samples.",
+      },
+      waste: {
+        zh: "未污染 IPTG 水溶液与含诱导培养物、抗生素或转基因材料的废液分开管理；后者遵循生物与耐药性废物流程。",
+        en: "Manage uncontaminated aqueous IPTG separately from waste containing induced cultures, antibiotics, or engineered biological material; the latter follows biological and antimicrobial-resistance procedures.",
+      },
+    },
+  },
 ];
 
 export type HazardCategory = "acute" | "corrosive" | "flammable" | "oxidizer" | "chronic" | "irritant";
@@ -2458,6 +2783,70 @@ export const CHEMICAL_SAFETY_RECORDS: ChemicalSafetyRecord[] = [
     ],
     incompatibilities: { zh: "强氧化剂、强酸和强碱；避免生成或释放其他有毒砷化合物的条件。", en: "Strong oxidizers, strong acids, and strong bases; avoid conditions that generate or release other toxic arsenic compounds." },
     special: { zh: "三水合物与无水二甲胂酸钠的 CAS 和分子式不同，但两者都属于含砷危废管理范围。", en: "The trihydrate and anhydrous sodium cacodylate have different CAS numbers and formulas, but both require arsenic hazardous-waste controls." },
+  },
+  {
+    id: "sodium-acetate",
+    uses: ["nucleic-acid", "protein", "general"],
+    name: { zh: "醋酸钠三水合物", en: "Sodium acetate trihydrate" },
+    aliases: ["6131-90-4", "127-09-3", "sodium acetate trihydrate", "sodium ethanoate trihydrate", "醋酸钠", "乙酸钠", "醋酸钠三水合物"],
+    cas: "6131-90-4",
+    formula: "C₂H₉NaO₅",
+    cid: 23665404,
+    level: "moderate",
+    signal: { zh: "无统一信号词", en: "No uniform signal word" },
+    categories: [],
+    ghs: [],
+    summary: { zh: "核酸沉淀和缓冲体系常用盐；所引三水合物来源未给出统一 GHS H 代码，但粉尘、酸化步骤和高浓度溶液仍需规范管理。", en: "A salt used for nucleic-acid precipitation and buffers; the cited trihydrate source does not provide a uniform GHS H-code set, but dust, acidification, and concentrated solutions still require good control." },
+    controls: [
+      { zh: "称量时减少粉尘并防止眼部接触；核对瓶身是无水物还是三水合物。", en: "Minimize dust during weighing, prevent eye contact, and verify whether the bottle contains anhydrous material or trihydrate." },
+      { zh: "用冰醋酸调 pH 时，按冰醋酸的腐蚀、挥发和不相容性要求操作。", en: "When adjusting pH with glacial acetic acid, apply its corrosive, volatile, and incompatibility controls." },
+    ],
+    incompatibilities: { zh: "强氧化剂；酸化体系还应远离强碱和次氯酸盐。", en: "Strong oxidizers; acidified systems should also be kept from strong bases and hypochlorite." },
+    special: { zh: "三水合物（CAS 6131-90-4）与无水醋酸钠（CAS 127-09-3）的分子量不同，配方称量不能直接互换。", en: "The trihydrate (CAS 6131-90-4) and anhydrous sodium acetate (CAS 127-09-3) have different molecular weights and recipe masses are not interchangeable." },
+  },
+  {
+    id: "magnesium-chloride",
+    uses: ["nucleic-acid", "protein", "cell-culture", "general"],
+    name: { zh: "氯化镁六水合物", en: "Magnesium chloride hexahydrate" },
+    aliases: ["7791-18-6", "magnesium chloride hexahydrate", "MgCl2 hexahydrate", "MgCl₂·6H₂O", "氯化镁", "氯化镁六水合物"],
+    cas: "7791-18-6",
+    formula: "Cl₂H₁₂MgO₆",
+    cid: 24644,
+    level: "moderate",
+    signal: { zh: "无统一信号词", en: "No uniform signal word" },
+    categories: [],
+    ghs: [],
+    summary: { zh: "酶反应和培养基常用镁盐；所引六水合物来源未给出统一 GHS H 代码，但吸湿性粉末、眼部接触和高浓度盐溶液仍需控制。", en: "A magnesium salt used in enzyme reactions and media; the cited hexahydrate source does not provide a uniform GHS H-code set, but hygroscopic powder, eye contact, and concentrated salt solutions still require control." },
+    controls: [
+      { zh: "快速称量并及时密闭，减少吸湿导致的浓度误差和粉末扩散。", en: "Weigh promptly and reseal to reduce moisture-driven concentration error and powder spread." },
+      { zh: "配置高浓度储备液时佩戴眼部防护，清理结晶和飞溅残留。", en: "Use eye protection for concentrated stocks and clean crystallized or splashed residue." },
+    ],
+    incompatibilities: { zh: "强氧化剂；高浓度磷酸盐、碳酸盐或碱性体系可产生沉淀。", en: "Strong oxidizers; concentrated phosphate, carbonate, or alkaline systems can produce precipitates." },
+    special: { zh: "六水合物（MW 203.30）和无水氯化镁（MW 95.21）不能按相同质量配制；不同水合状态和产品可能有不同 SDS 分类。", en: "Hexahydrate (MW 203.30) and anhydrous magnesium chloride (MW 95.21) cannot use the same recipe mass; hydrate state and product can change the SDS classification." },
+  },
+  {
+    id: "iptg",
+    uses: ["protein", "cell-culture", "general"],
+    name: { zh: "IPTG", en: "IPTG" },
+    aliases: ["367-93-1", "isopropyl beta-D-thiogalactopyranoside", "isopropyl β-D-1-thiogalactopyranoside", "IPTG", "异丙基-β-D-硫代半乳糖苷"],
+    cas: "367-93-1",
+    formula: "C₉H₁₈O₅S",
+    cid: 656894,
+    level: "high",
+    signal: { zh: "警告", en: "Warning" },
+    categories: ["acute"],
+    ghs: [
+      { code: "H302", statement: { zh: "吞咽有害", en: "Harmful if swallowed" } },
+      { code: "H312", statement: { zh: "皮肤接触有害", en: "Harmful in contact with skin" } },
+      { code: "H332", statement: { zh: "吸入有害", en: "Harmful if inhaled" } },
+    ],
+    summary: { zh: "lac 系统诱导和蓝白斑筛选常用化学诱导剂；PubChem 汇总中的部分来源给出吞咽、皮肤接触和吸入有害分类。", en: "A chemical inducer used for lac-system expression and blue-white screening; some sources aggregated by PubChem classify it as harmful by ingestion, skin contact, and inhalation." },
+    controls: [
+      { zh: "称量粉末时避免扬尘和皮肤接触，使用眼部与手部防护。", en: "Prevent dust and skin contact during weighing and use eye and hand protection." },
+      { zh: "储备液过滤、分装和冻融按产品说明执行，并清楚标注浓度。", en: "Filter, aliquot, and freeze-thaw stocks according to the product instructions and label concentration clearly." },
+    ],
+    incompatibilities: { zh: "强氧化剂；实际产品的不相容物以供应商 SDS 第 10 节为准。", en: "Strong oxidizers; use Section 10 of the supplier SDS for product-specific incompatibilities." },
+    special: { zh: "不同供应商对 IPTG 的 GHS 分类可能不同；网页展示的是代表性汇总，实际操作必须以当前瓶身和产品 SDS 为准。", en: "IPTG GHS classifications vary among suppliers; this page shows a representative aggregation and actual work must follow the current label and product SDS." },
   },
 ];
 
