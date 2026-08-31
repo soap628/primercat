@@ -8742,3 +8742,159 @@ html[data-theme="light"] { color-scheme: light; }
   .primer-preview-candidate { grid-template-columns: 1fr; }
   .primer-preview-candidate dl > div:first-child { padding-left: 0; border-left: 0; }
 }
+
+/* ── Round 11 · home scientific motion language ───────────────────── */
+.home-page-v4 .home-hero-kicker,
+.home-page-v4 .hero-headline,
+.home-page-v4 .hero-pipeline,
+.home-page-v4 .hero-cta-row,
+.home-page-v4 .hero-pills {
+  opacity: 0;
+  animation: home-copy-enter 640ms cubic-bezier(.22, 1, .36, 1) forwards;
+}
+.home-page-v4 .home-hero-kicker { animation-delay: 40ms; }
+.home-page-v4 .hero-headline { animation-delay: 110ms; }
+.home-page-v4 .hero-pipeline { animation-delay: 200ms; }
+.home-page-v4 .hero-cta-row { animation-delay: 280ms; }
+.home-page-v4 .hero-pills { animation-delay: 350ms; }
+
+.home-evidence {
+  opacity: 0;
+  transform: translate3d(18px, 8px, 0) scale(.988);
+  transform-origin: 50% 55%;
+  animation: home-evidence-enter 760ms cubic-bezier(.22, 1, .36, 1) 120ms forwards;
+}
+.home-evidence::before {
+  transform: scaleY(0);
+  transform-origin: top;
+  animation: home-evidence-rule 720ms cubic-bezier(.22, 1, .36, 1) 430ms forwards;
+}
+.home-evidence-topline > div,
+.home-evidence-status {
+  opacity: 0;
+  transform: translateY(5px);
+  animation: home-data-reveal 420ms ease-out forwards;
+}
+.home-evidence-topline > div { animation-delay: 460ms; }
+.home-evidence-status { animation-delay: 1920ms; }
+.home-evidence-status i {
+  animation: home-status-pulse 3.2s ease-out 2.35s infinite;
+}
+.home-evidence-axis {
+  opacity: 0;
+  animation: home-data-reveal 320ms ease-out 620ms forwards;
+}
+.home-evidence-track::before {
+  position: absolute;
+  z-index: 2;
+  top: 24px;
+  bottom: 20px;
+  left: 18px;
+  width: 1px;
+  opacity: 0;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--accent) 72%, transparent), transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 26%, transparent);
+  content: "";
+  pointer-events: none;
+  animation: home-track-scan 4.6s cubic-bezier(.4, 0, .2, 1) 1.05s infinite;
+}
+.home-evidence-gene {
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: home-track-draw 680ms cubic-bezier(.65, 0, .35, 1) 700ms forwards;
+}
+.home-evidence-gene .exon {
+  opacity: 0;
+  transform: scaleY(.3);
+  animation: home-exon-reveal 330ms cubic-bezier(.34, 1.56, .64, 1) forwards;
+}
+.home-evidence-gene .exon-1 { animation-delay: 880ms; }
+.home-evidence-gene .exon-2 { animation-delay: 980ms; }
+.home-evidence-gene .exon-3 {
+  animation-name: home-exon-reveal, home-target-breathe;
+  animation-duration: 330ms, 3.8s;
+  animation-delay: 1080ms, 2.15s;
+  animation-timing-function: cubic-bezier(.34, 1.56, .64, 1), ease-in-out;
+  animation-iteration-count: 1, infinite;
+  animation-fill-mode: forwards, none;
+}
+.home-evidence-gene .exon-4 { animation-delay: 1180ms; }
+.home-evidence-primer {
+  opacity: 0;
+  animation: home-primer-lock 460ms cubic-bezier(.22, 1, .36, 1) forwards;
+}
+.home-evidence-primer.forward { --primer-shift: -18px; animation-delay: 1260ms; }
+.home-evidence-primer.reverse { --primer-shift: 18px; animation-delay: 1430ms; }
+.home-evidence-track::after {
+  opacity: 0;
+  animation: home-data-reveal 360ms ease-out 1540ms forwards;
+}
+.home-evidence-metrics > div {
+  opacity: 0;
+  transform: translateY(7px);
+  animation: home-metric-rise 380ms cubic-bezier(.22, 1, .36, 1) forwards;
+}
+.home-evidence-metrics > div:nth-child(1) { animation-delay: 1540ms; }
+.home-evidence-metrics > div:nth-child(2) { animation-delay: 1620ms; }
+.home-evidence-metrics > div:nth-child(3) { animation-delay: 1700ms; }
+.home-evidence-metrics > div:nth-child(4) { animation-delay: 1780ms; }
+.home-evidence-score,
+.home-evidence-sources {
+  opacity: 0;
+  animation: home-data-reveal 440ms cubic-bezier(.22, 1, .36, 1) forwards;
+}
+.home-evidence-score { animation-delay: 1880ms; }
+.home-evidence-sources { animation-delay: 1980ms; }
+
+@keyframes home-copy-enter {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes home-evidence-enter {
+  from { opacity: 0; transform: translate3d(18px, 8px, 0) scale(.988); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes home-evidence-rule { to { transform: scaleY(1); } }
+@keyframes home-data-reveal {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes home-track-draw { to { transform: scaleX(1); } }
+@keyframes home-exon-reveal {
+  from { opacity: 0; transform: scaleY(.3); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+@keyframes home-target-breathe {
+  0%, 82%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+  90% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 12%, transparent); }
+}
+@keyframes home-primer-lock {
+  from { opacity: 0; transform: translateX(var(--primer-shift)); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes home-metric-rise {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes home-status-pulse {
+  0%, 72%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 13%, transparent); }
+  82% { box-shadow: 0 0 0 7px color-mix(in srgb, currentColor 0%, transparent); }
+}
+@keyframes home-track-scan {
+  0%, 18% { opacity: 0; transform: translateX(0); }
+  24% { opacity: .78; }
+  52% { opacity: .45; }
+  60%, 100% { opacity: 0; transform: translateX(min(470px, calc(100vw - 96px))); }
+}
+
+@media (max-width: 640px) {
+  .home-evidence-track::before {
+    animation-name: home-track-scan-mobile;
+  }
+}
+@keyframes home-track-scan-mobile {
+  0%, 18% { opacity: 0; transform: translateX(0); }
+  24% { opacity: .72; }
+  52% { opacity: .4; }
+  60%, 100% { opacity: 0; transform: translateX(calc(100vw - 86px)); }
+}
