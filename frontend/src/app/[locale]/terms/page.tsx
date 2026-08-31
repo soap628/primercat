@@ -2,15 +2,15 @@ const COPY = {
   zh: {
     badge: "服务条款",
     title: "服务条款",
-    updated: "最近更新：2026 年 3 月",
+    updated: "最近更新：2026 年 8 月 31 日",
     sections: [
       {
         title: "使用范围",
         body: "PrimerCat 仅供学术研究和非商业用途。严禁将本工具用于临床诊断、药物开发决策或任何以盈利为目的的商业活动（未经书面授权）。",
       },
       {
-        title: "结果免责声明",
-        body: "本工具提供的所有结果（引物设计、gRNA 设计、BLAST 比对）均为计算预测，不构成实验保证。\n\n• 引物设计结果需经实验验证（PCR 扩增、熔解曲线等）\n• gRNA 活性评分为预测值，脱靶风险需实验确认\n• BLAST 比对仅针对参考数据库，不等同于全基因组验证\n\n使用本工具的风险由用户自行承担。",
+        title: "计算结果与安全资料",
+        body: "PrimerCat 提供计算、数据库筛查和研究参考资料，不构成实验成功保证、临床结论或专业安全意见。\n\n• 引物需通过扩增效率、产物大小、熔解曲线等实验验证\n• gRNA 活性与脱靶标签为计算结果，需进一步分析和实验确认\n• BLAST 结论受所选数据库、参数与更新时间限制\n• 配方、Protocol 与试剂安全摘要不能替代产品说明书、SDS、机构 SOP 或风险评估\n\n用户应根据具体实验体系独立复核并承担使用风险。",
       },
       {
         title: "账号与数据",
@@ -18,7 +18,7 @@ const COPY = {
       },
       {
         title: "知识产权",
-        body: "PrimerCat 平台代码、设计和内容归开发者所有。用户提交的序列数据归用户所有，我们不对其主张任何权利。",
+        body: "PrimerCat 的原创代码、设计与内容受适用法律保护；第三方软件、数据库和资料仍归各自权利人所有。用户保留其提交内容的相关权利，并授权 PrimerCat 在提供所请求服务所必需的范围内处理该内容。",
       },
       {
         title: "服务变更",
@@ -33,15 +33,15 @@ const COPY = {
   en: {
     badge: "Terms of Service",
     title: "Terms of Service",
-    updated: "Last updated: March 2026",
+    updated: "Last updated: 31 August 2026",
     sections: [
       {
         title: "Permitted Use",
         body: "PrimerCat is intended for academic research and non-commercial use only. Use of this tool for clinical diagnosis, pharmaceutical development decisions, or any commercial purpose is prohibited without prior written authorization.",
       },
       {
-        title: "Disclaimer of Results",
-        body: "All results provided by this tool (primer design, gRNA design, BLAST alignment) are computational predictions and do not constitute experimental guarantees.\n\n• Primer design results require experimental validation (PCR amplification, melt curve analysis, etc.)\n• gRNA activity scores are predictions; off-target risk requires experimental confirmation\n• BLAST alignment is limited to reference databases and is not equivalent to genome-wide PCR validation\n\nYou use this tool at your own risk.",
+        title: "Computational results and safety references",
+        body: "PrimerCat provides calculations, database screening, and research reference material. It does not provide an experimental guarantee, clinical conclusion, or professional safety advice.\n\n• Primers require experimental validation of efficiency, product size, melt curve, and related performance\n• gRNA activity and off-target labels are computational and require further analysis and experimental confirmation\n• BLAST conclusions depend on the selected database, parameters, and update status\n• Formulations, protocols, and reagent-safety summaries do not replace product instructions, SDS documents, institutional SOPs, or risk assessments\n\nUsers must review outputs for their specific experimental system and accept the risks of use.",
       },
       {
         title: "Accounts and Data",
@@ -49,7 +49,7 @@ const COPY = {
       },
       {
         title: "Intellectual Property",
-        body: "The PrimerCat platform code, design, and content are owned by the developers. Sequence data submitted by users belongs to the users — we make no claims to it.",
+        body: "Original PrimerCat code, design, and content are protected under applicable law; third-party software, databases, and materials remain the property of their respective rights holders. Users retain applicable rights in submitted content and grant PrimerCat permission to process it only as needed to provide the requested service.",
       },
       {
         title: "Service Changes",

@@ -15,7 +15,7 @@ const BIBTEX = `@software{wang_primercat_2026,
 const APA_ZH = `Wang, Z. (2026). PrimerCat: An auditable platform for qPCR primer design, CRISPR gRNA design, and BLAST sequence search (Version 1.0) [Software]. https://primercat.tech`;
 const APA_EN = `Wang, Z. (2026). PrimerCat: An auditable platform for qPCR primer design, CRISPR gRNA design, and BLAST sequence search (Version 1.0) [Software]. https://primercat.tech`;
 
-function CopyBlock({ label, text }: { label: string; text: string }) {
+function CopyBlock({ label, text, locale }: { label: string; text: string; locale: string }) {
   const [copied, setCopied] = useState(false);
   function copy() {
     navigator.clipboard.writeText(text).then(() => {
@@ -46,7 +46,7 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
             transition: "all 0.15s",
           }}
         >
-          {copied ? "✓ Copied" : "Copy"}
+          {copied ? (locale === "zh" ? "已复制" : "Copied") : (locale === "zh" ? "复制" : "Copy")}
         </button>
       </div>
       <pre className="citation-code-v7" style={{
@@ -73,18 +73,18 @@ const COPY = {
   zh: {
     badge: "引用",
     title: "如何引用 PrimerCat",
-    intro: "如果 PrimerCat 对您的研究有帮助，请按以下格式引用。目前提供 URL 引用，Zenodo DOI 正在申请中，发布后将更新此页面。",
+    intro: "如在研究中使用 PrimerCat，可采用以下 URL 引用格式。",
     doiNotice: "关于 DOI",
-    doiBody: "正式 DOI 尚未发布。如需在论文中引用，建议使用上方 URL 格式；DOI 发布后可向期刊补充更新引用信息。如有疑问请联系我们。",
+    doiBody: "PrimerCat 当前尚未分配 DOI。投稿前请核对期刊的软件引用要求；需要时可先使用上方 URL 格式。",
     ctaAbout: "关于开发者",
     ctaContact: "联系 / 合作",
   },
   en: {
     badge: "Citation",
     title: "How to Cite PrimerCat",
-    intro: "If PrimerCat contributed to your research, please cite it using one of the formats below. A Zenodo DOI is pending — URL citation is available now.",
+    intro: "If you use PrimerCat in your research, cite it with one of the URL-based formats below.",
     doiNotice: "About the DOI",
-    doiBody: "A formal DOI has not yet been issued. For immediate citation needs, use the URL format above. Once the Zenodo record is published, you can update the citation in your manuscript. Feel free to contact us if needed.",
+    doiBody: "PrimerCat does not currently have a DOI. Check the target journal's software-citation requirements before submission; the URL format above may be used where appropriate.",
     ctaAbout: "About the Developer",
     ctaContact: "Contact / Collaborate",
   },
@@ -109,8 +109,8 @@ export default function CitePage({ params: { locale } }: { params: { locale: str
       </section>
 
       <section className="story-surface" style={{ padding: "22px clamp(18px, 3vw, 28px)", marginBottom: 14 }}>
-        <CopyBlock label="BibTeX (@software)" text={BIBTEX} />
-        <CopyBlock label="APA 7th" text={apa} />
+        <CopyBlock label="BibTeX (@software)" text={BIBTEX} locale={locale} />
+        <CopyBlock label="APA 7th" text={apa} locale={locale} />
       </section>
 
       <section className="story-surface" style={{ padding: "20px clamp(18px, 3vw, 28px)", marginBottom: 14 }}>

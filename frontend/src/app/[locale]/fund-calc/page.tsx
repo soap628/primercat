@@ -268,8 +268,8 @@ export default function FundCalculatorPage({ params: { locale } }: { params: { l
       <section className="fund-calc-hero">
         <div>
           <span className="fund-calc-kicker">PRIMERCAT · FUND PLANNER</span>
-          <h1>{zh ? "科研经费分配助手" : "Research fund planner"}</h1>
-          <p>{zh ? "把经费草案拆成直接费用、间接费用、内部明细和年度计划。所有计算仅在浏览器中完成。" : "Turn a funding draft into direct costs, indirect costs, internal line items, and an annual schedule. Calculations stay in your browser."}</p>
+          <h1>{zh ? "科研经费预算助手" : "Research budget planner"}</h1>
+          <p>{zh ? "编制直接费用、间接费用、内部明细与年度计划草案。所有计算仅在当前浏览器中完成。" : "Draft direct costs, indirect costs, internal line items, and an annual schedule. All calculations remain in the current browser."}</p>
         </div>
         <aside>
           <span>{zh ? "当前草案" : "Current draft"}</span>

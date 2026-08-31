@@ -21,8 +21,8 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
       methodTitle: "四步工作流",
       methodSteps: [
         {
-          title: "1. 选取最佳转录本",
-          body: "实时查询 NCBI RefSeq，筛选 NM_ 编码转录本，优先选取 CDS 完整、外显子最多的主要转录本作为设计模板。",
+          title: "1. 按规则选择参考转录本",
+          body: "实时查询 NCBI RefSeq，筛选 NM_ 编码转录本，并按 CDS 完整性和外显子数等规则选择设计模板。",
         },
         {
           title: "2. Primer3 生成候选引物",
@@ -41,9 +41,9 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
       boundaryBody:
         "RefSeq RNA BLAST 提升的是转录本层面的可信度，不等同于全基因组 PCR 特异性验证。正式实验前建议结合更高层级的 in-silico 分析或湿实验确认。",
       trustTitle: "可信度说明",
-      trustGoodTitle: "已经有说服力",
+      trustGoodTitle: "当前结果已提供",
       trustGood: [
-        "自动选取物种上下文中最合适的 RefSeq 转录本",
+        "按公开规则选择物种对应的 RefSeq 参考转录本",
         "结果页展示设计依据、筛查状态、扩增子和推荐理由",
         "BLAST 失败不会被误报为通过特异性验证",
         "转录本层面证据与全基因组结论明确区分",
@@ -63,8 +63,8 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
       methodTitle: "Four-step workflow",
       methodSteps: [
         {
-          title: "1. Select the best transcript",
-          body: "Queries NCBI RefSeq in real time, filters NM_ protein-coding transcripts, and selects the canonical transcript with complete CDS and the most exons as the design template.",
+          title: "1. Select a reference transcript by rule",
+          body: "Queries NCBI RefSeq in real time, filters NM_ protein-coding transcripts, and selects a design template using CDS completeness, exon count, and related rules.",
         },
         {
           title: "2. Generate candidates with Primer3",
@@ -83,9 +83,9 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
       boundaryBody:
         "RefSeq RNA BLAST improves transcript-level confidence. It is not genome-wide PCR specificity validation. Formal experimental use should include stronger in-silico checks or wet-lab validation.",
       trustTitle: "Trust statement",
-      trustGoodTitle: "What is well-supported",
+      trustGoodTitle: "What the result provides",
       trustGood: [
-        "Automatically selects the most suitable RefSeq transcript in species context",
+        "Selects a species-specific RefSeq reference transcript using stated rules",
         "Result page shows design basis, BLAST status, amplicon, and ranking rationale",
         "BLAST failures are never reported as specificity passes",
         "Transcript-level evidence and genome-wide claims are explicitly separated",
@@ -112,11 +112,11 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
         },
         {
           title: "2. 活性评分",
-          body: "基于位置权重矩阵（Rule Set 2 / DeepCRISPR 启发规则）对每条 gRNA 的切割效率打分，综合 GC 含量、seed 区碱基偏好和多聚碱基风险。",
+          body: "使用简化的序列特征模型估算每条 gRNA 的相对活性，综合位置碱基权重、GC 含量、seed 区特征和多聚碱基风险。",
         },
         {
           title: "3. 脱靶风险分层",
-          body: "通过预计算的基因组偏移矩阵估计脱靶命中数量，将脱靶风险分为 Low / Medium / High 三档，并标注已知脱靶位点数量。",
+          body: "配置本地索引时使用 Bowtie2 进行参考基因组筛查；否则回退至物种限定的 NCBI nt BLAST。结果按命中数和相似度分层，并标注实际使用的后端。",
         },
         {
           title: "4. 排序与展示",
@@ -127,10 +127,10 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
       boundaryBody:
         "脱靶评估基于计算预测，不等同于实验验证的脱靶图谱（如 GUIDE-seq、CIRCLE-seq）。高风险等级的 gRNA 应在实验前进行更严格的验证，建议结合细胞系功能实验确认切割效率。",
       trustTitle: "可信度说明",
-      trustGoodTitle: "已经有说服力",
+      trustGoodTitle: "当前结果已提供",
       trustGood: [
         "支持 SpCas9、Cas12a、SpCas9-NG 三种 Cas 蛋白",
-        "活性评分基于已发表的位置权重规则，而非随机排序",
+        "活性评分使用明确的序列特征规则，而非随机排序",
         "脱靶风险分三档标注，不会模糊化为单一分数",
         "PAM 上下文和 spacer 序列完整展示，可供用户自行核查",
       ],
@@ -141,9 +141,9 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
         "目前仅支持人类和小鼠基因组参考序列",
       ],
       sources: [
-        "NCBI Gene — 基因坐标和外显子信息",
-        "Rule Set 2 / DeepCRISPR — 活性评分参考规则",
-        "基因组偏移矩阵 — 脱靶风险估计",
+        "NCBI RefSeq — 目标序列与转录本信息",
+        "简化位置权重与序列特征规则 — 活性排序",
+        "Bowtie2 本地索引或 NCBI nt BLAST — 脱靶初筛",
       ],
     },
     en: {
@@ -155,11 +155,11 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
         },
         {
           title: "2. Activity scoring",
-          body: "Scores each gRNA for predicted cleavage efficiency using position weight matrices (Rule Set 2 / DeepCRISPR-inspired rules), incorporating GC content, seed region base preference, and poly-nucleotide risk.",
+          body: "Estimates relative guide activity with a simplified sequence-feature model using position-specific nucleotide weights, GC content, seed-region features, and homopolymer risk.",
         },
         {
           title: "3. Off-target risk stratification",
-          body: "Estimates off-target hit counts using a pre-computed genome mismatch matrix and assigns risk tiers (Low / Medium / High) with annotated off-target site counts.",
+          body: "Uses Bowtie2 against a local reference-genome index when configured; otherwise it falls back to species-filtered NCBI nt BLAST. Risk tiers use returned hit counts and identity, and the active backend is labeled.",
         },
         {
           title: "4. Ranking and display",
@@ -170,10 +170,10 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
       boundaryBody:
         "Off-target assessment is computational and not equivalent to experimental off-target profiling methods (e.g., GUIDE-seq, CIRCLE-seq). High-risk gRNAs should undergo more rigorous validation before use. Functional cell-line experiments are recommended to confirm cleavage efficiency.",
       trustTitle: "Trust statement",
-      trustGoodTitle: "What is well-supported",
+      trustGoodTitle: "What the result provides",
       trustGood: [
         "Supports SpCas9, Cas12a, and SpCas9-NG",
-        "Activity scoring uses published position-weight rules, not arbitrary ranking",
+        "Activity scoring uses explicit sequence-feature rules rather than arbitrary ranking",
         "Off-target risk is presented in three labeled tiers, not collapsed into a single score",
         "Full PAM context and spacer sequences are shown for manual review",
       ],
@@ -184,9 +184,9 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
         "Currently supports human and mouse reference genomes only",
       ],
       sources: [
-        "NCBI Gene — gene coordinates and exon structure",
-        "Rule Set 2 / DeepCRISPR — activity scoring reference rules",
-        "Genome mismatch matrix — off-target risk estimation",
+        "NCBI RefSeq — target sequences and transcript information",
+        "Simplified position-weight and sequence-feature rules — activity ranking",
+        "Local Bowtie2 index or NCBI nt BLAST — off-target screening",
       ],
     },
   },
@@ -215,9 +215,9 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
       boundaryBody:
         "比对结果受所选数据库版本和 E-value 阈值影响。较大的 E-value 会引入更多低可信度命中。结果仅反映与已知数据库序列的相似性，不代表功能或进化关系的最终结论。",
       trustTitle: "可信度说明",
-      trustGoodTitle: "已经有说服力",
+      trustGoodTitle: "当前结果已提供",
       trustGood: [
-        "直接对接 NCBI 官方 QBlast API，数据来源权威",
+        "通过 NCBI QBlast API 提交查询",
         "展示原始比对块（query/midline/subject），可供用户自行核查",
         "E-value 和 bit score 均为标准统计量，含义明确",
         "支持多程序和多数据库组合，适合不同序列类型",
@@ -257,9 +257,9 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
       boundaryBody:
         "Results depend on the selected database version and E-value threshold. Higher E-values introduce more low-confidence hits. Results reflect similarity to known database sequences only and do not represent final conclusions about function or evolutionary relationships.",
       trustTitle: "Trust statement",
-      trustGoodTitle: "What is well-supported",
+      trustGoodTitle: "What the result provides",
       trustGood: [
-        "Directly uses the official NCBI QBlast API — authoritative data source",
+        "Submits queries through the NCBI QBlast API",
         "Shows raw alignment blocks (query / midline / subject) for manual inspection",
         "E-value and bit score are standard statistical measures with clear interpretations",
         "Supports multiple program and database combinations for different sequence types",

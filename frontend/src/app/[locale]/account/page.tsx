@@ -8,8 +8,8 @@ import { getPrimerJobs, getGrnaJobs, getBlastJobs, deleteJob, JobRecord } from "
 
 type TabKey = "primer" | "grna" | "blast";
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString();
+function formatDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleString(locale === "zh" ? "zh-CN" : "en-US");
 }
 
 const mono: React.CSSProperties = {
@@ -21,12 +21,12 @@ const mono: React.CSSProperties = {
   wordBreak: "break-all",
 };
 
-function CopyBtn({ text }: { text: string }) {
+function CopyBtn({ text, zh }: { text: string; zh: boolean }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
       onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-      title="复制"
+      title={zh ? "复制" : "Copy"}
       style={{ background: "none", border: "none", cursor: "pointer", padding: "0 3px", color: copied ? "var(--green)" : "var(--text-3)", fontSize: 11 }}
     >
       {copied ? "✓" : "⎘"}
@@ -47,9 +47,9 @@ function ScoreBar({ value, max = 100 }: { value: number; max?: number }) {
   );
 }
 
-function PrimerExpandedDetail({ result }: { result: Record<string, unknown> }) {
+function PrimerExpandedDetail({ result, zh }: { result: Record<string, unknown>; zh: boolean }) {
   const pairs = Array.isArray(result.primer_pairs) ? result.primer_pairs as Record<string, unknown>[] : [];
-  if (pairs.length === 0) return <p style={{ fontSize: 12, color: "var(--text-3)", margin: "8px 0 0" }}>无引物结果</p>;
+  if (pairs.length === 0) return <p style={{ fontSize: 12, color: "var(--text-3)", margin: "8px 0 0" }}>{zh ? "无引物结果" : "No primer results"}</p>;
   return (
     <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
       {pairs.map((p, i) => {
@@ -62,10 +62,10 @@ function PrimerExpandedDetail({ result }: { result: Record<string, unknown> }) {
             {/* 头部：排名、产物大小、综合评分 */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <span style={{ fontWeight: 700, color: "var(--text-1)" }}>Pair {(p.rank as number ?? i + 1)}</span>
-              <span style={{ color: "var(--text-2)" }}>产物 <b>{p.product_size as number} bp</b></span>
+              <span style={{ color: "var(--text-2)" }}>{zh ? "产物" : "Product"} <b>{p.product_size as number} bp</b></span>
               {score && (
                 <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ color: "var(--text-2)" }}>综合评分</span>
+                  <span style={{ color: "var(--text-2)" }}>{zh ? "综合评分" : "Composite score"}</span>
                   <ScoreBar value={score.total} />
                 </span>
               )}
@@ -76,13 +76,13 @@ function PrimerExpandedDetail({ result }: { result: Record<string, unknown> }) {
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                 <span style={{ color: "var(--primer-color)", fontWeight: 700, width: 14 }}>F</span>
                 <span style={mono}>{p.left_primer as string}</span>
-                <CopyBtn text={p.left_primer as string} />
+                <CopyBtn text={p.left_primer as string} zh={zh} />
                 <span style={{ color: "var(--text-3)" }}>Tm {(p.left_tm as number)?.toFixed(1)}°C · GC {(p.left_gc as number)?.toFixed(1)}%</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                 <span style={{ color: "var(--accent)", fontWeight: 700, width: 14 }}>R</span>
                 <span style={mono}>{p.right_primer as string}</span>
-                <CopyBtn text={p.right_primer as string} />
+                <CopyBtn text={p.right_primer as string} zh={zh} />
                 <span style={{ color: "var(--text-3)" }}>Tm {(p.right_tm as number)?.toFixed(1)}°C · GC {(p.right_gc as number)?.toFixed(1)}%</span>
               </div>
             </div>
@@ -93,9 +93,9 @@ function PrimerExpandedDetail({ result }: { result: Record<string, unknown> }) {
                 {[
                   ["Tm", score.tm_score, 30],
                   ["GC", score.gc_score, 20],
-                  ["特异性", score.specificity_score, 26],
-                  ["跨外显子", score.exon_score, 15],
-                  ["二聚体", score.dimer_score, 10],
+                  [zh ? "特异性证据" : "Specificity", score.specificity_score, 30],
+                  [zh ? "跨外显子" : "Exon-spanning", score.exon_score, 15],
+                  [zh ? "二聚体" : "Dimer", score.dimer_score, 10],
                 ].map(([label, val, max]) => (
                   <span key={label as string} style={{ display: "flex", alignItems: "center", gap: 4, color: "var(--text-2)" }}>
                     {label as string} <ScoreBar value={val as number} max={max as number} />/{max as number}
@@ -108,17 +108,19 @@ function PrimerExpandedDetail({ result }: { result: Record<string, unknown> }) {
             <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px", fontSize: 11, color: "var(--text-2)" }}>
               {p.is_specific != null && (
                 <span style={{ color: p.is_specific ? "var(--green)" : "var(--red)" }}>
-                  {p.is_specific ? "✓ BLAST 特异" : "✗ BLAST 非特异"}
+                  {p.is_specific
+                    ? (zh ? "✓ 初筛未见明显非目标命中" : "✓ No evident non-target hit in screen")
+                    : (zh ? "✗ 初筛发现非目标风险" : "✗ Non-target risk detected")}
                 </span>
               )}
-              {blastL && <span>F 最高同一性 {(blastL.top_hit_identity as number)?.toFixed(1)}%</span>}
-              {blastR && <span>R 最高同一性 {(blastR.top_hit_identity as number)?.toFixed(1)}%</span>}
+              {blastL && <span>F {zh ? "最高一致性" : "top identity"} {(blastL.top_hit_identity as number)?.toFixed(1)}%</span>}
+              {blastR && <span>R {zh ? "最高一致性" : "top identity"} {(blastR.top_hit_identity as number)?.toFixed(1)}%</span>}
               {exon && (exon.spans_junction as boolean) && (
                 <span style={{ color: "var(--blast-color)" }}>
-                  ✓ 跨外显子 {exon.left_exon as number}–{exon.right_exon as number}
+                  ✓ {zh ? "跨外显子" : "Exon-spanning"} {exon.left_exon as number}–{exon.right_exon as number}
                 </span>
               )}
-              {exon && !exon.spans_junction && <span>未跨外显子</span>}
+              {exon && !exon.spans_junction && <span>{zh ? "未跨外显子" : "Not exon-spanning"}</span>}
             </div>
           </div>
         );
@@ -127,27 +129,27 @@ function PrimerExpandedDetail({ result }: { result: Record<string, unknown> }) {
   );
 }
 
-function GrnaExpandedDetail({ result }: { result: Record<string, unknown> }) {
+function GrnaExpandedDetail({ result, zh }: { result: Record<string, unknown>; zh: boolean }) {
   const list = Array.isArray(result.grna_list) ? result.grna_list as Record<string, unknown>[] : [];
-  if (list.length === 0) return <p style={{ fontSize: 12, color: "var(--text-3)", margin: "8px 0 0" }}>无 gRNA 结果</p>;
+  if (list.length === 0) return <p style={{ fontSize: 12, color: "var(--text-3)", margin: "8px 0 0" }}>{zh ? "无 gRNA 结果" : "No gRNA results"}</p>;
   return (
     <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
       {list.slice(0, 5).map((g, i) => (
         <div key={i} className="account-result-row-v8" style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", padding: "8px 12px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <span style={{ fontWeight: 600, color: "var(--text-2)", flexShrink: 0 }}>#{g.rank as number}</span>
           <span style={mono}>{g.guide_with_pam as string}</span>
-          <CopyBtn text={g.guide_with_pam as string} />
-          <span style={{ color: "var(--text-3)", marginLeft: 4 }}>得分 {(g.on_target_score as number)?.toFixed(2)} · GC {(g.gc_content as number)?.toFixed(1)}% · 风险 {g.heuristic_risk as string}</span>
+          <CopyBtn text={g.guide_with_pam as string} zh={zh} />
+          <span style={{ color: "var(--text-3)", marginLeft: 4 }}>{zh ? "预测活性分" : "Predicted activity"} {(g.on_target_score as number)?.toFixed(2)} · GC {(g.gc_content as number)?.toFixed(1)}% · {zh ? "风险" : "Risk"} {g.heuristic_risk as string}</span>
         </div>
       ))}
-      {list.length > 5 && <p style={{ fontSize: 12, color: "var(--text-3)", margin: 0 }}>共 {list.length} 条，仅显示前 5</p>}
+      {list.length > 5 && <p style={{ fontSize: 12, color: "var(--text-3)", margin: 0 }}>{zh ? `共 ${list.length} 条，仅显示前 5 条` : `${list.length} total; showing the first 5`}</p>}
     </div>
   );
 }
 
-function BlastExpandedDetail({ result }: { result: Record<string, unknown> }) {
+function BlastExpandedDetail({ result, zh }: { result: Record<string, unknown>; zh: boolean }) {
   const hits = Array.isArray(result.hits) ? result.hits as Record<string, unknown>[] : [];
-  if (hits.length === 0) return <p style={{ fontSize: 12, color: "var(--text-3)", margin: "8px 0 0" }}>无命中结果</p>;
+  if (hits.length === 0) return <p style={{ fontSize: 12, color: "var(--text-3)", margin: "8px 0 0" }}>{zh ? "无命中结果" : "No hits"}</p>;
   return (
     <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
       {hits.slice(0, 5).map((h, i) => {
@@ -155,30 +157,32 @@ function BlastExpandedDetail({ result }: { result: Record<string, unknown> }) {
         return (
           <div key={i} className="account-result-row-v8" style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", padding: "8px 12px", fontSize: 12 }}>
             <div style={{ fontWeight: 500, color: "var(--text-1)", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.title as string}</div>
-            <span style={{ color: "var(--text-3)" }}>{h.accession as string} · 同一性 {(hsp?.identity_pct as number)?.toFixed(1)}% · 比对长度 {hsp?.align_length as number} bp</span>
+            <span style={{ color: "var(--text-3)" }}>{h.accession as string} · {zh ? "一致性" : "Identity"} {(hsp?.identity_pct as number)?.toFixed(1)}% · {zh ? "比对长度" : "Alignment length"} {hsp?.align_length as number} bp</span>
           </div>
         );
       })}
-      {hits.length > 5 && <p style={{ fontSize: 12, color: "var(--text-3)", margin: 0 }}>共 {hits.length} 条，仅显示前 5</p>}
+      {hits.length > 5 && <p style={{ fontSize: 12, color: "var(--text-3)", margin: 0 }}>{zh ? `共 ${hits.length} 条，仅显示前 5 条` : `${hits.length} total; showing the first 5`}</p>}
     </div>
   );
 }
 
-function JobCard({ job, type, onDelete, tDelete }: {
+function JobCard({ job, type, onDelete, tDelete, locale }: {
   job: JobRecord;
   type: TabKey;
   onDelete: () => void;
   tDelete: string;
+  locale: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const res = job.result_json as Record<string, unknown>;
+  const zh = locale === "zh";
 
   const subtitle = type === "primer"
-    ? `${job.mode === "gene" ? "基因模式" : "序列模式"} · ${res.sequence_length ?? "?"} bp · ${Array.isArray(res.primer_pairs) ? (res.primer_pairs as unknown[]).length : 0} 对引物 · ${formatDate(job.created_at)}`
+    ? `${job.mode === "gene" ? (zh ? "基因模式" : "Gene mode") : (zh ? "序列模式" : "Sequence mode")} · ${res.sequence_length ?? "?"} bp · ${Array.isArray(res.primer_pairs) ? (res.primer_pairs as unknown[]).length : 0} ${zh ? "对引物" : "primer pairs"} · ${formatDate(job.created_at, locale)}`
     : type === "grna"
-    ? `${job.cas_type} · ${job.species} · ${Array.isArray(res.grna_list) ? (res.grna_list as unknown[]).length : 0} 条 gRNA · ${formatDate(job.created_at)}`
-    : `${job.program} / ${job.database} · ${Array.isArray(res.hits) ? (res.hits as unknown[]).length : 0} 条命中 · ${formatDate(job.created_at)}`;
+    ? `${job.cas_type} · ${job.species} · ${Array.isArray(res.grna_list) ? (res.grna_list as unknown[]).length : 0} ${zh ? "条 gRNA" : "gRNAs"} · ${formatDate(job.created_at, locale)}`
+    : `${job.program} / ${job.database} · ${Array.isArray(res.hits) ? (res.hits as unknown[]).length : 0} ${zh ? "条命中" : "hits"} · ${formatDate(job.created_at, locale)}`;
 
   return (
     <article className="card card-hover account-job-card-v8" style={{ overflow: "hidden" }}>
@@ -195,23 +199,23 @@ function JobCard({ job, type, onDelete, tDelete }: {
             className="btn-secondary"
             style={{ padding: "4px 10px", fontSize: 12, cursor: "pointer" }}
           >
-            {expanded ? "收起" : "详情"}
+            {expanded ? (zh ? "收起" : "Collapse") : (zh ? "详情" : "Details")}
           </button>
           {confirming ? (
             <>
-              <span style={{ fontSize: 12, color: "var(--text-2)" }}>确认删除？</span>
+              <span style={{ fontSize: 12, color: "var(--text-2)" }}>{zh ? "确认删除？" : "Delete this record?"}</span>
               <button
                 onClick={() => { setConfirming(false); onDelete(); }}
                 style={{ padding: "4px 10px", background: "var(--red)", border: "none", borderRadius: "var(--r-md)", color: "#fff", fontSize: 12, cursor: "pointer", fontWeight: 600 }}
               >
-                确认
+                {zh ? "确认" : "Delete"}
               </button>
               <button
                 onClick={() => setConfirming(false)}
                 className="btn-secondary"
                 style={{ padding: "4px 10px", fontSize: 12, cursor: "pointer" }}
               >
-                取消
+                {zh ? "取消" : "Cancel"}
               </button>
             </>
           ) : (
@@ -226,21 +230,22 @@ function JobCard({ job, type, onDelete, tDelete }: {
       </div>
       {expanded && (
         <div className="account-job-expanded-v8" style={{ borderTop: "1px solid var(--border)", padding: "12px 16px", background: "var(--bg-inset)" }}>
-          {type === "primer" && <PrimerExpandedDetail result={res} />}
-          {type === "grna" && <GrnaExpandedDetail result={res} />}
-          {type === "blast" && <BlastExpandedDetail result={res} />}
+          {type === "primer" && <PrimerExpandedDetail result={res} zh={zh} />}
+          {type === "grna" && <GrnaExpandedDetail result={res} zh={zh} />}
+          {type === "blast" && <BlastExpandedDetail result={res} zh={zh} />}
         </div>
       )}
     </article>
   );
 }
 
-function JobList({ jobs, type, onDelete, tDelete, tEmpty }: {
+function JobList({ jobs, type, onDelete, tDelete, tEmpty, locale }: {
   jobs: JobRecord[];
   type: TabKey;
   onDelete: (id: string) => void;
   tDelete: string;
   tEmpty: string;
+  locale: string;
 }) {
   if (jobs.length === 0) {
     return <p style={{ color: "var(--text-3)", fontSize: 14, marginTop: 24 }}>{tEmpty}</p>;
@@ -248,7 +253,7 @@ function JobList({ jobs, type, onDelete, tDelete, tEmpty }: {
   return (
     <div className="account-job-list-v8" style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
       {jobs.map((job) => (
-        <JobCard key={job.id} job={job} type={type} onDelete={() => onDelete(job.id)} tDelete={tDelete} />
+        <JobCard key={job.id} job={job} type={type} onDelete={() => onDelete(job.id)} tDelete={tDelete} locale={locale} />
       ))}
     </div>
   );
@@ -384,7 +389,7 @@ export default function AccountPage({ params: { locale } }: { params: { locale: 
       </div>
 
       {fetching ? (
-        <p style={{ color: "var(--text-3)", fontSize: 14 }}>Loading…</p>
+        <p style={{ color: "var(--text-3)", fontSize: 14 }}>{locale === "zh" ? "正在加载…" : "Loading…"}</p>
       ) : (
         <>
           <JobList
@@ -393,6 +398,7 @@ export default function AccountPage({ params: { locale } }: { params: { locale: 
             onDelete={(id) => handleDelete(tab, id)}
             tDelete={t("delete")}
             tEmpty={t("empty")}
+            locale={locale}
           />
 
           {/* 翻页 */}

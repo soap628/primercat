@@ -247,15 +247,15 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
       {/* Header */}
       <header className="mw-hero-v6">
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-          <span style={S.badge}>⚗️ {zh ? "计算工具" : "Calculator"}</span>
+          <span style={S.badge}>{zh ? "实验室计算" : "Laboratory calculation"}</span>
         </div>
         <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--text-1)", margin: "0 0 6px" }}>
           {zh ? "分子量计算器" : "Molecular Weight Calculator"}
         </h1>
         <p style={{ fontSize: 14, color: "var(--text-2)", margin: 0 }}>
           {zh
-            ? "解析化学式 · 溶液配制 · 稀释计算 · 全程可查"
-            : "Parse chemical formulas · Solution prep · Dilution · All in one place"}
+            ? "解析化学式并计算摩尔质量、溶液浓度与稀释参数。"
+            : "Parse chemical formulas and calculate molar mass, solution concentration, and dilution parameters."}
         </p>
       </header>
 

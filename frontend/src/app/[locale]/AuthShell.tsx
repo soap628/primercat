@@ -19,27 +19,27 @@ export default function AuthShell({
   const copy = zh
     ? {
         kicker: "科研账户",
-        title: login ? "继续你的设计工作" : "建立可追溯的科研工作区",
+        title: login ? "查看已保存的设计记录" : "创建研究记录空间",
         intro: login
-          ? "登录后集中查看保存的引物、gRNA 与 BLAST 分析记录，并继续尚未完成的研究工作。"
-          : "创建账户，把不同工具的设计记录放在同一处。参数、结果和证据边界会随记录一起保存。",
+          ? "登录后查看已保存的 qPCR 引物、gRNA 与 BLAST 记录。"
+          : "创建账户，以便保存和检索设计参数、结果与筛查范围。",
         points: login
-          ? ["集中查看三类分析记录", "跨设备继续已保存的工作", "结果依据与设计边界同步保留"]
+          ? ["集中查看三类分析记录", "跨设备访问已保存记录", "保留结果依据与筛查范围"]
           : ["保存 qPCR、gRNA 与 BLAST 记录", "按基因名或序列快速检索", "随时回看参数、评分和筛查范围"],
-        formKicker: login ? "安全访问" : "创建账户",
+        formKicker: login ? "账户访问" : "创建账户",
         formTitle: login ? "登录 PrimerCat" : "注册 PrimerCat",
         formBody: login ? "使用你的邮箱和密码进入账户。" : "填写邮箱和密码即可开始，昵称可以稍后再决定。",
       }
     : {
         kicker: "Research account",
-        title: login ? "Continue your design work" : "Build a traceable research workspace",
+        title: login ? "Review saved design records" : "Create a research record space",
         intro: login
-          ? "Sign in to review saved primer, gRNA, and BLAST analyses in one place and continue your unfinished work."
-          : "Create an account to keep design records from every tool together, with parameters, results, and evidence boundaries attached.",
+          ? "Sign in to review saved qPCR primer, gRNA, and BLAST records."
+          : "Create an account to save and search design parameters, results, and screening scope.",
         points: login
-          ? ["Review all three analysis histories", "Continue saved work across devices", "Keep rationale and scope with every result"]
+          ? ["Review all three analysis histories", "Access saved records across devices", "Retain result evidence and screening scope"]
           : ["Save qPCR, gRNA, and BLAST records", "Search quickly by gene or sequence", "Revisit parameters, scores, and screening scope"],
-        formKicker: login ? "Secure access" : "Create account",
+        formKicker: login ? "Account access" : "Create account",
         formTitle: login ? "Sign in to PrimerCat" : "Register for PrimerCat",
         formBody: login ? "Use your email and password to access your account." : "Start with an email and password. A display name is optional.",
       };

@@ -5,8 +5,8 @@ export function generateMetadata({ params: { locale } }: { params: { locale: str
   return {
     title: zh ? "小工具 | PrimerCat" : "Utilities | PrimerCat",
     description: zh
-      ? "PrimerCat 的四个科研小工具。"
-      : "Four research utilities from PrimerCat.",
+      ? "分子量、溶液配制、经费草案、试剂安全与实验流程工具。"
+      : "Utilities for molecular weight, solution preparation, budget drafts, reagent safety, and laboratory protocols.",
   };
 }
 

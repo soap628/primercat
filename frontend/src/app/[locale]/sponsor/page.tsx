@@ -23,15 +23,15 @@ export default function SponsorPage({ params: { locale } }: { params: { locale: 
         </h1>
         <p className="story-copy" style={{ color: "rgba(255,255,255,0.8)", maxWidth: 520, margin: 0 }}>
           {zh
-            ? "PrimerCat 由独立开发者个人维护。如果它对你的科研工作有帮助，欢迎通过支付宝请我喝杯咖啡 ☕"
-            : "PrimerCat is maintained by a solo developer. If it's been useful for your research, consider buying me a coffee via Alipay ☕"}
+            ? "PrimerCat 由独立开发者维护。赞助将用于服务器、外部服务与持续维护。"
+            : "PrimerCat is maintained by an independent developer. Contributions support hosting, external services, and ongoing maintenance."}
         </p>
       </section>
 
       {/* Why */}
       <section className="story-surface" style={{ padding: "24px clamp(20px, 4vw, 32px)" }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase" as const, color: "var(--green)", marginBottom: 12 }}>
-          {zh ? "为什么需要支持" : "Why your support matters"}
+          {zh ? "资金用途" : "Use of contributions"}
         </div>
         <div className="story-bullet-list">
           {(zh ? [
@@ -78,8 +78,8 @@ export default function SponsorPage({ params: { locale } }: { params: { locale: 
       <section className="story-surface" style={{ padding: "20px clamp(20px, 4vw, 32px)" }}>
         <p style={{ fontSize: 14, color: "var(--text-2)", margin: 0, fontStyle: "italic" as const }}>
           {zh
-            ? "感谢每一位支持者，你的鼓励是我持续维护这个项目的动力。🙏"
-            : "Thank you to everyone who supports this project — it means a lot and keeps things running. 🙏"}
+            ? "感谢你支持 PrimerCat 的持续维护。"
+            : "Thank you for supporting the continued maintenance of PrimerCat."}
         </p>
       </section>
 

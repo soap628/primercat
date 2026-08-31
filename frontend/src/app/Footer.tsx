@@ -2,15 +2,15 @@ import Link from "next/link";
 
 const COPY = {
   zh: {
-    brandDesc: "分子生物学科研工具。每个决策都展示，每个数字都有来源。",
-    product: "设计功能",
+    brandDesc: "分子生物学设计、计算与实验参考工具。",
+    product: "序列设计",
     productLinks: [
       { label: "qPCR 引物设计 — PrimerCat", href: "/primer" },
       { label: "常规 PCR 引物设计", href: "/pcr" },
       { label: "gRNA 设计 — CrisprCat", href: "/grna" },
       { label: "BLAST 序列比对", href: "/blast" },
     ],
-    docs: "方法与可信度",
+    docs: "方法与依据",
     docsLinks: [
       { label: "方法说明", href: "/methods" },
       { label: "可信度说明", href: "/validation" },
@@ -18,9 +18,10 @@ const COPY = {
     addOns: "小工具",
     addOnLinks: [
       { label: "分子量计算器", href: "/mw-calc" },
-      { label: "溶液配制指南", href: "/solutions" },
-      { label: "科研经费分配", href: "/fund-calc" },
-      { label: "试剂安全与毒性", href: "/chemical-safety" },
+      { label: "溶液配制", href: "/solutions" },
+      { label: "科研经费预算", href: "/fund-calc" },
+      { label: "试剂安全与危害", href: "/chemical-safety" },
+      { label: "实验流程库", href: "/protocols" },
     ],
     connect: "关于",
     connectLinks: [
@@ -29,21 +30,21 @@ const COPY = {
       { label: "赞助支持", href: "/sponsor" },
       { label: "引用", href: "/cite" },
     ],
-    disclaimer: "仅供研究使用。结果需经实验确认，RefSeq RNA BLAST 不等于全基因组 PCR 验证。",
+    disclaimer: "仅供研究使用。计算、评分与数据库筛查不能替代实验验证。",
     copyright: "© 2026 PrimerCat. Research use only.",
     privacy: "隐私政策",
     terms: "服务条款",
   },
   en: {
-    brandDesc: "Molecular biology research tools. Every decision shown. Every number has a source.",
-    product: "Design",
+    brandDesc: "Molecular biology design, calculation, and laboratory reference tools.",
+    product: "Sequence design",
     productLinks: [
       { label: "qPCR Primer Design — PrimerCat", href: "/primer" },
       { label: "Endpoint PCR Primer Design", href: "/pcr" },
       { label: "gRNA Design — CrisprCat", href: "/grna" },
       { label: "BLAST Sequence Search", href: "/blast" },
     ],
-    docs: "Methods & trust",
+    docs: "Methods & evidence",
     docsLinks: [
       { label: "Methods", href: "/methods" },
       { label: "Trust & Limitations", href: "/validation" },
@@ -52,8 +53,9 @@ const COPY = {
     addOnLinks: [
       { label: "MW Calculator", href: "/mw-calc" },
       { label: "Solution Preparation", href: "/solutions" },
-      { label: "Research Fund Planner", href: "/fund-calc" },
-      { label: "Reagent Safety & Toxicity", href: "/chemical-safety" },
+      { label: "Research Budget Planner", href: "/fund-calc" },
+      { label: "Reagent Safety & Hazards", href: "/chemical-safety" },
+      { label: "Protocol Library", href: "/protocols" },
     ],
     connect: "About",
     connectLinks: [
@@ -62,7 +64,7 @@ const COPY = {
       { label: "Sponsor", href: "/sponsor" },
       { label: "Cite", href: "/cite" },
     ],
-    disclaimer: "For research use only. Results require experimental validation. RefSeq RNA BLAST is not genome-wide PCR validation.",
+    disclaimer: "For research use only. Calculations, scores, and database screens do not replace experimental validation.",
     copyright: "© 2026 PrimerCat. Research use only.",
     privacy: "Privacy",
     terms: "Terms",

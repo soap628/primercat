@@ -20,17 +20,24 @@ export default function ToolsPage({ params: { locale } }: { params: { locale: st
     },
     {
       id: "research-fund-planner",
-      title: isZh ? "科研经费分配" : "Research Fund Planner",
+      title: isZh ? "科研经费预算" : "Research Budget Planner",
       icon: "fund",
       tone: "#7d5489",
       href: "/fund-calc",
     },
     {
       id: "chemical-safety",
-      title: isZh ? "试剂安全与毒性" : "Reagent Safety & Toxicity",
+      title: isZh ? "试剂安全与危害" : "Reagent Safety & Hazards",
       icon: "safety",
       tone: "#a84c45",
       href: "/chemical-safety",
+    },
+    {
+      id: "protocol-library",
+      title: isZh ? "实验流程库" : "Protocol Library",
+      icon: "protocol",
+      tone: "#59616b",
+      href: "/protocols",
     },
   ];
 

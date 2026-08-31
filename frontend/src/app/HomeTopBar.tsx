@@ -147,7 +147,7 @@ export default function HomeTopBar({ locale }: { locale: string }) {
       <Link href={`/${locale}`} className="home-topbar-brand" aria-label={locale === "zh" ? "PrimerCat 首页" : "PrimerCat home"}>
         <span className="home-brand-mark"><CatLogo size={18} /></span>
         <span className="home-brand-wordmark">Primer<strong>Cat</strong></span>
-        <span className="home-topbar-tagline">{locale === "zh" ? "科研设计工作台" : "Research design workspace"}</span>
+        <span className="home-topbar-tagline">{locale === "zh" ? "生命科学研究工具" : "Life-science research tools"}</span>
       </Link>
 
       <nav className="home-primary-nav" aria-label={locale === "zh" ? "首页主导航" : "Homepage navigation"}>

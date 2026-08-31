@@ -2,15 +2,15 @@ const COPY = {
   zh: {
     badge: "隐私政策",
     title: "隐私政策",
-    updated: "最近更新：2026 年 3 月",
+    updated: "最近更新：2026 年 8 月 31 日",
     sections: [
       {
         title: "数据收集",
-        body: "我们收集以下数据以提供服务：\n• 账号注册信息（邮箱、显示名称）\n• 工具使用记录（设计参数、历史结果）\n• 服务器日志（IP 地址、访问时间，用于安全和调试）\n\n我们不收集、不出售任何个人敏感信息。",
+        body: "为提供与维护服务，PrimerCat 可能处理以下数据：\n• 账号信息（邮箱、显示名称和密码哈希）\n• 用户主动提交的序列、设计参数与结果；登录用户选择保存时形成历史记录\n• 服务器日志（如 IP 地址、访问时间、请求状态和错误信息），用于安全、排错与运行维护\n\nPrimerCat 不出售用户数据。请勿提交无权处理或不应传输至第三方服务的敏感序列。",
       },
       {
         title: "第三方服务",
-        body: "PrimerCat 使用以下第三方服务：\n• NCBI BLAST（由美国国家生物技术信息中心提供，提交序列将按 NCBI 政策处理）\n• 云服务提供商（仅用于托管）\n\n使用这些服务时，用户的数据可能按各自隐私政策处理。",
+        body: "PrimerCat 使用第三方基础设施与数据库服务：\n• NCBI BLAST / Entrez：相关查询、序列或标识符可能被发送至 NCBI，并按其政策处理\n• 云服务提供商：用于网站、接口、数据库与日志托管\n\n第三方服务按照各自的隐私政策处理数据。",
       },
       {
         title: "数据使用",
@@ -18,7 +18,7 @@ const COPY = {
       },
       {
         title: "数据安全",
-        body: "我们采用 HTTPS 加密传输和安全存储实践。密码以加密方式存储，不可逆。如发现安全漏洞，请联系我们。",
+        body: "PrimerCat 使用 HTTPS 传输，并以单向哈希保存密码。任何互联网服务都无法保证绝对安全；如发现安全问题，请通过联系页面报告。",
       },
       {
         title: "联系方式",
@@ -29,15 +29,15 @@ const COPY = {
   en: {
     badge: "Privacy Policy",
     title: "Privacy Policy",
-    updated: "Last updated: March 2026",
+    updated: "Last updated: 31 August 2026",
     sections: [
       {
         title: "Data Collection",
-        body: "We collect the following data to provide our service:\n• Account registration information (email, display name)\n• Tool usage records (design parameters, history)\n• Server logs (IP address, access time — for security and debugging)\n\nWe do not collect or sell any sensitive personal information.",
+        body: "To provide and maintain the service, PrimerCat may process:\n• Account data (email, display name, and password hash)\n• Sequences, design parameters, and results submitted by the user; saved history when a signed-in user chooses to retain it\n• Server logs such as IP address, access time, request status, and error details for security, troubleshooting, and operations\n\nPrimerCat does not sell user data. Do not submit sensitive sequences that you are not authorised to process or transmit to third-party services.",
       },
       {
         title: "Third-Party Services",
-        body: "PrimerCat uses the following third-party services:\n• NCBI BLAST (provided by the US National Center for Biotechnology Information — submitted sequences are handled per NCBI policy)\n• Cloud hosting providers (used only for infrastructure)\n\nWhen using these services, your data may be processed under their respective privacy policies.",
+        body: "PrimerCat uses third-party infrastructure and database services:\n• NCBI BLAST / Entrez: relevant queries, sequences, or identifiers may be sent to NCBI and processed under its policies\n• Cloud providers: used to host the site, APIs, databases, and operational logs\n\nThird-party services process data under their own privacy policies.",
       },
       {
         title: "Data Use",
@@ -45,7 +45,7 @@ const COPY = {
       },
       {
         title: "Data Security",
-        body: "We use HTTPS encryption and secure storage practices. Passwords are stored in an irreversible encrypted format. If you discover a security vulnerability, please contact us.",
+        body: "PrimerCat uses HTTPS in transit and stores passwords as one-way hashes. No internet service can guarantee absolute security. Report suspected security issues through the contact page.",
       },
       {
         title: "Contact",

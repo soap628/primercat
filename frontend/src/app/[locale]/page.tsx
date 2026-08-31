@@ -77,17 +77,17 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
   const isZh = locale === "zh";
   const mascotNotes = isZh
     ? [
-        "这对引物，我看行。",
-        "ΔTm 很稳，继续。",
-        "跨外显子？聪明。",
-        "BLAST 过了，别忘了跑胶。",
+        "这对候选，值得看看。",
+        "ΔTm 在目标范围内。",
+        "跨外显子，降低 gDNA 干扰。",
+        "BLAST 初筛完成，别忘了做实验。",
         "94 分，还得上实验台。",
       ]
     : [
-        "This primer pair looks good.",
-        "ΔTm is steady. Keep going.",
-        "Exon-spanning? Smart.",
-        "BLAST passed. Don’t skip the gel.",
+        "This candidate is worth reviewing.",
+        "ΔTm is within the target range.",
+        "Exon-spanning can reduce gDNA interference.",
+        "BLAST screening is complete. Validate it experimentally.",
         "Score 94. Bench test next.",
       ];
   const [noteIndex, setNoteIndex] = useState(0);
@@ -150,7 +150,7 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
             <span>{isZh ? "示意预览" : "Illustrative preview"}</span>
             <strong>TP53 · NM_000546</strong>
           </div>
-          <span className="home-evidence-status"><i />{isZh ? "RNA 特异性通过" : "RNA specificity passed"}</span>
+          <span className="home-evidence-status"><i />{isZh ? "RNA 初筛未见明显非目标命中" : "No evident non-target RNA hit"}</span>
         </div>
 
         <div className="home-evidence-track">
@@ -354,7 +354,7 @@ function StepVisual({ step, locale }: { step: number; locale: string }) {
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 2 }}>
               {isZh ? `引物对 ${p.rank}` : `Pair ${p.rank}`}
-              {p.rank === 1 && <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 700, color: "#ffb1ee", background: "rgba(255,177,238,0.1)", border: "1px solid rgba(255,177,238,0.3)", borderRadius: 4, padding: "1px 5px", letterSpacing: "0.05em" }}>{isZh ? "推荐" : "TOP"}</span>}
+              {p.rank === 1 && <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 700, color: "#ffb1ee", background: "rgba(255,177,238,0.1)", border: "1px solid rgba(255,177,238,0.3)", borderRadius: 4, padding: "1px 5px", letterSpacing: "0.05em" }}>{isZh ? "排序首位" : "RANK 1"}</span>}
             </div>
             <div style={{ fontSize: 11, color: "var(--text-2)", fontFamily: "var(--font-mono)" }}>
               Tm {p.tm} · GC {p.gc}
@@ -482,7 +482,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
             </span>
           ))}
           <div className="cat-party-message">
-            🐱 <span style={{ color: "#ffb1ee" }}>Easter egg unlocked!</span> You found the cat party 🎉
+            🐱 <span style={{ color: "#ffb1ee" }}>{locale === "zh" ? "彩蛋已解锁！" : "Easter egg unlocked!"}</span> {locale === "zh" ? "欢迎来到猫咪派对" : "You found the cat party"} 🎉
           </div>
         </div>
       )}
@@ -538,7 +538,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
               </span>
             ))}
             <span className="hero-pipeline-tag">
-              {locale === "zh" ? "全程自动 · 每步可查" : "Automated · Traceable"}
+              {locale === "zh" ? "自动运行 · 依据可查" : "Automated · Evidence shown"}
             </span>
           </div>
 

@@ -8,31 +8,31 @@ const TONE_STYLES: Record<string, { bg: string; border: string; dot: string }> =
 
 const COPY = {
   zh: {
-    badge: "结果可信度",
-    title: "结果页面的每一列数字，背后是什么",
+    badge: "结果依据与边界",
+    title: "如何解读计算结果",
     intro:
-      "PrimerCat 不只给你一个排名列表——结果页面随结果同步呈现了推理依据、特异性状态和设计边界。这里解释每项数据的来源，以及它能回答哪些问题、回答不了哪些问题。",
+      "结果页同时展示参数、评分依据、筛查状态与适用边界。这里说明各项数据来自哪里、可支持什么判断，以及不能替代哪些验证。",
 
-    heroAsideTitle: "透明度原则",
+    heroAsideTitle: "判读原则",
     heroAsideBody:
-      "结果不是黑箱打分。每一对引物或每一条 gRNA 的得分，都可以在结果页逐项追溯：Tm、GC%、跨外显子状态、Bowtie2 / BLAST 命中数……推荐理由和设计限制一并展示。",
-    heroMetricLabel: "结果覆盖维度",
+      "评分用于比较候选，不代表实验成功率。Tm、GC%、跨外显子状态、Bowtie2 / BLAST 命中等证据与限制会在结果页分别标注。",
+    heroMetricLabel: "主要证据维度",
     heroMetricValue: "6 项",
-    heroMetricBody: "每条结果涵盖序列参数、热力学特性、基因组特异性、结构风险、外显子结构和活性估算六个维度。",
+    heroMetricBody: "不同工具按需展示序列参数、热力学特性、特异性证据、结构风险、外显子结构与活性估算。",
 
-    evidenceTitle: "结果页面已经给了你什么",
+    evidenceTitle: "结果页提供的主要证据",
     evidenceIntro:
-      "下面六项信息已经内嵌在每条结果里——不需要额外查阅文献，打开结果页就能看到。",
+      "不同工具会显示下列相关信息。具体字段以当前结果页为准，方法与阈值仍应结合实验体系复核。",
     evidenceItems: [
       {
         icon: "01",
         title: "模板来源与转录本 ID",
-        body: "系统自动从 NCBI RefSeq 选取的主转录本编号（NM_XXXXXX.X）、外显子数量、CDS 长度，以及选择该转录本的依据（CDS 完整性优先）。",
+        body: "系统从 NCBI RefSeq 按规则选择的参考转录本编号（NM_XXXXXX.X）、外显子数量、CDS 长度及选择依据。",
       },
       {
         icon: "02",
         title: "热力学参数",
-        body: "左右引物的 Tm（熔解温度）、GC%、发卡 ΔG、自身 3' 末端互补热力学值——均由 Primer3 在设计阶段计算，并在参数越界时直接过滤掉该候选。",
+        body: "左右引物的 Tm（熔解温度）、GC%、发卡 Tm 与 3' 端自互补参数由 Primer3 计算；候选按当前约束条件生成和筛选。",
       },
       {
         icon: "03",
@@ -47,7 +47,7 @@ const COPY = {
       {
         icon: "05",
         title: "综合评分细项",
-        body: "总分由 Tm 差、GC% 偏差、特异性、外显子跨越、扩增子大小、引物末端稳定性六个子分加权合并，每项得分可在结果卡展开区查看。",
+        body: "总分由 Tm、GC%、当前特异性证据、外显子跨越和二聚体风险五项加权合并；每项得分可在结果卡中查看。",
       },
       {
         icon: "06",
@@ -69,13 +69,13 @@ const COPY = {
           "配置 hg38/mm10 索引时使用 Bowtie2；否则使用批量 RefSeq RNA BLAST 初筛",
           "外显子–外显子跨越检测（基于 RefSeq 注释的外显子坐标）",
           "扩增子大小 80–200 bp（qPCR 优化范围）",
-          "综合评分排序（6 子分加权）",
+          "综合评分排序（5 项加权）",
           "设计依据完整展示在结果页",
         ],
         limit: [
           "基因组 DNA 中的内含子命中被保守标记为脱靶（RT-qPCR 的 cDNA 模板不含内含子，此保守性可接受）",
           "SNP / 多态性位点不检查——引物覆盖区域若含常见 SNP 可能导致扩增失败",
-          "不做湿实验验证（扩增效率曲线、溶解曲线需自行验证）",
+          "不做湿实验验证（扩增效率、熔解曲线和产物大小需自行验证）",
           "引物浓度、缓冲液组成等实验条件由用户自行优化",
         ],
       },
@@ -115,21 +115,21 @@ const COPY = {
       },
     ],
 
-    signalTitle: "如何读懂特异性状态标签",
+    signalTitle: "如何解读筛查状态",
     signalItems: [
       {
-        signal: "✓ 特异",
-        meaning: "Bowtie2 / BLAST 仅找到唯一高相似度命中，或脱靶命中数 ≤2 且脱靶相似度 <80%。可作为第一选择，仍建议凝胶或溶解曲线验证。",
+        signal: "✓ 未见明显非目标命中",
+        meaning: "当前后端与阈值下未发现需要警示的非目标命中。该状态仅适用于结果页标注的数据库和筛查范围，仍需凝胶、熔解曲线或其他实验验证。",
         tone: "green",
       },
       {
-        signal: "⚠ 潜在脱靶",
-        meaning: "发现 >2 处 ≥80% 相似度的脱靶命中，或命中位置落在多个基因座。建议检查脱靶位点的基因功能后再决定是否使用。",
+        signal: "⚠ 需要复核",
+        meaning: "发现潜在非目标命中、筛查范围受限或证据不完整。使用前应查看命中位置、相似度、产物长度和数据库范围。",
         tone: "amber",
       },
       {
-        signal: "✗ 非特异",
-        meaning: "存在多处高相似度（>90%）脱靶命中，该引物或 gRNA 在基因组中重复出现。强烈建议优先选用排名靠前的特异性引物。",
+        signal: "✗ 存在明显非目标风险",
+        meaning: "当前筛查发现多个高相似度非目标命中。应优先比较其他候选，并在使用前进行更完整的计算与实验验证。",
         tone: "red",
       },
       {
@@ -142,39 +142,39 @@ const COPY = {
     solidLabel: "✓ 覆盖范围",
     limitLabel: "⚠ 边界 / 限制",
 
-    ctaTitle: "准备好了？从这里开始",
-    ctaBody: "了解了数据来源和边界，就能更有把握地解读结果——也知道下一步该做什么实验来验证。",
+    ctaTitle: "查看结果前，先确认筛查范围",
+    ctaBody: "先确认模板、数据库、阈值和未覆盖风险，再决定需要补充哪些计算或实验验证。",
     ctaPrimer: "设计 qPCR 引物",
     ctaMethods: "查看工作原理",
     ctaGrna: "设计 CRISPR gRNA",
   },
 
   en: {
-    badge: "Result Credibility",
-    title: "What's behind every column of numbers on the results page",
+    badge: "Evidence & Boundaries",
+    title: "How to interpret computational results",
     intro:
-      "PrimerCat doesn't just hand you a ranked list — the results page ships reasoning, specificity status, and design boundaries alongside every result. Here's what each data point comes from, what questions it answers, and where it stops.",
+      "Result pages display parameters, ranking evidence, screening status, and scope boundaries together. This page explains where those values come from, what they support, and which validations they cannot replace.",
 
-    heroAsideTitle: "Transparency Principle",
+    heroAsideTitle: "Interpretation principle",
     heroAsideBody:
-      "Results aren't black-box scores. Every primer pair or gRNA score is traceable on the results page: Tm, GC%, exon-spanning status, Bowtie2 / BLAST hit count… the rationale and design limits are shown together.",
-    heroMetricLabel: "Dimensions covered",
+      "Scores compare candidates; they are not experimental success rates. Evidence such as Tm, GC%, exon-spanning status, and Bowtie2 or BLAST hits is shown separately from its limitations.",
+    heroMetricLabel: "Main evidence dimensions",
     heroMetricValue: "6",
-    heroMetricBody: "Each result covers six dimensions: sequence parameters, thermodynamics, specificity evidence, structural risk, exon architecture, and activity estimate.",
+    heroMetricBody: "Tools display the relevant subset of sequence parameters, thermodynamics, specificity evidence, structural risk, exon architecture, and activity estimates.",
 
-    evidenceTitle: "What the results page already tells you",
+    evidenceTitle: "Evidence provided on result pages",
     evidenceIntro:
-      "The six items below are embedded in every result — no extra literature lookup needed. Open the results page and they're right there.",
+      "Different tools display the relevant items below. Review the current result page and interpret its methods and thresholds in the context of your assay.",
     evidenceItems: [
       {
         icon: "01",
         title: "Template source & transcript ID",
-        body: "The RefSeq primary transcript accession (NM_XXXXXX.X) chosen automatically, exon count, CDS length, and the selection rationale (CDS completeness preferred).",
+        body: "The RefSeq transcript accession (NM_XXXXXX.X) selected by stated rules, exon count, CDS length, and selection rationale.",
       },
       {
         icon: "02",
         title: "Thermodynamic parameters",
-        body: "Tm, GC%, hairpin ΔG, and 3′-end self-complementarity for both primers — computed by Primer3 at design time; candidates that exceed thresholds are filtered out before ranking.",
+        body: "Tm, GC%, hairpin Tm, and 3′-end self-complementarity parameters for both primers are computed by Primer3; candidates are generated and filtered under the active constraints.",
       },
       {
         icon: "03",
@@ -189,7 +189,7 @@ const COPY = {
       {
         icon: "05",
         title: "Composite score breakdown",
-        body: "Total score combines six sub-scores (Tm delta, GC% deviation, specificity, exon-spanning, amplicon size, primer-end stability) with weighted addition — expand any result card to inspect each sub-score.",
+        body: "Total score combines five weighted dimensions: Tm, GC%, available specificity evidence, exon-spanning design, and dimer risk. Expand a result card to inspect each score.",
       },
       {
         icon: "06",
@@ -211,7 +211,7 @@ const COPY = {
           "Bowtie2 when an hg38/mm10 index is configured; otherwise batched RefSeq RNA BLAST screening",
           "Exon–exon junction spanning detection (based on RefSeq exon coordinates)",
           "Amplicon size 80–200 bp (qPCR-optimised range)",
-          "Composite score ranking (6 weighted sub-scores)",
+          "Composite score ranking (5 weighted dimensions)",
           "Full design rationale displayed on the results page",
         ],
         limit: [
@@ -257,21 +257,21 @@ const COPY = {
       },
     ],
 
-    signalTitle: "How to read specificity status labels",
+    signalTitle: "How to read screening-status labels",
     signalItems: [
       {
-        signal: "✓ Specific",
-        meaning: "Bowtie2 / BLAST found only one high-identity hit, or ≤2 off-target hits all below 80% identity. Use as first choice; gel or melt-curve confirmation is still recommended.",
+        signal: "✓ No evident non-target hit",
+        meaning: "No reportable non-target hit was found under the active backend and thresholds. This applies only to the database and scope shown on the result page; gel, melt-curve, or other experimental confirmation is still required.",
         tone: "green",
       },
       {
-        signal: "⚠ Potential off-target",
-        meaning: "More than 2 hits with ≥80% identity found, or hits spread across multiple loci. Review the off-target gene functions before committing to this primer or gRNA.",
+        signal: "⚠ Review required",
+        meaning: "Potential non-target hits, limited screening scope, or incomplete evidence was detected. Review hit locations, identity, product size, and database scope before use.",
         tone: "amber",
       },
       {
-        signal: "✗ Non-specific",
-        meaning: "Multiple high-identity (>90%) off-target hits found — the sequence appears repeatedly in the genome. Strongly prefer higher-ranked specific alternatives.",
+        signal: "✗ Evident non-target risk",
+        meaning: "The active screen found multiple high-identity non-target hits. Compare other candidates and perform more complete computational and experimental validation before use.",
         tone: "red",
       },
       {
@@ -284,8 +284,8 @@ const COPY = {
     solidLabel: "✓ Coverage",
     limitLabel: "⚠ Limits / Caveats",
 
-    ctaTitle: "Ready to start?",
-    ctaBody: "Understanding where the data comes from — and where it stops — means you can interpret results with confidence and know exactly which experiments to run next.",
+    ctaTitle: "Confirm the screening scope before using a result",
+    ctaBody: "Review the template, database, thresholds, and uncovered risks before deciding which additional computational or experimental checks are required.",
     ctaPrimer: "Design qPCR primers",
     ctaMethods: "How it works",
     ctaGrna: "Design CRISPR gRNA",
@@ -339,9 +339,7 @@ export default function ValidationPage({
             margin: 0,
           }}
         >
-          {locale === "zh" ? (
-            <>结果页面的每一列数字，<br />背后是什么</>
-          ) : copy.title}
+          {copy.title}
         </h1>
 
         <p style={{ fontSize: 17, lineHeight: 1.75, color: "var(--text-2)", margin: 0, maxWidth: 680 }}>

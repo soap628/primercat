@@ -2,13 +2,13 @@ const COPY = {
   zh: {
     badge: "联系我们",
     title: "联系 PrimerCat",
-    intro: "如有问题、反馈或合作意向，请通过以下方式联系我们。",
+    intro: "如有使用问题、错误报告、功能建议或合作咨询，请发送邮件。",
     emailLabel: "电子邮件",
     email: "zihaowangs@proton.me",
     responseNote: "我们通常在 1-3 个工作日内回复邮件。",
-    topicsTitle: "常见联系原因",
+    topicsTitle: "联系事项",
     topics: [
-      "工具使用问题或 Bug 反馈",
+      "工具使用问题或错误报告",
       "功能建议或新需求",
       "学术合作与数据共享",
       "赞助与支持项目",
@@ -17,11 +17,11 @@ const COPY = {
   en: {
     badge: "Contact",
     title: "Contact PrimerCat",
-    intro: "For questions, feedback, or collaboration inquiries, please reach out via the contact below.",
+    intro: "Email us with usage questions, bug reports, feature requests, or collaboration inquiries.",
     emailLabel: "Email",
     email: "zihaowangs@proton.me",
     responseNote: "We typically respond within 1–3 business days.",
-    topicsTitle: "Common Reasons to Contact",
+    topicsTitle: "Contact topics",
     topics: [
       "Tool usage questions or bug reports",
       "Feature requests or suggestions",

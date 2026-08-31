@@ -17,10 +17,10 @@ type UseFilter = "all" | ChemicalUse;
 
 const COPY = {
   zh: {
-    kicker: "Chemical safety · GHS / LCSS",
-    title: "实验室试剂安全与毒性查询",
-    intro: "按名称、CAS 或化学式快速找到常见试剂的危险摘要、关键控制和不相容性。每条记录链接到 PubChem 原始页面，并明确提醒核对当前产品 SDS。",
-    heroMetric: "V5 核酸与蛋白储备液库",
+    kicker: "GHS / LCSS 试剂安全资料",
+    title: "实验室试剂安全与危害资料",
+    intro: "按名称、CAS 或化学式检索常见试剂的危险摘要、操作控制与不相容性。每条记录链接至 PubChem 来源，并提示核对当前产品 SDS。",
+    heroMetric: "资料范围",
     reagentUnit: "种常见试剂",
     heroBody: "覆盖缓冲剂、去污剂、溶剂、染料、筛选药物和高危固定剂，并把商品混合物、浓度相关溶液与纯物质分开。",
     emergencyTitle: "发生暴露或泄漏时",
@@ -67,7 +67,7 @@ const COPY = {
     noGhs: "该来源未给出适用于所有形态/浓度的统一 H 代码；请打开来源并核对当前产品 SDS。",
     interactionKicker: "Known incompatibilities · 非穷尽清单",
     interactionTitle: "高危组合提醒",
-    interactionIntro: "这里只展示有权威来源支持、会直接改变废液或操作方式的组合。未列出不代表可以安全混合。",
+    interactionIntro: "这里只展示公开安全资料明确支持、会直接改变废液或操作方式的组合。未列出不代表可以安全混合。",
     interactionResponse: "立即采取",
     sourceModelTitle: "这些信息如何使用",
     sourceModelItems: [
@@ -91,10 +91,10 @@ const COPY = {
     disclaimer: "仅供研究与实验室风险识别参考，不构成医疗建议。紧急情况请联系当地急救、毒物咨询中心和机构 EHS。",
   },
   en: {
-    kicker: "Chemical safety · GHS / LCSS",
-    title: "Laboratory reagent safety & toxicity",
-    intro: "Search common reagents by name, CAS, or formula for hazard summaries, critical controls, and incompatibilities. Every record links to the source PubChem page and requires checking the current product SDS.",
-    heroMetric: "V5 nucleic-acid & protein stock library",
+    kicker: "GHS / LCSS reagent safety",
+    title: "Laboratory reagent safety & hazard reference",
+    intro: "Search common reagents by name, CAS, or formula for hazard summaries, handling controls, and incompatibilities. Each record links to its PubChem source and prompts a check of the current product SDS.",
+    heroMetric: "Reference scope",
     reagentUnit: "common reagents",
     heroBody: "Covers buffers, detergents, solvents, stains, selection drugs, and high-hazard fixatives while separating mixtures, concentration-specific solutions, and pure substances.",
     emergencyTitle: "If exposure or a spill occurs",

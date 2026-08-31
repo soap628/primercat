@@ -5,8 +5,8 @@ export function generateMetadata({ params: { locale } }: { params: { locale: str
   return {
     title: isZh ? "qPCR 引物设计 | PrimerCat" : "qPCR Primer Design | PrimerCat",
     description: isZh
-      ? "从基因名或 DNA 序列自动完成 Primer3 设计、RefSeq RNA BLAST 验证与评分排序。"
-      : "Design qPCR primers from a gene name or DNA sequence with Primer3, RefSeq RNA BLAST screening, and transparent scoring.",
+      ? "从基因名或 DNA 序列生成 Primer3 候选引物，进行 RefSeq RNA BLAST 初筛并展示评分依据。"
+      : "Generate qPCR primer candidates from a gene name or DNA sequence with Primer3, RefSeq RNA BLAST screening, and reviewable scoring evidence.",
     alternates: {
       canonical: `https://primercat.tech/${locale}/primer`,
       languages: {

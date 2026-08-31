@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 export type ToolApp = {
   id: string;
   title: string;
-  icon: "molecule" | "flask" | "fund" | "safety";
+  icon: "molecule" | "flask" | "fund" | "safety" | "protocol";
   tone: string;
   href: string;
 };
@@ -42,11 +42,17 @@ function AppGlyph({ icon }: { icon: ToolApp["icon"] }) {
       </svg>
     );
   }
-  return (
+  if (icon === "safety") return (
     <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
       <path d="M32 8 53 17v13c0 13-8.6 22.5-21 27-12.4-4.5-21-14-21-27V17L32 8Z" stroke="currentColor" strokeWidth="4" strokeLinejoin="round" />
       <path d="M32 20v17" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
       <circle cx="32" cy="46" r="3" fill="currentColor" />
+    </svg>
+  );
+  return (
+    <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <path d="M18 9h22l8 8v38H18V9Z" stroke="currentColor" strokeWidth="4" strokeLinejoin="round" />
+      <path d="M40 9v10h9M25 29l3 3 6-7M38 29h5M25 43l3 3 6-7M38 43h5" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

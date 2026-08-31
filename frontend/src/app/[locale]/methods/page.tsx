@@ -3,27 +3,27 @@ import { Link } from "@/navigation";
 const COPY = {
   zh: {
     badge: "工作原理",
-    title: "从序列或基因名开始，系统帮你做什么",
+    title: "设计方法与计算流程",
     intro:
-      "PrimerCat 包含四个核心序列工具：qPCR 引物设计、常规 PCR 引物设计、CRISPR gRNA 设计与 BLAST 序列比对。每个工具的工作方式都透明可查，结果页会把推理依据和结论边界一起带回来。",
+      "PrimerCat 提供 qPCR 引物、常规 PCR 引物、CRISPR gRNA 与 BLAST 序列比对。以下说明各工具的数据来源、计算步骤、输出内容与适用边界。",
 
-    whyTitle: "为什么这里的结果有依据可查",
+    whyTitle: "结果如何保持可追溯",
     whyCards: [
       {
-        title: "自动帮你找到正确的模板",
-        body: "输入基因名称，系统自动在 NCBI 数据库里找到最合适的参考序列——不需要你自己去下载或粘贴。",
+        title: "按规则选择参考模板",
+        body: "输入基因名称后，系统查询 NCBI RefSeq，并按 CDS 完整性和外显子数等规则选择参考转录本；结果页显示所用序列及选择依据。",
       },
       {
-        title: "结果附带推荐理由",
-        body: "不只给你一条引物或 gRNA 序列，还告诉你它为什么排在前面：Tm、GC 含量、特异性状态、跨外显子设计……每一项都列在结果页里。",
+        title: "排序依据逐项展示",
+        body: "引物或 gRNA 候选旁会显示 Tm、GC%、筛查状态、跨外显子信息等指标，用于解释当前排序。",
       },
       {
-        title: "局限也写在页面上",
-        body: "筛查范围和边界会在结果里明确标注，不让你去猜「这个结果能信多少」。",
+        title: "筛查边界明确标注",
+        body: "结果页注明所用数据库、比对后端和未覆盖的风险，避免把转录本初筛误解为全基因组或实验验证。",
       },
     ],
 
-    bgTitle: "背景知识：理解这些概念，让结果更有意义",
+    bgTitle: "关键概念",
     bgConcepts: [
       {
         tag: "qPCR",
@@ -35,19 +35,19 @@ const COPY = {
         tag: "RT-qPCR",
         color: "#22c55e",
         title: "RT-qPCR：从 mRNA 到 cDNA",
-        body: "检测基因表达时，先用逆转录酶将 mRNA 反转录为 cDNA（互补 DNA），再以 cDNA 为模板进行 qPCR 扩增，称为 RT-qPCR。这是目前最常用的基因表达定量方法。基因组 DNA 污染是 RT-qPCR 常见干扰源，跨外显子引物设计可有效排除该干扰。",
+        body: "检测基因表达时，先用逆转录酶将 RNA 转换为 cDNA，再以 cDNA 为模板进行 qPCR。基因组 DNA 是常见干扰源；跨外显子设计可降低风险，但仍需设置 no-RT 对照。",
       },
       {
         tag: "引物设计",
         color: "#3b82f6",
-        title: "Tm 和 GC%：引物稳定性的核心参数",
-        body: "熔解温度（Tm）是引物与模板恰好半解链时的温度，决定了 PCR 最佳退火温度。G-C 碱基对（3 个氢键）比 A-T（2 个氢键）更稳定，GC 含量越高，Tm 越高。理想引物 Tm 在 58–62°C、GC% 在 40–60%，既保证与模板高效结合，也减少非特异性扩增。",
+        title: "Tm 和 GC%：候选引物的基础参数",
+        body: "Tm 反映引物–模板双链的热稳定性，常用于设定退火温度的起始范围；GC% 也会影响结合稳定性。PrimerCat 默认以 Tm 58–62°C、GC% 40–60% 作为设计目标，实际条件仍应结合聚合酶、缓冲液和实验体系优化。",
       },
       {
         tag: "引物设计",
         color: "#3b82f6",
-        title: "跨外显子设计：排除基因组 DNA 干扰",
-        body: "基因组 DNA 含有内含子，而成熟 mRNA 经剪接已将内含子去除。将引物设计在两个相邻外显子的交界处，扩增子仅存在于 cDNA 中，而不存在于基因组 DNA——从而避免基因组 DNA 残留导致的假阳性扩增。",
+        title: "跨外显子设计与基因组 DNA 干扰",
+        body: "成熟 mRNA 已去除内含子，而基因组 DNA 保留内含子。将引物置于外显子连接处，或让引物对跨越较大内含子，可降低基因组 DNA 干扰；实际效果仍取决于引物位置、内含子长度和反应条件。",
       },
       {
         tag: "引物设计",
@@ -71,7 +71,7 @@ const COPY = {
         tag: "分子生物学",
         color: "#64748b",
         title: "RefSeq：从基因名到参考序列",
-        body: "NCBI RefSeq 数据库收录了经审校的基因参考转录本（NM_ 编号）和蛋白序列（NP_ 编号）。同一基因往往有多个转录本（剪接异构体）。PrimerCat 优先选取 CDS 最完整、外显子最多的主转录本作为设计模板，并在结果页注明所选转录本 ID 及选择依据。",
+        body: "NCBI RefSeq 收录参考转录本（NM_ 编号）和蛋白序列（NP_ 编号）。同一基因可能对应多个转录本。PrimerCat 按 CDS 完整性和外显子数等规则选择设计模板，并记录转录本 ID 与选择依据。",
       },
     ],
 
@@ -80,7 +80,7 @@ const COPY = {
       "输入基因名称，系统自动完成模板查找、引物生成、特异性初筛、综合排序，最后把推荐理由和设计依据一起展示给你。",
     qpcrSteps: [
       {
-        title: "1. 自动找到最佳参考序列",
+        title: "1. 按规则选择参考转录本",
         body: "系统从 NCBI RefSeq 数据库实时查询，筛选编码蛋白质的转录本，优先选 CDS 最完整、外显子最多的主要转录本作为设计模板。",
       },
       {
@@ -146,36 +146,36 @@ const COPY = {
       "Bowtie2 + hg38/mm10（配置后）：基因组层面筛查；NCBI BLAST：索引不可用时的转录本或序列相似性初筛",
     ],
 
-    ctaTitle: "透明的工作方式，比承诺「准确」更可信",
+    ctaTitle: "先理解证据范围，再使用计算结果",
     ctaBody:
-      "有经验的科研用户对「保证准确」类措辞天然保持警惕。PrimerCat 的做法是：把每一步的依据和局限直接写在结果页，由用户自己判断是否足够。",
+      "PrimerCat 在结果页同时显示设计依据与局限。计算结果用于候选筛选和实验规划，不能替代实验验证。",
     ctaPrimer: "设计 qPCR 引物",
     ctaGrna: "设计 gRNA",
     ctaValidation: "查看可信度说明",
   },
   en: {
     badge: "How It Works",
-    title: "What happens after you provide a sequence or gene name",
+    title: "Design methods and computational workflow",
     intro:
-      "PrimerCat includes four core sequence tools: qPCR primer design, endpoint PCR primer design, CRISPR gRNA design, and BLAST sequence alignment. Each tool is transparent about what it does, and each result page states both its reasoning and scope boundary.",
+      "PrimerCat provides qPCR primer design, endpoint PCR primer design, CRISPR gRNA design, and BLAST sequence search. This page documents each tool's data sources, computational steps, outputs, and scope boundaries.",
 
-    whyTitle: "Why these results come with traceable evidence",
+    whyTitle: "How results remain traceable",
     whyCards: [
       {
-        title: "Finds the right template for you",
-        body: "Enter a gene name and the system automatically locates the best reference sequence from NCBI — no manual download or paste required.",
+        title: "Selects a reference template by stated rules",
+        body: "After a gene name is entered, the system queries NCBI RefSeq and selects a transcript using CDS completeness, exon count, and related rules. The selected sequence and rationale are recorded.",
       },
       {
-        title: "Results include the reasoning",
-        body: "You get more than a primer or gRNA sequence. You see why it ranked where it did: Tm, GC content, specificity status, exon-spanning design — every factor is listed on the result page.",
+        title: "Ranking evidence is shown item by item",
+        body: "Primer and gRNA candidates display Tm, GC%, screening status, exon-spanning information, and other metrics used in the current ranking.",
       },
       {
         title: "Scope boundaries are stated clearly",
-        body: "The screening scope and its limitations are labeled in the result. You won't have to guess how much to trust any individual output.",
+        body: "Each result identifies the database, alignment backend, and uncovered risks so transcript-level screening is not mistaken for genome-wide or experimental validation.",
       },
     ],
 
-    bgTitle: "Background: concepts that make the results more useful",
+    bgTitle: "Key concepts",
     bgConcepts: [
       {
         tag: "qPCR",
@@ -187,19 +187,19 @@ const COPY = {
         tag: "RT-qPCR",
         color: "#22c55e",
         title: "RT-qPCR: from mRNA to cDNA",
-        body: "To measure gene expression, mRNA is first reverse-transcribed into complementary DNA (cDNA), then amplified by qPCR — hence RT-qPCR. Genomic DNA contamination is a common source of false signal; exon-spanning primer design is the standard way to guard against it.",
+        body: "For expression analysis, RNA is reverse-transcribed into cDNA before qPCR. Genomic DNA is a common source of interference; exon-spanning design can reduce that risk, but a no-RT control is still required.",
       },
       {
         tag: "Primer Design",
         color: "#3b82f6",
-        title: "Tm and GC%: the stability parameters",
-        body: "Melting temperature (Tm) is the temperature at which half the primer–template duplexes have separated. G–C pairs (3 hydrogen bonds) are more stable than A–T (2 bonds), so higher GC% raises Tm. Ideal primers have Tm 58–62°C and GC% 40–60%, balancing efficient annealing against non-specific amplification.",
+        title: "Tm and GC%: baseline primer parameters",
+        body: "Tm reflects primer–template duplex stability and helps define a starting annealing-temperature range; GC% also affects binding stability. PrimerCat uses Tm 58–62°C and GC% 40–60% as default design targets. Actual conditions should be optimised for the polymerase, buffer, and assay system.",
       },
       {
         tag: "Primer Design",
         color: "#3b82f6",
-        title: "Exon-spanning design: blocking genomic DNA",
-        body: "Mature mRNA is spliced — introns are removed. Placing a primer across an exon–exon junction creates an amplicon that exists only in cDNA, not in genomic DNA. This eliminates false-positive signal from residual genomic DNA in an RNA sample.",
+        title: "Exon-spanning design and genomic-DNA interference",
+        body: "Mature mRNA lacks introns while genomic DNA retains them. A primer across an exon junction, or a pair spanning a sufficiently large intron, can reduce genomic-DNA interference. Performance still depends on primer placement, intron length, and assay conditions.",
       },
       {
         tag: "Primer Design",
@@ -223,7 +223,7 @@ const COPY = {
         tag: "Molecular Biology",
         color: "#64748b",
         title: "RefSeq: from gene name to reference sequence",
-        body: "NCBI RefSeq archives curated reference transcripts (NM_ accessions) and proteins (NP_ accessions). A single gene often has multiple transcripts (splice isoforms). PrimerCat selects the canonical transcript with the most complete CDS and highest exon count, and records the transcript ID and selection rationale on the result page.",
+        body: "NCBI RefSeq provides reference transcripts (NM_ accessions) and proteins (NP_ accessions). A gene may have multiple transcripts. PrimerCat selects a design template using CDS completeness, exon count, and related rules, then records the transcript ID and rationale.",
       },
     ],
 
@@ -232,8 +232,8 @@ const COPY = {
       "Enter a gene name and the system handles transcript selection, primer generation, specificity screening, and ranked output — with the design rationale on the same page.",
     qpcrSteps: [
       {
-        title: "1. Automatically find the best reference sequence",
-        body: "The system queries NCBI RefSeq in real time, filters protein-coding transcripts, and selects the canonical transcript with the most complete CDS and the highest exon count as the design template.",
+        title: "1. Select a reference transcript by rule",
+        body: "The system queries NCBI RefSeq in real time, filters protein-coding transcripts, and selects a design template using CDS completeness, exon count, and related rules.",
       },
       {
         title: "2. Generate candidates under design constraints",
@@ -298,9 +298,9 @@ const COPY = {
       "Bowtie2 + hg38/mm10 (when configured): genome-level screening; NCBI BLAST: transcript or sequence-similarity screening when an index is unavailable",
     ],
 
-    ctaTitle: "Transparency is more credible than overpromising",
+    ctaTitle: "Understand the evidence before using the output",
     ctaBody:
-      "Researchers with experience are skeptical of tools that claim to guarantee accuracy. PrimerCat's approach: put every design decision and its limitations on the result page, and let you decide whether the evidence is sufficient.",
+      "PrimerCat shows design evidence and limitations together. Computational results support candidate selection and experiment planning; they do not replace experimental validation.",
     ctaPrimer: "Design qPCR Primers",
     ctaGrna: "Design gRNAs",
     ctaValidation: "View Confidence Scope",
@@ -310,14 +310,14 @@ const COPY = {
 export default function MethodsPage({ params: { locale } }: { params: { locale: string } }) {
   const copy = locale === "zh" ? COPY.zh : COPY.en;
 
-  const heroAsideTitle = locale === "zh" ? "四个工具，一套透明逻辑" : "Four tools, one transparent approach";
+  const heroAsideTitle = locale === "zh" ? "四项工具，一套可追溯流程" : "Four tools, one traceable workflow";
   const heroAsideBody = locale === "zh"
-    ? "qPCR 引物、常规 PCR 引物、CRISPR gRNA、BLAST 比对。每个工具都把工作原理和结论边界写在结果页，不让你猜。"
+    ? "qPCR 引物、常规 PCR 引物、CRISPR gRNA 与 BLAST 比对均显示计算依据和结论边界。"
     : "qPCR primers, endpoint PCR primers, CRISPR gRNAs, and BLAST alignment. Each tool returns its reasoning and scope boundary alongside the results.";
   const heroMetricLabel = locale === "zh" ? "核心流程" : "Core Flow";
   const heroMetricValue = "RefSeq → Design → Screen → Rank";
   const heroMetricBody = locale === "zh"
-    ? "自动找模板，按约束设计，做初步筛查，最后把推荐理由写回结果页。"
+    ? "检索模板、按约束生成候选、执行初筛并展示排序依据。"
     : "Auto-fetch a template, design under constraints, run a first-pass screen, return the rationale.";
 
   return (

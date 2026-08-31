@@ -65,7 +65,7 @@ function exportGrnaCSV(list: GrnaResult[], geneName?: string, casType?: string, 
     "Off-target Status",
     "Off-target Risk",
     "Potential Off-target Hits",
-    "Best Non-target Identity",
+    "Highest Non-target Identity",
     "Species",
   ].join(",");
   const rows = list.map((guide) =>

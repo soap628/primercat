@@ -4,13 +4,13 @@ const COPY = {
   zh: {
     badge: "开发人员",
     name: "小王",
-    tags: ["独立开发者", "全栈工程师", "无党派人士", "学生"],
+    tags: ["独立开发者", "全栈开发", "生命科学工具"],
     homepage: "https://soap628.com",
     intro:
-      "PrimerCat 是我在分子生物学实验室工作期间独立开发的工具。每次需要设计引物或 gRNA，都要在多个网站之间来回跳转、手动核对参数——这个流程既耗时又容易出错。PrimerCat 把这些步骤整合成一个可审计、有依据的流程。",
+      "PrimerCat 是我在分子生物学实验室工作期间独立开发的研究工具。它将序列检索、候选设计、数据库筛查和结果记录整合到同一流程，并保留关键参数与判断依据。",
     storyTitle: "为什么做这个工具",
     storyBody:
-      "市面上现有的引物和 gRNA 设计工具，大多只给你一个结果序列，不告诉你它为什么排在前面、用了哪条参考序列、特异性检查结果如何。对于实验室新成员来说，这些「黑盒」输出很难判断是否值得信任。\n\nPrimerCat 的目标是让每一步推理都可见：用了哪条转录本、引物打了多少分、为什么这条排第一。结果页面把推理依据和结果放在一起，让实验方案的决策更有依据。",
+      "序列工具的输出只有在模板、参数、数据库范围和筛查状态可追溯时，才便于复核。PrimerCat 因此在结果页同时展示所用转录本、评分细项、命中记录和已知边界。\n\n这些信息用于帮助研究人员比较候选和记录决策，但计算结果不替代实验验证。",
     stackTitle: "技术栈",
     stackItems: [
       { label: "后端", value: "Python · FastAPI · SQLAlchemy · Primer3-py · Biopython" },
@@ -19,8 +19,7 @@ const COPY = {
       { label: "部署", value: "Linux 服务器 · Nginx · Docker Compose" },
     ],
     contactTitle: "联系 / 合作",
-    contactBody:
-      "如果你是研究人员、开发者，或者有功能建议、Bug 反馈、合作意向，欢迎联系。",
+    contactBody: "欢迎提交使用问题、错误报告、功能建议或合作咨询。",
     email: "zihaowangs@proton.me",
     links: [
       { label: "引用 PrimerCat", href: "/cite" },
@@ -33,13 +32,13 @@ const COPY = {
   en: {
     badge: "Developer",
     name: "Zihao Wang",
-    tags: ["Independent Developer", "Full-stack Engineer", "Non-partisan", "Student"],
+    tags: ["Independent Developer", "Full-stack Development", "Life-science Tools"],
     homepage: "https://soap628.com",
     intro:
-      "PrimerCat is a tool I built independently while working in a molecular biology lab. Every primer or gRNA design session meant jumping between multiple websites and manually cross-checking parameters — slow and error-prone. PrimerCat consolidates those steps into one auditable, evidence-backed workflow.",
+      "PrimerCat is an independent research tool I built while working in a molecular biology laboratory. It combines sequence retrieval, candidate design, database screening, and result records in one workflow while retaining key parameters and decision evidence.",
     storyTitle: "Why I built this",
     storyBody:
-      "Most existing primer and gRNA design tools give you a result sequence without explaining why it ranks first, which reference sequence was used, or how the specificity check went. For new lab members, that black-box output is hard to trust.\n\nPrimerCat's goal is to make every reasoning step visible: which transcript was used, how primers were scored, why this one ranks first. The results page shows the reasoning alongside the output, so experimental decisions have a documented basis.",
+      "Sequence-tool outputs are easier to review when the template, parameters, database scope, and screening status remain traceable. PrimerCat therefore shows the selected transcript, score components, hit records, and known boundaries alongside each result.\n\nThis information supports candidate comparison and decision records; computational output does not replace experimental validation.",
     stackTitle: "Tech stack",
     stackItems: [
       { label: "Backend", value: "Python · FastAPI · SQLAlchemy · Primer3-py · Biopython" },
@@ -48,8 +47,7 @@ const COPY = {
       { label: "Deployment", value: "Linux server · Nginx · Docker Compose" },
     ],
     contactTitle: "Contact / Collaborate",
-    contactBody:
-      "If you're a researcher, developer, or have feature suggestions, bug reports, or collaboration ideas, feel free to reach out.",
+    contactBody: "Questions, bug reports, feature requests, and collaboration inquiries are welcome.",
     email: "zihaowangs@proton.me",
     links: [
       { label: "Cite PrimerCat", href: "/cite" },
