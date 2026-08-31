@@ -10,7 +10,7 @@ const COPY = {
       { label: "gRNA 设计 — CrisprCat", href: "/grna" },
       { label: "BLAST 序列比对", href: "/blast" },
     ],
-    docs: "文档",
+    docs: "方法与可信度",
     docsLinks: [
       { label: "方法说明", href: "/methods" },
       { label: "可信度说明", href: "/validation" },
@@ -42,7 +42,7 @@ const COPY = {
       { label: "gRNA Design — CrisprCat", href: "/grna" },
       { label: "BLAST Sequence Search", href: "/blast" },
     ],
-    docs: "Docs",
+    docs: "Methods & trust",
     docsLinks: [
       { label: "Methods", href: "/methods" },
       { label: "Trust & Limitations", href: "/validation" },

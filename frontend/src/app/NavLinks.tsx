@@ -136,7 +136,7 @@ const COPY = {
     pcr: "PCR",
     crispr: "CrisprCat",
     blast: "BLAST",
-    methods: "方法",
+    methods: "方法与可信度",
     validation: "可信度",
     tools: "工具",
     otherLabel: "EN",
@@ -153,7 +153,7 @@ const COPY = {
     pcr: "PCR",
     crispr: "CrisprCat",
     blast: "BLAST",
-    methods: "Methods",
+    methods: "Methods & trust",
     validation: "Trust",
     tools: "Tools",
     otherLabel: "中文",
@@ -221,8 +221,7 @@ export default function NavLinks({ locale }: { locale: string }) {
     { href: "/pcr", label: copy.pcr, icon: "P", matchPrefixes: ["/pcr"] },
     { href: "/grna", label: copy.crispr, icon: <CrisprCatIcon />, matchPrefixes: ["/grna"] },
     { href: "/blast", label: copy.blast, icon: <BlastIcon />, matchPrefixes: ["/blast"] },
-    { href: "/methods", label: copy.methods, icon: "M", matchPrefixes: ["/methods"] },
-    { href: "/validation", label: copy.validation, icon: "V", matchPrefixes: ["/validation"] },
+    { href: "/methods", label: copy.methods, icon: "M", matchPrefixes: ["/methods", "/validation"] },
     { href: "/tools", label: copy.tools, icon: "+", matchPrefixes: ["/tools", "/mw-calc", "/solutions", "/chemical-safety"] },
   ];
 
