@@ -2,11 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── 字体栈 (Spotify: SpotifyMixUI / CircularSp family) ── */
+/* ── 字体栈：Bahnschrift 用于拉丁字符，中文由系统字体回退 ── */
 :root {
-  --font-sans: "CircularSp", "Circular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-latin: "Bahnschrift", "DIN Alternate", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-latin), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", sans-serif;
   --font-mono: "Source Code Pro", "Office Code Pro", Menlo, monospace;
-  --font-display: "CircularSp", "Circular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: var(--font-latin), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", sans-serif;
 
   /* ── Spotify 深色背景层次 ── */
   --bg:          #121212;
@@ -2814,7 +2815,7 @@ button, [role="button"] { cursor: pointer; }
   line-height: 1.05;
   color: #ffffff;
   margin: 0 0 36px;
-  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-family: var(--font-display);
   white-space: nowrap;
 }
 :lang(zh) .hero-headline {
@@ -9305,16 +9306,8 @@ html[data-theme="light"] { color-scheme: light; }
 .home-easter-paw i:nth-child(3) { top: 5px; right: 7px; transform: rotate(18deg); }
 .home-easter-paw i:nth-child(4) { top: 19px; right: 0; width: 11px; height: 15px; transform: rotate(35deg); }
 .home-easter-paw b { bottom: 1px; left: 14px; width: 34px; height: 29px; border-radius: 52% 52% 44% 44%; transform: rotate(3deg); }
-.home-easter-kicker {
-  display: block;
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 760;
-  letter-spacing: .13em;
-}
 .home-easter-dialog h2 {
-  margin: 10px 0 0;
+  margin: 4px 0 0;
   color: var(--text-1);
   font-size: clamp(26px, 4vw, 34px);
   font-weight: 820;

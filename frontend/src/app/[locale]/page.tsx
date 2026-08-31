@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 
 function PrimerCatMascot({ locale, onActivate, expanded }: { locale: string; onActivate: () => void; expanded: boolean }) {
   const isZh = locale === "zh";
@@ -93,6 +93,23 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
   const [easterEggOpen, setEasterEggOpen] = useState(false);
   const easterEggDialogRef = useRef<HTMLDivElement>(null);
   const easterEggCloseRef = useRef<HTMLButtonElement>(null);
+  const easterEggAudioRef = useRef<HTMLAudioElement>(null);
+
+  const openEasterEgg = useCallback(() => {
+    setEasterEggOpen(true);
+    const audio = easterEggAudioRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    void audio.play().catch(() => undefined);
+  }, []);
+
+  const closeEasterEgg = useCallback(() => {
+    setEasterEggOpen(false);
+    const audio = easterEggAudioRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+  }, []);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -111,7 +128,7 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
     const focusTimer = window.setTimeout(() => easterEggCloseRef.current?.focus(), 20);
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setEasterEggOpen(false);
+        closeEasterEgg();
         return;
       }
 
@@ -139,10 +156,11 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
       document.removeEventListener("keydown", handleKeyDown);
       previouslyFocused?.focus();
     };
-  }, [easterEggOpen]);
+  }, [closeEasterEgg, easterEggOpen]);
 
   return (
     <>
+      <audio ref={easterEggAudioRef} src="/audio/primer-cat-easter-egg.mp3" preload="auto" />
       <div className="home-evidence" aria-label={isZh ? "PrimerCat 产品结果示意预览" : "PrimerCat product result preview"}>
         <div className="home-evidence-topline">
           <div>
@@ -161,7 +179,7 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
             <strong key={`${locale}-${noteIndex}`} className="home-mascot-note-copy">{mascotNotes[noteIndex]}</strong>
             <span className="home-mascot-note-dots"><i /><i /><i /></span>
           </div>
-          <PrimerCatMascot locale={locale} onActivate={() => setEasterEggOpen(true)} expanded={easterEggOpen} />
+          <PrimerCatMascot locale={locale} onActivate={openEasterEgg} expanded={easterEggOpen} />
           <div className="home-evidence-primer forward" aria-hidden="true"><b>F</b><span>AGGCTGCTCCCC...</span></div>
           <div className="home-evidence-primer reverse" aria-hidden="true"><span>CGTGCAAGTCAC...</span><b>R</b></div>
         </div>
@@ -181,7 +199,7 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
       {easterEggOpen && (
         <div
           className="home-easter-veil"
-          onMouseDown={(event) => event.target === event.currentTarget && setEasterEggOpen(false)}
+          onMouseDown={(event) => event.target === event.currentTarget && closeEasterEgg()}
         >
           <div
             ref={easterEggDialogRef}
@@ -195,7 +213,7 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
               ref={easterEggCloseRef}
               type="button"
               className="home-easter-close"
-              onClick={() => setEasterEggOpen(false)}
+              onClick={closeEasterEgg}
               aria-label={isZh ? "关闭彩蛋" : "Close easter egg"}
             >
               <span aria-hidden="true">×</span>
@@ -203,8 +221,7 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
             <div className="home-easter-paw" aria-hidden="true">
               <i /><i /><i /><i /><b />
             </div>
-            <span className="home-easter-kicker">PRIMERCAT · SECRET ROUTE</span>
-            <h2 id="home-easter-title">{isZh ? "你发现了彩蛋！" : "You found the easter egg!"}</h2>
+            <h2 id="home-easter-title">{isZh ? "恭喜你发现了一个彩蛋！" : "Congratulations, you found an easter egg!"}</h2>
             <p id="home-easter-description">
               {isZh ? "跟着猫爪，你发现了站长的老巢。" : "Follow the paw prints to the webmaster’s hideout."}
             </p>
