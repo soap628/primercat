@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "@/navigation";
 import { useAuth } from "@/lib/useAuth";
 
@@ -78,31 +78,99 @@ function UserIcon() {
   );
 }
 
+function MenuIcon({ open }: { open: boolean }) {
+  return open ? (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+  ) : (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+      <path d="M5 7h14M5 12h14M5 17h14" />
+    </svg>
+  );
+}
+
 export default function HomeTopBar({ locale }: { locale: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading } = useAuth();
   const { dark, toggle } = useDarkMode();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const topbarRef = useRef<HTMLElement>(null);
 
   const otherLocale = locale === "zh" ? "en" : "zh";
   const otherLabel  = locale === "zh" ? "EN" : "中文";
   const loginLabel  = locale === "zh" ? "登录" : "Sign in";
   const accountLabel = locale === "zh" ? "账户" : "Account";
+  const navLinks = locale === "zh"
+    ? [
+        { href: "/primer", label: "引物设计" },
+        { href: "/pcr", label: "PCR" },
+        { href: "/grna", label: "CRISPR" },
+        { href: "/solutions", label: "溶液配制" },
+        { href: "/chemical-safety", label: "试剂安全" },
+        { href: "/tools", label: "全部工具" },
+      ]
+    : [
+        { href: "/primer", label: "Primer design" },
+        { href: "/pcr", label: "PCR" },
+        { href: "/grna", label: "CRISPR" },
+        { href: "/solutions", label: "Solutions" },
+        { href: "/chemical-safety", label: "Chemical safety" },
+        { href: "/tools", label: "All tools" },
+      ];
+
+  useEffect(() => {
+    const closeOutside = (event: MouseEvent) => {
+      if (topbarRef.current && !topbarRef.current.contains(event.target as Node)) setMenuOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
+  useEffect(() => setMenuOpen(false), [pathname]);
 
   function switchLocale() {
+    setMenuOpen(false);
     router.push(pathname, { locale: otherLocale });
   }
 
   return (
-    <div className="home-topbar">
+    <header ref={topbarRef} className="home-topbar">
       <Link href={`/${locale}`} className="home-topbar-brand" aria-label={locale === "zh" ? "PrimerCat 首页" : "PrimerCat home"}>
         <span className="home-brand-mark"><CatLogo size={18} /></span>
         <span className="home-brand-wordmark">Primer<strong>Cat</strong></span>
         <span className="home-topbar-tagline">{locale === "zh" ? "科研设计工作台" : "Research design workspace"}</span>
       </Link>
 
+      <nav className="home-primary-nav" aria-label={locale === "zh" ? "首页主导航" : "Homepage navigation"}>
+        {navLinks.map((item) => (
+          <Link key={item.href} href={`/${locale}${item.href}`} className="home-primary-nav-link">
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+
       {/* Right controls */}
       <div className="home-topbar-actions">
+
+      <button
+        type="button"
+        onClick={() => setMenuOpen((open) => !open)}
+        aria-label={locale === "zh" ? (menuOpen ? "关闭导航菜单" : "打开导航菜单") : (menuOpen ? "Close navigation menu" : "Open navigation menu")}
+        aria-expanded={menuOpen}
+        aria-controls="home-mobile-navigation"
+        className="home-topbar-action home-topbar-menu-button"
+      >
+        <MenuIcon open={menuOpen} />
+      </button>
 
       {/* Theme toggle */}
       <button
@@ -144,6 +212,21 @@ export default function HomeTopBar({ locale }: { locale: string }) {
         )
       )}
       </div>
-    </div>
+
+      {menuOpen && (
+        <nav id="home-mobile-navigation" className="home-mobile-primary-nav" aria-label={locale === "zh" ? "移动端首页导航" : "Mobile homepage navigation"}>
+          <span className="home-mobile-nav-label">{locale === "zh" ? "探索 PrimerCat" : "Explore PrimerCat"}</span>
+          <div className="home-mobile-nav-links">
+            {navLinks.map((item, index) => (
+              <Link key={item.href} href={`/${locale}${item.href}`} onClick={() => setMenuOpen(false)} className="home-mobile-nav-link">
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                {item.label}
+                <b aria-hidden="true">↗</b>
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
+    </header>
   );
 }
