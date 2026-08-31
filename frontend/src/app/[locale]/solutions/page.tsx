@@ -64,6 +64,9 @@ const COPY = {
     linkedRecords: "条试剂记录",
     strongest: "最高关注级别",
     openRecord: "查看安全卡",
+    openRecipe: "展开配方",
+    closeRecipe: "收起配方",
+    recipesShown: "个配方",
     noLinkedRecords: "当前配方没有映射到毒性库中的高关注试剂；这不代表所有原料均无危险，仍须核对每个产品 SDS。",
     additionOrder: "关键加料顺序",
     incompatibility: "禁配与不相容",
@@ -138,6 +141,9 @@ const COPY = {
     linkedRecords: "linked reagent records",
     strongest: "Highest concern",
     openRecord: "Open safety card",
+    openRecipe: "Open recipe",
+    closeRecipe: "Close recipe",
+    recipesShown: "recipes",
     noLinkedRecords: "This recipe currently has no high-concern reagent mapped in the safety library. That does not establish every ingredient as hazard-free; check each product SDS.",
     additionOrder: "Critical addition order",
     incompatibility: "Do not mix / incompatibilities",
@@ -213,7 +219,12 @@ function NumericField({ label, value, setValue, unit, setUnit, units }: {
   );
 }
 
-function RecipeCard({ recipe, zh }: { recipe: SolutionRecipe; zh: boolean }) {
+function RecipeCard({ recipe, zh, expanded, onToggle }: {
+  recipe: SolutionRecipe;
+  zh: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   const copy = zh ? COPY.zh : COPY.en;
   const [volume, setVolume] = useState(String(recipe.defaultVolumeMl));
   const targetVolume = positiveNumber(volume);
@@ -225,15 +236,28 @@ function RecipeCard({ recipe, zh }: { recipe: SolutionRecipe; zh: boolean }) {
   const strongestRecord = linkedRecords.reduce<ChemicalSafetyRecord | null>((current, record) => (
     !current || CONCERN_RANK[record.level] > CONCERN_RANK[current.level] ? record : current
   ), null);
+  const title = zh ? recipe.title.zh : recipe.title.en;
+  const subtitle = zh ? recipe.subtitle.zh : recipe.subtitle.en;
+  const detailId = `${recipe.id}-detail`;
 
   return (
-    <article className="lab-recipe-card" id={recipe.id}>
-      <div className="lab-recipe-head">
-        <div>
+    <article className={`lab-recipe-card${expanded ? " is-open" : ""}`} id={recipe.id}>
+      <button className="lab-recipe-summary" type="button" onClick={onToggle} aria-expanded={expanded} aria-controls={detailId}>
+        <span className="lab-recipe-type-mark" aria-hidden="true" />
+        <span className="lab-recipe-summary-copy">
           <span className="lab-recipe-category">{copy[recipe.category]}</span>
-          <h3>{zh ? recipe.title.zh : recipe.title.en}</h3>
-          <p>{zh ? recipe.subtitle.zh : recipe.subtitle.en}</p>
-        </div>
+          <h3>{title}</h3>
+          <p>{subtitle}</p>
+        </span>
+        <span className="lab-recipe-summary-meta">
+          <span>{linkedRecords.length} {copy.linkedRecords}</span>
+          {strongestRecord && <b className={`lab-concern-${strongestRecord.level}`}>{copy[strongestRecord.level]}</b>}
+        </span>
+        <span className="lab-recipe-toggle-label">{expanded ? copy.closeRecipe : copy.openRecipe}<b aria-hidden="true">⌄</b></span>
+      </button>
+
+      {expanded && <div className="lab-recipe-detail" id={detailId}>
+      <div className="lab-recipe-head lab-recipe-detail-bar">
         <label className="lab-volume-control">
           <span>{copy.finalVolumeLabel}</span>
           <div><input type="number" min="0.001" step="any" value={volume} onChange={(event) => setVolume(event.target.value)} /><b>mL</b></div>
@@ -292,6 +316,7 @@ function RecipeCard({ recipe, zh }: { recipe: SolutionRecipe; zh: boolean }) {
         <a href={recipe.sourceUrl} target="_blank" rel="noreferrer">{copy.source} ↗</a>
         <Link href={recipe.safetyQuery ? `/chemical-safety?q=${encodeURIComponent(recipe.safetyQuery)}` : "/chemical-safety"}>{copy.safety} →</Link>
       </div>
+      </div>}
     </article>
   );
 }
@@ -314,6 +339,7 @@ export default function SolutionsPage({ params: { locale } }: { params: { locale
   const [percentVolume, setPercentVolume] = useState("100");
   const [percentVolumeUnit, setPercentVolumeUnit] = useState("mL");
   const [category, setCategory] = useState<"all" | SolutionRecipe["category"]>("all");
+  const [openRecipeId, setOpenRecipeId] = useState<string | null>(SOLUTION_RECIPES[0]?.id ?? null);
 
   const molarResult = useMemo(() => {
     const molarMass = positiveNumber(mw);
@@ -346,21 +372,21 @@ export default function SolutionsPage({ params: { locale } }: { params: { locale
   const dilutionValuesValid = positiveNumber(stockConcentration) && positiveNumber(targetConcentration) && positiveNumber(dilutionVolume);
 
   return (
-    <div className="lab-page solutions-page">
-      <section className="lab-hero">
+    <div className="lab-page solutions-page solutions-visual-pilot">
+      <section className="solution-hero">
         <div>
           <span className="lab-kicker">{copy.kicker}</span>
           <h1>{copy.title}</h1>
           <p>{copy.intro}</p>
         </div>
-        <aside>
+        <aside className="solution-hero-meta">
           <span>{copy.heroMetric}</span>
           <strong>{copy.heroValue}</strong>
           <p>{copy.heroBody}</p>
         </aside>
       </section>
 
-      <section className="lab-calculator-shell">
+      <section className="lab-calculator-shell solution-section solution-calculator">
         <div className="lab-section-heading">
           <div><span>01</span><h2>{copy.calculator}</h2></div>
           <p>{copy.calculatorIntro}</p>
@@ -422,18 +448,27 @@ export default function SolutionsPage({ params: { locale } }: { params: { locale
         )}
       </section>
 
-      <section className="lab-recipes-section">
+      <section className="lab-recipes-section solution-section solution-library">
         <div className="lab-section-heading">
           <div><span>02</span><div><small>{copy.recipesKicker}</small><h2>{copy.recipesTitle}</h2></div></div>
           <p>{copy.recipesIntro}</p>
         </div>
-        <div className="lab-filter-row">
-          {(["all", "buffer", "electrophoresis", "stock"] as const).map((item) => <button key={item} type="button" data-active={category === item} onClick={() => setCategory(item)}>{copy[item]}</button>)}
+        <div className="solution-library-toolbar">
+          <div className="lab-filter-row">
+            {(["all", "buffer", "electrophoresis", "stock"] as const).map((item) => <button key={item} type="button" data-active={category === item} onClick={() => { setCategory(item); setOpenRecipeId(null); }}>{copy[item]}</button>)}
+          </div>
+          <span><b>{visibleRecipes.length}</b> {copy.recipesShown}</span>
         </div>
-        <div className="lab-recipe-grid">{visibleRecipes.map((recipe) => <RecipeCard key={recipe.id} recipe={recipe} zh={zh} />)}</div>
+        <div className="lab-recipe-grid">{visibleRecipes.map((recipe) => <RecipeCard
+          key={recipe.id}
+          recipe={recipe}
+          zh={zh}
+          expanded={openRecipeId === recipe.id}
+          onToggle={() => setOpenRecipeId((current) => current === recipe.id ? null : recipe.id)}
+        />)}</div>
       </section>
 
-      <section className="lab-safety-check">
+      <section className="lab-safety-check solution-safety-strip">
         <div><span>03</span><h2>{copy.safetyTitle}</h2></div>
         <ul>{copy.safetyItems.map((item) => <li key={item}>{item}</li>)}</ul>
         <div className="lab-safety-actions"><Link href="/chemical-safety">{copy.safety} →</Link><p>{copy.disclaimer}</p></div>

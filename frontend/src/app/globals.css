@@ -4969,6 +4969,437 @@ button, [role="button"] { cursor: pointer; }
 .lab-safety-actions a { flex: 0 0 auto; color: var(--lab-blue); text-decoration: none; font-size: 12px; font-weight: 800; }
 .lab-safety-actions p { margin: 0; color: var(--text-3); font-size: 10px; line-height: 1.6; }
 
+/* ── Solutions visual pilot: flatter scientific workspace ─────────────── */
+.solutions-visual-pilot {
+  --solution-accent: var(--accent);
+  --solution-accent-soft: var(--accent-soft);
+  width: min(1180px, 100%);
+  gap: 0;
+  padding-top: 34px;
+}
+
+.solution-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  align-items: end;
+  gap: clamp(32px, 6vw, 76px);
+  padding: 22px 4px 38px;
+  border-bottom: 1px solid var(--border);
+}
+
+.solutions-visual-pilot .lab-kicker {
+  color: var(--solution-accent);
+  font-size: 10px;
+}
+
+.solution-hero h1 {
+  max-width: 800px;
+  margin: 11px 0 12px;
+  color: var(--text-1);
+  font-size: clamp(36px, 5vw, 58px);
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+}
+
+.solution-hero > div > p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.solution-hero-meta {
+  padding: 2px 0 2px 28px;
+  border-left: 1px solid var(--border-mid);
+}
+
+.solution-hero-meta > span {
+  display: block;
+  color: var(--text-3);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.solution-hero-meta > strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--text-1);
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+
+.solution-hero-meta > p {
+  margin: 8px 0 0;
+  color: var(--text-3);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.solutions-visual-pilot .solution-section {
+  padding: 40px 4px 44px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.solutions-visual-pilot .lab-section-heading {
+  align-items: flex-end;
+  margin-bottom: 22px;
+}
+
+.solutions-visual-pilot .lab-section-heading > div > span,
+.solutions-visual-pilot .solution-safety-strip > div > span {
+  display: block;
+  width: auto;
+  height: auto;
+  flex-basis: auto;
+  border-radius: 0;
+  color: var(--solution-accent);
+  background: transparent;
+  font-size: 10px;
+}
+
+.solutions-visual-pilot .lab-section-heading h2,
+.solutions-visual-pilot .solution-safety-strip h2 {
+  font-size: 25px;
+}
+
+.solutions-visual-pilot .lab-tabs {
+  width: 100%;
+  gap: 24px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.solutions-visual-pilot .lab-tabs button {
+  position: relative;
+  padding: 9px 0 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.solutions-visual-pilot .lab-tabs button[aria-selected="true"] {
+  color: var(--solution-accent);
+  background: transparent;
+  box-shadow: none;
+}
+
+.solutions-visual-pilot .lab-tabs button[aria-selected="true"]::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--solution-accent);
+  content: "";
+}
+
+.solutions-visual-pilot .lab-calc-grid {
+  grid-template-columns: minmax(0, 1.55fr) minmax(230px, 0.45fr);
+  gap: 26px;
+  margin-top: 24px;
+}
+
+.solutions-visual-pilot .lab-input-row,
+.solutions-visual-pilot .lab-wide-select {
+  border-radius: 8px;
+  background: var(--bg-card);
+}
+
+.solutions-visual-pilot .lab-input-row:focus-within {
+  border-color: var(--solution-accent);
+  box-shadow: 0 0 0 3px var(--solution-accent-soft);
+}
+
+.solutions-visual-pilot .lab-result-card {
+  min-height: 150px;
+  padding: 8px 0 8px 26px;
+  border: 0;
+  border-left: 1px solid var(--border-mid);
+  border-radius: 0;
+  background: transparent;
+}
+
+.solutions-visual-pilot .lab-result-card > span,
+.solutions-visual-pilot .lab-field-helper a { color: var(--solution-accent); }
+
+.solution-library-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 4px;
+}
+
+.solutions-visual-pilot .lab-filter-row {
+  gap: 20px;
+  margin: 0;
+}
+
+.solutions-visual-pilot .lab-filter-row button {
+  padding: 7px 0 10px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+}
+
+.solutions-visual-pilot .lab-filter-row button:hover,
+.solutions-visual-pilot .lab-filter-row button[data-active="true"] {
+  border-color: var(--solution-accent);
+  color: var(--solution-accent);
+  background: transparent;
+}
+
+.solution-library-toolbar > span {
+  color: var(--text-3);
+  font-size: 10px;
+}
+
+.solution-library-toolbar > span b {
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.solutions-visual-pilot .lab-recipe-grid {
+  gap: 0;
+  border-top: 1px solid var(--border);
+}
+
+.solutions-visual-pilot .lab-recipe-card {
+  overflow: visible;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.lab-recipe-summary {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 3px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 4px;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.lab-recipe-summary:hover,
+.lab-recipe-card.is-open > .lab-recipe-summary { background: rgba(255, 255, 255, 0.025); }
+
+.lab-recipe-type-mark {
+  width: 3px;
+  height: 34px;
+  border-radius: 3px;
+  background: var(--solution-accent);
+  opacity: 0.35;
+}
+
+.lab-recipe-card.is-open .lab-recipe-type-mark { opacity: 1; }
+
+.lab-recipe-summary-copy { min-width: 0; }
+.lab-recipe-summary-copy .lab-recipe-category { color: var(--text-3); font-size: 8px; }
+
+.lab-recipe-summary-copy h3 {
+  margin: 4px 0 3px;
+  color: var(--text-1);
+  font-size: 16px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.lab-recipe-summary-copy p {
+  overflow: hidden;
+  margin: 0;
+  color: var(--text-3);
+  font-size: 11px;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lab-recipe-summary-meta {
+  display: flex;
+  min-width: 150px;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--text-3);
+  font-size: 9px;
+}
+
+.lab-recipe-summary-meta b { font-size: 10px; }
+.lab-recipe-summary-meta .lab-concern-critical { color: var(--red); }
+.lab-recipe-summary-meta .lab-concern-high { color: var(--lab-amber); }
+.lab-recipe-summary-meta .lab-concern-moderate { color: var(--lab-teal); }
+
+.lab-recipe-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-3);
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.lab-recipe-toggle-label b {
+  color: var(--solution-accent);
+  font-size: 17px;
+  transition: transform 0.18s ease;
+}
+
+.lab-recipe-card.is-open .lab-recipe-toggle-label b { transform: rotate(180deg); }
+
+.lab-recipe-detail {
+  margin: 0 0 10px 21px;
+  border-top: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.solutions-visual-pilot .lab-recipe-detail-bar {
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 16px 20px 12px;
+}
+
+.solutions-visual-pilot .lab-volume-control > div {
+  border-radius: 8px;
+  background: transparent;
+}
+
+.solutions-visual-pilot .lab-ingredient-table {
+  border-color: var(--border);
+}
+
+.solutions-visual-pilot .lab-ingredient-header { background: transparent; }
+
+.solutions-visual-pilot .lab-recipe-safety-panel {
+  padding: 24px 20px;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+
+.solutions-visual-pilot .lab-recipe-safety-metrics > span {
+  min-height: 0;
+  padding: 0 0 0 12px;
+  border: 0;
+  border-left: 1px solid var(--border-mid);
+  border-radius: 0;
+  background: transparent;
+}
+
+.solutions-visual-pilot .lab-linked-reagent-grid { gap: 0; }
+
+.solutions-visual-pilot .lab-linked-reagent {
+  padding: 5px 11px;
+  border: 0;
+  border-left: 2px solid var(--border-mid);
+  border-radius: 0;
+  background: transparent;
+  transform: none;
+}
+
+.solutions-visual-pilot .lab-linked-reagent:hover {
+  border-left-color: var(--solution-accent);
+  background: rgba(255, 255, 255, 0.025);
+  transform: none;
+}
+
+.solutions-visual-pilot .lab-linked-reagent-critical { border-left-color: var(--red); }
+.solutions-visual-pilot .lab-linked-reagent-high { border-left-color: var(--lab-amber); }
+.solutions-visual-pilot .lab-linked-reagent-moderate { border-left-color: var(--lab-teal); }
+
+.solutions-visual-pilot .lab-recipe-safety-guidance { gap: 0; }
+
+.solutions-visual-pilot .lab-recipe-safety-guidance article {
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 9px;
+  padding: 4px 16px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.solutions-visual-pilot .lab-recipe-safety-guidance article > span {
+  display: block;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  color: var(--solution-accent);
+  background: transparent;
+}
+
+.solutions-visual-pilot .lab-recipe-sections { border-bottom: 1px solid var(--border); }
+.solutions-visual-pilot .lab-recipe-sections > section { padding: 20px; }
+.solutions-visual-pilot .lab-recipe-notes { background: transparent; }
+
+.solutions-visual-pilot .lab-recipe-actions {
+  padding: 14px 20px;
+  border-top: 0;
+  background: transparent;
+}
+
+.solutions-visual-pilot .lab-recipe-actions a { color: var(--solution-accent); }
+
+.solutions-visual-pilot .solution-safety-strip {
+  padding: 34px 4px 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.solutions-visual-pilot .solution-safety-strip > ul { margin-top: 18px; }
+.solutions-visual-pilot .lab-safety-actions a { color: var(--solution-accent); }
+
+@media (max-width: 760px) {
+  .solutions-visual-pilot { padding-top: 20px; }
+  .solution-hero { grid-template-columns: 1fr; gap: 22px; padding: 18px 2px 28px; }
+  .solution-hero h1 { font-size: 38px; }
+  .solution-hero-meta { padding: 18px 0 0; border-top: 1px solid var(--border); border-left: 0; }
+  .solutions-visual-pilot .lab-section-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .solutions-visual-pilot .lab-calc-grid { grid-template-columns: 1fr; }
+  .solutions-visual-pilot .lab-fields-grid { grid-template-columns: 1fr; }
+  .solutions-visual-pilot .lab-result-card { min-height: 0; padding: 22px 0 0; border-top: 1px solid var(--border-mid); border-left: 0; }
+  .solution-library-toolbar { align-items: flex-end; }
+  .solutions-visual-pilot .lab-filter-row { gap: 14px; }
+  .lab-recipe-summary { grid-template-columns: 3px minmax(0, 1fr) auto; gap: 12px; padding: 16px 2px; }
+  .lab-recipe-summary-copy p { white-space: normal; }
+  .lab-recipe-summary-meta { grid-column: 2 / 4; min-width: 0; flex-direction: row; gap: 12px; }
+  .lab-recipe-toggle-label { grid-column: 3; grid-row: 1; }
+  .lab-recipe-toggle-label { font-size: 0; }
+  .lab-recipe-toggle-label b { font-size: 18px; }
+  .lab-recipe-detail { margin-left: 15px; }
+  .solutions-visual-pilot .lab-recipe-detail-bar { align-items: stretch; flex-direction: column; }
+  .solutions-visual-pilot .lab-volume-control { width: 100%; flex-basis: auto; }
+  .solutions-visual-pilot .lab-ingredient-row { grid-template-columns: minmax(0, 1fr) 110px; }
+  .solutions-visual-pilot .lab-ingredient-row > span,
+  .solutions-visual-pilot .lab-ingredient-row > strong { padding: 10px 12px; }
+  .solutions-visual-pilot .lab-recipe-safety-panel > header { align-items: flex-start; flex-direction: column; }
+  .solutions-visual-pilot .lab-recipe-safety-guidance { grid-template-columns: 1fr; gap: 14px; }
+  .solutions-visual-pilot .lab-recipe-safety-guidance article { padding: 4px 0; border-left: 0; }
+  .solutions-visual-pilot .lab-recipe-sections { grid-template-columns: 1fr; }
+  .solutions-visual-pilot .lab-recipe-sections > section + section { border-top: 1px solid var(--border); border-left: 0; }
+  .solutions-visual-pilot .solution-safety-strip > ul { grid-template-columns: 1fr; }
+  .solutions-visual-pilot .lab-safety-actions { align-items: flex-start; flex-direction: column; }
+}
+
 .chem-emergency-banner {
   display: flex;
   align-items: flex-start;
