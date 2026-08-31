@@ -970,13 +970,27 @@ export default function PrimerPage() {
   const featureHighlights = [t("feat_transcript"), t("feat_exon_design"), t("feat_blast_verify"), t("feat_score_range")];
 
   return (
+    <div className="primer-designer-page design-workspace-v3">
+      <section className="design-hero qpcr-design-hero">
+        <div>
+          <span className="design-kicker">PRIMERCAT · qPCR</span>
+          <h1>{t("title")}</h1>
+          <p>{t("subtitle")}</p>
+        </div>
+        <aside className="design-hero-meta">
+          <span>Primer3 · NCBI RefSeq · RNA BLAST</span>
+          <strong>{locale === "zh" ? "基因或序列 → 候选引物" : "Gene or sequence → primer pairs"}</strong>
+          <p>{featureHighlights.join(" · ")}</p>
+        </aside>
+      </section>
+
     <div className="page-sidebar-layout primer-page-shell" style={{ display: "flex", gap: 28, alignItems: "flex-start" }}>
       <aside className="page-sidebar primer-control-panel">
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
             <div>
-              <div className="primer-panel-kicker">PrimerCat qPCR</div>
-              <h1 className="primer-page-headline">{t("title")}</h1>
+              <div className="primer-panel-kicker">01 · {locale === "zh" ? "设计输入" : "Design input"}</div>
+              <h2 className="primer-page-headline">{mode === "gene" ? t("mode_gene") : t("mode_sequence")}</h2>
             </div>
             <button
               type="button"
@@ -990,12 +1004,7 @@ export default function PrimerPage() {
               ?
             </button>
           </div>
-          <p className="primer-panel-subtitle">{t("subtitle")}</p>
-          <div className="primer-panel-chips">
-            {["Primer3", "NCBI RefSeq", "RefSeq RNA BLAST"].map((item) => (
-              <span key={item} className="primer-panel-chip">{item}</span>
-            ))}
-          </div>
+          <p className="primer-panel-subtitle">{locale === "zh" ? "选择输入方式并设置物种，结果将在右侧生成。" : "Choose an input mode and species; results will appear in the workspace."}</p>
         </div>
         <div className="tab-bar primer-tab-shell mb-5" style={{ width: "100%" }}>
           {(["gene", "sequence"] as const).map(m => (
@@ -1295,6 +1304,7 @@ export default function PrimerPage() {
       </main>
 
       {showHelp && <PrimerWorkflowModal onClose={() => setShowHelp(false)} />}
+    </div>
     </div>
   );
 }

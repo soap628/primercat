@@ -488,8 +488,8 @@ export default function PCRPage() {
   }
 
   return (
-    <div className="pcr-page">
-      <section className="pcr-hero">
+    <div className="pcr-page design-workspace-v3 pcr-visual-v3">
+      <section className="pcr-hero design-hero">
         <div>
           <div className="pcr-kicker">PRIMERCAT · ENDPOINT PCR</div>
           <h1>{t("title")}</h1>
