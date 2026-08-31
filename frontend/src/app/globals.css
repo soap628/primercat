@@ -10172,6 +10172,141 @@ html[data-theme="light"] { color-scheme: light; }
   .tools-launcher-categories { grid-template-columns: 1fr; }
 }
 
+/* ── Utilities · four-entry launcher ──────────────────────────────────── */
+.tools-simple-page {
+  width: 100%;
+  padding: 18px 0 74px;
+  color: var(--text-1);
+}
+.tools-simple-head {
+  display: flex;
+  min-height: 155px;
+  align-items: flex-end;
+  padding: 12px 2px 30px;
+  border-bottom: 1px solid var(--border-mid);
+}
+.tools-simple-head span {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 760;
+  letter-spacing: .13em;
+}
+.tools-simple-head h1 {
+  margin: 12px 0 0;
+  color: var(--text-1);
+  font-size: clamp(46px, 6vw, 72px);
+  font-weight: 770;
+  letter-spacing: -.06em;
+  line-height: .95;
+}
+.tools-simple-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid var(--border);
+}
+.tools-simple-app {
+  --app-tone: var(--accent);
+  position: relative;
+  display: flex;
+  min-height: 320px;
+  padding: clamp(22px, 2.5vw, 32px);
+  border-right: 1px solid var(--border);
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--text-1);
+  background: transparent;
+  text-decoration: none;
+  transition: background 160ms ease;
+}
+.tools-simple-app:last-child { border-right: 0; }
+.tools-simple-app::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--app-tone);
+  opacity: 0;
+  transform: scaleX(.45);
+  transform-origin: left;
+  transition: opacity 160ms ease, transform 220ms cubic-bezier(.22, 1, .36, 1);
+  content: "";
+}
+.tools-simple-app:hover { background: color-mix(in srgb, var(--app-tone) 6%, var(--bg-card)); }
+.tools-simple-app:hover::after { opacity: .8; transform: scaleX(1); }
+.tools-simple-app:focus-visible {
+  z-index: 1;
+  outline: 2px solid var(--app-tone);
+  outline-offset: -2px;
+}
+.tools-simple-app-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.tools-simple-app-top > span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  border: 1px solid color-mix(in srgb, var(--app-tone) 40%, var(--border));
+  border-radius: 10px;
+  place-items: center;
+  color: color-mix(in srgb, var(--app-tone) 78%, var(--text-1));
+  background: color-mix(in srgb, var(--app-tone) 8%, transparent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 780;
+}
+.tools-simple-app-top i {
+  color: var(--text-3);
+  font-size: 20px;
+  font-style: normal;
+  transition: color 140ms ease, transform 180ms ease;
+}
+.tools-simple-app:hover .tools-simple-app-top i {
+  color: var(--app-tone);
+  transform: translate(2px, -2px);
+}
+.tools-simple-app h2 {
+  margin: 0;
+  color: var(--text-1);
+  font-size: clamp(22px, 2.5vw, 30px);
+  font-weight: 750;
+  letter-spacing: -.04em;
+  line-height: 1.1;
+}
+.tools-simple-app p {
+  margin: 9px 0 0;
+  color: var(--text-2);
+  font-size: 11px;
+  line-height: 1.55;
+}
+@media (max-width: 960px) {
+  .tools-simple-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tools-simple-app {
+    min-height: 220px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tools-simple-app:nth-child(even) { border-right: 0; }
+  .tools-simple-app:nth-last-child(-n + 2) { border-bottom: 0; }
+}
+@media (max-width: 660px) {
+  .tools-simple-page { padding: 0 0 52px; }
+  .tools-simple-head { min-height: 140px; padding: 10px 0 28px; }
+  .tools-simple-head h1 { font-size: 46px; }
+  .tools-simple-grid { grid-template-columns: 1fr; }
+  .tools-simple-app,
+  .tools-simple-app:nth-child(even),
+  .tools-simple-app:nth-last-child(-n + 2) {
+    min-height: 190px;
+    padding: 24px 20px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tools-simple-app:last-child { border-bottom: 0; }
+}
+
 /* ── Research fund planner ─────────────────────────────────────────────── */
 .fund-calc-v1 {
   --fund-tone: #a76bb1;
