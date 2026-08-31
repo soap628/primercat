@@ -243,9 +243,9 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
   ];
 
   return (
-    <div style={S.wrap}>
+    <div className="mw-workbench-v6" style={S.wrap}>
       {/* Header */}
-      <div>
+      <header className="mw-hero-v6">
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
           <span style={S.badge}>⚗️ {zh ? "计算工具" : "Calculator"}</span>
         </div>
@@ -257,10 +257,10 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
             ? "解析化学式 · 溶液配制 · 稀释计算 · 全程可查"
             : "Parse chemical formulas · Solution prep · Dilution · All in one place"}
         </p>
-      </div>
+      </header>
 
       {/* Tab bar */}
-      <div style={{ display: "flex", gap: 4, background: "var(--bg-inset)", borderRadius: 10, padding: 4, width: "fit-content" }}>
+      <div className="mw-tabs-v6" style={{ display: "flex", gap: 4, background: "var(--bg-inset)", borderRadius: 10, padding: 4, width: "fit-content" }}>
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -280,7 +280,7 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
       {/* ── Tab: MW ── */}
       {tab === "mw" && (
         <>
-          <div style={S.card}>
+          <section className="mw-work-surface mw-formula-surface" style={S.card}>
             <div style={S.sectionTitle}>
               {zh ? "输入化学式" : "Enter Chemical Formula"}
             </div>
@@ -323,11 +323,11 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
             {mwResult && "error" in mwResult && (
               <p style={S.error}>⚠ {mwResult.error}</p>
             )}
-          </div>
+          </section>
 
           {/* Result */}
           {mwResult && "mw" in mwResult && (
-            <div style={S.card}>
+            <section className="mw-work-surface mw-result-surface" style={S.card}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
                 <div>
                   <div style={S.label}>{zh ? "摩尔质量" : "Molar Mass"}</div>
@@ -388,12 +388,12 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
           {/* History */}
           {history.length > 0 && (
-            <div style={S.card}>
+            <section className="mw-work-surface mw-history-surface" style={S.card}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <div style={S.sectionTitle}>{zh ? "计算历史" : "History"}</div>
                 <button onClick={() => setHistory([])} style={{ fontSize: 12, color: "var(--text-3)", background: "none", border: "none", cursor: "pointer" }}>
@@ -418,14 +418,14 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
         </>
       )}
 
       {/* ── Tab: Solution ── */}
       {tab === "solution" && (
-        <div style={S.card}>
+        <section className="mw-work-surface mw-solution-surface" style={S.card}>
           <div style={S.sectionTitle}>{zh ? "溶液配制计算 (C = n/V = m / (MW·V))" : "Solution Preparation (C = m / (MW · V))"}</div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -500,12 +500,12 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
               border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(163,31,52,0.3)",
             }}>{zh ? "计算" : "Calculate"}</button>
           </div>
-        </div>
+        </section>
       )}
 
       {/* ── Tab: Dilution ── */}
       {tab === "dilution" && (
-        <div style={S.card}>
+        <section className="mw-work-surface mw-dilution-surface" style={S.card}>
           <div style={S.sectionTitle}>{zh ? "稀释计算 (C₁V₁ = C₂V₂)" : "Dilution Calculator (C₁V₁ = C₂V₂)"}</div>
 
           <div style={{ marginBottom: 14 }}>
@@ -569,11 +569,11 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
               </strong>
             )}
           </p>
-        </div>
+        </section>
       )}
 
       {/* Reference table */}
-      <div style={S.card}>
+      <section className="mw-work-surface mw-reference-surface" style={S.card}>
         <div style={S.sectionTitle}>{zh ? "常用元素原子量参考" : "Common Atomic Weights Reference"}</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {["H","C","N","O","P","S","Na","K","Ca","Mg","Cl","F","Fe","Zn","Cu","I","Br"].map((el) => (
@@ -587,7 +587,7 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

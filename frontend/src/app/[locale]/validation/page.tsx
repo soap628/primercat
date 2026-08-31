@@ -301,7 +301,7 @@ export default function ValidationPage({
 
   return (
     <main
-      className="vp-main"
+      className="vp-main validation-page-v6"
       style={{
         maxWidth: 860,
         margin: "0 auto",
@@ -339,7 +339,9 @@ export default function ValidationPage({
             margin: 0,
           }}
         >
-          {copy.title}
+          {locale === "zh" ? (
+            <>结果页面的每一列数字，<br />背后是什么</>
+          ) : copy.title}
         </h1>
 
         <p style={{ fontSize: 17, lineHeight: 1.75, color: "var(--text-2)", margin: 0, maxWidth: 680 }}>

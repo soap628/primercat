@@ -321,7 +321,7 @@ export default function MethodsPage({ params: { locale } }: { params: { locale: 
     : "Auto-fetch a template, design under constraints, run a first-pass screen, return the rationale.";
 
   return (
-    <div className="story-page">
+    <div className="story-page methods-page-v6">
       <section
         className="story-hero"
         style={{
