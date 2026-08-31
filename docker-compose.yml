@@ -57,12 +57,15 @@ services:
 
   certbot:
     image: certbot/certbot
+    entrypoint: /bin/sh
     volumes:
       - certbot-conf:/etc/letsencrypt
       - certbot-www:/var/www/certbot
-    # 每 12 小时自动续期（循环放在 command 而非 entrypoint，
-    # 这样 `docker compose run --rm certbot certonly ...` 能正常执行一次性命令）
-    command: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done;'"
+    # certbot 镜像默认入口是 certbot；改为 shell 后再运行续期循环。
+    # 一次性签发命令仍可通过 `docker compose run --entrypoint certbot ...` 执行。
+    command:
+      - -c
+      - trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done;
 
 volumes:
   pgdata:
