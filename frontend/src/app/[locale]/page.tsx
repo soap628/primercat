@@ -307,7 +307,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
     {
       tag: t("pcr_card_tag"), title: t("pcr_card_title"), desc: t("pcr_card_desc"),
       href: "/pcr",
-      tagColor: "#17856f", icon: "PCR",
+      tagColor: "var(--home-pcr-tone)", icon: "PCR",
       glowColor: "rgba(25,185,154,0.06)",
       borderHover: "rgba(25,185,154,0.28)",
       shadowColor: "rgba(25,185,154,0.14)",
@@ -315,7 +315,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
     {
       tag: t("grna_card_tag"), title: t("grna_card_title"), desc: t("grna_card_desc"),
       href: "/grna",
-      tagColor: "#2f70b8", icon: "CR",
+      tagColor: "var(--home-grna-tone)", icon: "CR",
       glowColor: "rgba(83,157,245,0.06)",
       borderHover: "rgba(83,157,245,0.28)",
       shadowColor: "rgba(83,157,245,0.14)",
