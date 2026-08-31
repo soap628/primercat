@@ -4,7 +4,7 @@ export default function SponsorPage({ params: { locale } }: { params: { locale: 
   const zh = locale === "zh";
 
   return (
-    <div className="story-page" style={{ maxWidth: 640 }}>
+    <div className="story-page aux-page-v7 sponsor-page-v7" style={{ maxWidth: 640 }}>
 
       {/* Hero */}
       <section
@@ -65,6 +65,7 @@ export default function SponsorPage({ params: { locale } }: { params: { locale: 
             alt="Alipay QR Code"
             width={200}
             height={200}
+            unoptimized
             style={{ borderRadius: 8, display: "block" }}
           />
         </div>

@@ -35,7 +35,7 @@ export default function ContactPage({ params: { locale } }: { params: { locale: 
   const copy = locale === "zh" ? COPY.zh : COPY.en;
 
   return (
-    <div className="story-page">
+    <div className="story-page aux-page-v7 contact-page-v7">
       <section
         className="story-hero"
         style={{

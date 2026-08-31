@@ -65,9 +65,9 @@ export default function AboutPage({ params: { locale } }: { params: { locale: st
   const copy = locale === "zh" ? COPY.zh : COPY.en;
 
   return (
-    <div className="story-page" style={{ maxWidth: 820 }}>
+    <div className="story-page aux-page-v7 about-page-v7" style={{ maxWidth: 820 }}>
       {/* Header */}
-      <section style={{ marginBottom: 28 }}>
+      <section className="aux-hero-v7" style={{ marginBottom: 28 }}>
         <div style={{
           fontSize: 11, fontWeight: 700, letterSpacing: "0.09em",
           textTransform: "uppercase", color: "var(--accent)", marginBottom: 14,

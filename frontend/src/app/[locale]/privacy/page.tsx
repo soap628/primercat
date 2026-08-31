@@ -59,8 +59,8 @@ export default function PrivacyPage({ params: { locale } }: { params: { locale: 
   const copy = locale === "zh" ? COPY.zh : COPY.en;
 
   return (
-    <div className="story-page" style={{ maxWidth: 780 }}>
-      <section style={{ marginBottom: 8 }}>
+    <div className="story-page aux-page-v7 legal-page-v7 privacy-page-v7" style={{ maxWidth: 780 }}>
+      <section className="aux-hero-v7" style={{ marginBottom: 8 }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: 12 }}>
           {copy.badge}
         </div>

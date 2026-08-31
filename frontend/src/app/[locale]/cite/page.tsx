@@ -24,7 +24,7 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
     });
   }
   return (
-    <div style={{ marginBottom: 20 }}>
+    <div className="citation-block-v7" style={{ marginBottom: 20 }}>
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
         marginBottom: 8,
@@ -33,6 +33,7 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
           {label}
         </span>
         <button
+          className="citation-copy-v7"
           onClick={copy}
           style={{
             cursor: "pointer",
@@ -48,7 +49,7 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
           {copied ? "✓ Copied" : "Copy"}
         </button>
       </div>
-      <pre style={{
+      <pre className="citation-code-v7" style={{
         margin: 0,
         padding: "16px 18px",
         borderRadius: 12,
@@ -94,8 +95,8 @@ export default function CitePage({ params: { locale } }: { params: { locale: str
   const apa = locale === "zh" ? APA_ZH : APA_EN;
 
   return (
-    <div className="story-page" style={{ maxWidth: 820 }}>
-      <section style={{ marginBottom: 24 }}>
+    <div className="story-page aux-page-v7 cite-page-v7" style={{ maxWidth: 820 }}>
+      <section className="aux-hero-v7" style={{ marginBottom: 24 }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 12 }}>
           {copy.badge}
         </div>
