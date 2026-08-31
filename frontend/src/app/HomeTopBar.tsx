@@ -8,16 +8,10 @@ import { useAuth } from "@/lib/useAuth";
 function CatLogo({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 22 22" fill="none" aria-hidden="true">
-      <ellipse cx="11" cy="13.5" rx="7.5" ry="6.8" fill="white" opacity="0.96" />
-      <polygon points="4.2,10 6.5,3.5 9.8,8.8" fill="white" opacity="0.96" />
-      <polygon points="17.8,10 15.5,3.5 12.2,8.8" fill="white" opacity="0.96" />
-      <polygon points="5.4,9.6 7,5.2 9.2,8.8" fill="#fca5a5" opacity="0.65" />
-      <polygon points="16.6,9.6 15,5.2 12.8,8.8" fill="#fca5a5" opacity="0.65" />
-      <circle cx="8.2" cy="13" r="1.4" fill="#ffb1ee" />
-      <circle cx="13.8" cy="13" r="1.4" fill="#ffb1ee" />
-      <circle cx="8.7" cy="12.5" r="0.45" fill="white" />
-      <circle cx="14.3" cy="12.5" r="0.45" fill="white" />
-      <ellipse cx="11" cy="16.2" rx="0.9" ry="0.65" fill="#fca5a5" opacity="0.9" />
+      <path d="M4.4 10.2 6.7 3.8l3.2 4.3a9 9 0 0 1 2.2 0l3.2-4.3 2.3 6.4a7.5 7.5 0 0 1 .9 3.6c0 4-3.3 6.2-7.5 6.2s-7.5-2.2-7.5-6.2c0-1.3.3-2.5.9-3.6Z" stroke="currentColor" strokeWidth="1.45" strokeLinejoin="round" />
+      <circle cx="8.4" cy="13.2" r="1" fill="currentColor" />
+      <circle cx="13.6" cy="13.2" r="1" fill="currentColor" />
+      <path d="M9.4 16.3c1 .7 2.2.7 3.2 0" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
     </svg>
   );
 }
@@ -84,22 +78,6 @@ function UserIcon() {
   );
 }
 
-const btnBase: React.CSSProperties = {
-  cursor: "pointer",
-  border: "1px solid rgba(255,255,255,0.14)",
-  borderRadius: 10,
-  background: "rgba(255,255,255,0.06)",
-  backdropFilter: "blur(12px)",
-  WebkitBackdropFilter: "blur(12px)",
-  color: "rgba(255,255,255,0.72)",
-  display: "flex",
-  alignItems: "center",
-  gap: 6,
-  transition: "background 0.15s, border-color 0.15s, color 0.15s",
-  lineHeight: 1,
-  whiteSpace: "nowrap" as const,
-};
-
 export default function HomeTopBar({ locale }: { locale: string }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -116,53 +94,21 @@ export default function HomeTopBar({ locale }: { locale: string }) {
   }
 
   return (
-    <div className="home-topbar" style={{
-      position: "absolute",
-      top: 0, left: 0, right: 0,
-      zIndex: 50,
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      gap: 6,
-      padding: "18px 28px",
-    }}>
-
-      {/* Brand pill — left side */}
-      <div className="home-topbar-brand" style={{
-        display: "flex", alignItems: "center", gap: 10,
-        padding: "7px 14px 7px 9px",
-        borderRadius: 999,
-        border: "1px solid rgba(255,255,255,0.1)",
-        background: "rgba(255,255,255,0.05)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-      }}>
-        <div style={{
-          width: 24, height: 24, borderRadius: 7, flexShrink: 0,
-          background: "linear-gradient(135deg,#181818,#ffb1ee 50%,#539df5)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 0 0 1px rgba(255,177,238,0.3), 0 4px 12px rgba(255,177,238,0.2)",
-        }}>
-          <CatLogo size={15} />
-        </div>
-        <div className="home-topbar-dot" style={{ width: 5, height: 5, borderRadius: "50%", background: "#ffb1ee", boxShadow: "0 0 6px rgba(255,177,238,0.8)", flexShrink: 0 }} />
-        <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", letterSpacing: "0.02em" }}>
-          Primer<span style={{ color: "#ffb1ee" }}>Cat</span>
-        </span>
-        <span className="home-topbar-tagline" style={{ fontSize: 11, color: "rgba(255,255,255,0.32)", marginLeft: 2 }}>
-          {locale === "zh" ? "面向科研" : "Built for researchers"}
-        </span>
-      </div>
+    <div className="home-topbar">
+      <Link href={`/${locale}`} className="home-topbar-brand" aria-label={locale === "zh" ? "PrimerCat 首页" : "PrimerCat home"}>
+        <span className="home-brand-mark"><CatLogo size={18} /></span>
+        <span className="home-brand-wordmark">Primer<strong>Cat</strong></span>
+        <span className="home-topbar-tagline">{locale === "zh" ? "科研设计工作台" : "Research design workspace"}</span>
+      </Link>
 
       {/* Right controls */}
-      <div className="home-topbar-actions" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div className="home-topbar-actions">
 
       {/* Theme toggle */}
       <button
         onClick={toggle}
-        aria-label="Toggle dark mode"
+        aria-label={locale === "zh" ? (dark ? "切换到浅色模式" : "切换到深色模式") : (dark ? "Switch to light mode" : "Switch to dark mode")}
         className="home-topbar-action"
-        style={{ ...btnBase, padding: "7px 10px" }}
       >
         {dark ? <SunIcon /> : <MoonIcon />}
       </button>
@@ -170,8 +116,8 @@ export default function HomeTopBar({ locale }: { locale: string }) {
       {/* Language */}
       <button
         onClick={switchLocale}
+        aria-label={locale === "zh" ? "Switch to English" : "切换到中文"}
         className="home-topbar-action"
-        style={{ ...btnBase, padding: "7px 12px", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em" }}
       >
         <GlobeIcon />
         {otherLabel}
@@ -182,16 +128,7 @@ export default function HomeTopBar({ locale }: { locale: string }) {
         user ? (
           <Link
             href={`/${locale}/account`}
-            className="home-topbar-action"
-            style={{
-              ...btnBase,
-              padding: "7px 13px",
-              fontSize: 12, fontWeight: 600,
-              border: "1px solid rgba(255,177,238,0.3)",
-              background: "rgba(255,177,238,0.08)",
-              color: "#ffb1ee",
-              textDecoration: "none",
-            }}
+            className="home-topbar-action home-topbar-account"
           >
             <UserIcon />
             {accountLabel}
@@ -199,16 +136,7 @@ export default function HomeTopBar({ locale }: { locale: string }) {
         ) : (
           <Link
             href={`/${locale}/login`}
-            className="home-topbar-action"
-            style={{
-              ...btnBase,
-              padding: "7px 14px",
-              fontSize: 12, fontWeight: 600,
-              border: "1px solid rgba(255,177,238,0.3)",
-              background: "rgba(255,177,238,0.08)",
-              color: "#ffb1ee",
-              textDecoration: "none",
-            }}
+            className="home-topbar-action home-topbar-account"
           >
             <UserIcon />
             {loginLabel}

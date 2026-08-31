@@ -5,124 +5,39 @@ import { Link } from "@/navigation";
 import HomeTopBar from "../HomeTopBar";
 import { useEffect, useState, useRef } from "react";
 
-function CatLogo({ size = 22 }: { size?: number }) {
+function ProductEvidenceGraphic({ locale }: { locale: string }) {
+  const isZh = locale === "zh";
   return (
-    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" aria-hidden="true">
-      <ellipse cx="11" cy="13.5" rx="7.5" ry="6.8" fill="white" opacity="0.96" />
-      <polygon points="4.2,10 6.5,3.5 9.8,8.8" fill="white" opacity="0.96" />
-      <polygon points="17.8,10 15.5,3.5 12.2,8.8" fill="white" opacity="0.96" />
-      <polygon points="5.4,9.6 7,5.2 9.2,8.8" fill="#fca5a5" opacity="0.65" />
-      <polygon points="16.6,9.6 15,5.2 12.8,8.8" fill="#fca5a5" opacity="0.65" />
-      <circle cx="8.2" cy="13" r="1.4" fill="#ffb1ee" />
-      <circle cx="13.8" cy="13" r="1.4" fill="#ffb1ee" />
-      <circle cx="8.7" cy="12.5" r="0.45" fill="white" />
-      <circle cx="14.3" cy="12.5" r="0.45" fill="white" />
-      <ellipse cx="11" cy="16.2" rx="0.9" ry="0.65" fill="#fca5a5" opacity="0.9" />
-    </svg>
-  );
-}
+    <div className="home-evidence" aria-label={isZh ? "PrimerCat 产品结果示意预览" : "PrimerCat product result preview"}>
+      <div className="home-evidence-topline">
+        <div>
+          <span>{isZh ? "示意预览" : "Illustrative preview"}</span>
+          <strong>TP53 · NM_000546</strong>
+        </div>
+        <span className="home-evidence-status"><i />{isZh ? "特异性通过" : "Specificity passed"}</span>
+      </div>
 
-function QpcrCatAnimation() {
-  return (
-    <svg className="qpcr-anim" viewBox="0 0 560 190" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <defs>
-        <linearGradient id="dnaGrad" x1="0" y1="0" x2="560" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="rgba(255,177,238,0)" />
-          <stop offset="25%"  stopColor="rgba(255,177,238,0.2)" />
-          <stop offset="50%"  stopColor="rgba(83,157,245,0.15)" />
-          <stop offset="75%"  stopColor="rgba(255,177,238,0.2)" />
-          <stop offset="100%" stopColor="rgba(255,177,238,0)" />
-        </linearGradient>
-        <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
-          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
+      <div className="home-evidence-track" aria-hidden="true">
+        <div className="home-evidence-axis"><span>5′</span><span>3′</span></div>
+        <div className="home-evidence-gene">
+          <span className="exon exon-1" /><span className="exon exon-2" /><span className="exon exon-3" /><span className="exon exon-4" />
+        </div>
+        <div className="home-evidence-primer forward"><b>F</b><span>AGGCTGCTCCCC...</span></div>
+        <div className="home-evidence-primer reverse"><span>CGTGCAAGTCAC...</span><b>R</b></div>
+      </div>
 
-      {/* ── Background DNA helix ── */}
-      <g className="qpcr-dna-bg">
-        <path d="M10 93 C50 85,90 101,130 93 C170 85,210 101,250 93 C290 85,330 101,370 93 C410 85,450 101,490 93 C515 89,540 91,550 93"
-          stroke="url(#dnaGrad)" strokeWidth="1.4" strokeLinecap="round" />
-        <path d="M10 107 C50 115,90 99,130 107 C170 115,210 99,250 107 C290 115,330 99,370 107 C410 115,450 99,490 107 C515 111,540 109,550 107"
-          stroke="url(#dnaGrad)" strokeWidth="1.4" strokeLinecap="round" />
-        {[60,100,140,180,380,420,460,500].map((x) => (
-          <line key={x} x1={x} y1="95" x2={x} y2="105" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
-        ))}
-      </g>
+      <div className="home-evidence-metrics">
+        <div><span>{isZh ? "正向 Tm" : "Forward Tm"}</span><strong>60.4 °C</strong></div>
+        <div><span>{isZh ? "反向 Tm" : "Reverse Tm"}</span><strong>60.1 °C</strong></div>
+        <div><span>GC</span><strong>55%</strong></div>
+        <div><span>{isZh ? "扩增子" : "Amplicon"}</span><strong>152 bp</strong></div>
+      </div>
 
-      {/* ── Left primer tag ── */}
-      <g className="qpcr-primer-left">
-        <line x1="78" y1="100" x2="232" y2="100" stroke="#ffb1ee" strokeWidth="1.6" strokeLinecap="round" opacity="0.7"/>
-        <text x="82" y="93" fontSize="8" fill="#ffb1ee" fontWeight="700" letterSpacing="0.07em" opacity="0.7">5′→3′  F</text>
-      </g>
-
-      {/* ── Right primer tag ── */}
-      <g className="qpcr-primer-right">
-        <line x1="328" y1="100" x2="482" y2="100" stroke="#539df5" strokeWidth="1.6" strokeLinecap="round" opacity="0.65"/>
-        <text x="430" y="93" fontSize="8" fill="#539df5" fontWeight="700" letterSpacing="0.07em" opacity="0.7">R  3′←5′</text>
-      </g>
-
-      {/* ── Cat — main character ── */}
-      <g className="qpcr-cat-body" filter="url(#softGlow)">
-        {/* halo */}
-        <circle cx="280" cy="103" r="56" fill="rgba(255,177,238,0.10)" className="cat-halo"/>
-
-        {/* ears */}
-        <polygon points="240,76 248,50 265,74" fill="#ffb1ee" opacity="0.97"/>
-        <polygon points="320,76 312,50 295,74" fill="#ffb1ee" opacity="0.97"/>
-        <polygon points="244,74 250,57 262,72" fill="#fca5a5" opacity="0.6"/>
-        <polygon points="316,74 310,57 298,72" fill="#fca5a5" opacity="0.6"/>
-
-        {/* body */}
-        <circle cx="280" cy="105" r="45" fill="#ffb1ee" opacity="0.97"/>
-
-        {/* eyes */}
-        <g className="cat-eye-left">
-          <ellipse cx="264" cy="100" rx="6.5" ry="7" fill="white" opacity="0.95"/>
-          <circle cx="265" cy="100.5" r="4.2" fill="#111"/>
-          <circle cx="263.5" cy="98.5" r="1.5" fill="white"/>
-        </g>
-        <g className="cat-eye-right">
-          <ellipse cx="296" cy="100" rx="6.5" ry="7" fill="white" opacity="0.95"/>
-          <circle cx="297" cy="100.5" r="4.2" fill="#111"/>
-          <circle cx="295.5" cy="98.5" r="1.5" fill="white"/>
-        </g>
-
-        {/* nose */}
-        <ellipse cx="280" cy="113" rx="3.5" ry="2.2" fill="#fca5a5" opacity="0.9"/>
-        {/* mouth */}
-        <path d="M277 115.5 Q280 119.5 283 115.5" stroke="#fca5a5" strokeWidth="1" fill="none" opacity="0.75"/>
-
-        {/* whiskers */}
-        <line x1="246" y1="110" x2="262" y2="112" stroke="white" strokeWidth="0.9" opacity="0.4"/>
-        <line x1="246" y1="115" x2="262" y2="115" stroke="white" strokeWidth="0.9" opacity="0.4"/>
-        <line x1="298" y1="112" x2="314" y2="110" stroke="white" strokeWidth="0.9" opacity="0.4"/>
-        <line x1="298" y1="115" x2="314" y2="115" stroke="white" strokeWidth="0.9" opacity="0.4"/>
-      </g>
-
-      {/* ── Tail ── */}
-      <g className="qpcr-tail">
-        <path d="M319 127 C350 144 370 164 357 151 C344 138 328 150 320 139"
-          stroke="#ffb1ee" strokeWidth="9" strokeLinecap="round" fill="none" opacity="0.88"/>
-      </g>
-
-      {/* ── Floating badges ── */}
-      <g className="qpcr-badge badge-left">
-        <rect x="36" y="130" width="76" height="22" rx="6"
-          fill="rgba(255,177,238,0.08)" stroke="rgba(255,177,238,0.22)" strokeWidth="1"/>
-        <text x="74" y="145" textAnchor="middle" fontSize="9" fill="#ffb1ee" fontWeight="700">TP53  ✓</text>
-      </g>
-      <g className="qpcr-badge badge-right">
-        <rect x="448" y="130" width="82" height="22" rx="6"
-          fill="rgba(83,157,245,0.08)" stroke="rgba(83,157,245,0.22)" strokeWidth="1"/>
-        <text x="489" y="145" textAnchor="middle" fontSize="9" fill="#539df5" fontWeight="700">Score 94 / 100</text>
-      </g>
-      <g className="qpcr-badge badge-top">
-        <rect x="196" y="22" width="168" height="22" rx="6"
-          fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.09)" strokeWidth="1"/>
-        <text x="280" y="37" textAnchor="middle" fontSize="8.5" fill="rgba(255,255,255,0.42)" fontWeight="600" letterSpacing="0.05em">Primer3 · BLAST · RefSeq</text>
-      </g>
-    </svg>
+      <div className="home-evidence-footer">
+        <div className="home-evidence-score"><strong>94</strong><span>/ 100<br />{isZh ? "综合评分" : "ranked score"}</span></div>
+        <div className="home-evidence-sources"><span>Primer3</span><span>NCBI RefSeq</span><span>RNA BLAST</span></div>
+      </div>
+    </div>
   );
 }
 
@@ -327,8 +242,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
     {
       tag: t("primer_card_tag"), title: t("primer_card_title"), desc: t("primer_card_desc"),
       href: "/primer",
-      iconBg: "linear-gradient(135deg,#121212,#ffb1ee)",
-      tagColor: "#ffb1ee", icon: "Q",
+      tagColor: "#c454a9", icon: "QP",
       glowColor: "rgba(255,177,238,0.06)",
       borderHover: "rgba(255,177,238,0.28)",
       shadowColor: "rgba(255,177,238,0.14)",
@@ -336,8 +250,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
     {
       tag: t("pcr_card_tag"), title: t("pcr_card_title"), desc: t("pcr_card_desc"),
       href: "/pcr",
-      iconBg: "linear-gradient(135deg,#121212,#19b99a)",
-      tagColor: "#36d7b7", icon: "P",
+      tagColor: "#17856f", icon: "PCR",
       glowColor: "rgba(25,185,154,0.06)",
       borderHover: "rgba(25,185,154,0.28)",
       shadowColor: "rgba(25,185,154,0.14)",
@@ -345,8 +258,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
     {
       tag: t("grna_card_tag"), title: t("grna_card_title"), desc: t("grna_card_desc"),
       href: "/grna",
-      iconBg: "linear-gradient(135deg,#121212,#539df5)",
-      tagColor: "#539df5", icon: "C",
+      tagColor: "#2f70b8", icon: "CR",
       glowColor: "rgba(83,157,245,0.06)",
       borderHover: "rgba(83,157,245,0.28)",
       shadowColor: "rgba(83,157,245,0.14)",
@@ -354,15 +266,14 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
     {
       tag: t("blast_card_tag"), title: t("blast_card_title"), desc: t("blast_card_desc"),
       href: "/blast",
-      iconBg: "linear-gradient(135deg,#181818,#ffa42b)",
-      tagColor: "#ffa42b", icon: "B",
+      tagColor: "#b7670c", icon: "BL",
       glowColor: "rgba(255,164,43,0.06)",
       borderHover: "rgba(255,164,43,0.28)",
       shadowColor: "rgba(255,164,43,0.14)",
     },
   ];
 
-  const featIcons = ["🧬", "🔬", "🎯", "📊", "🔭", "📄"];
+  const featMarkers = ["TX", "EX", "SP", "RK", "QC", "RP"];
   const features = [
     { title: t("feat_transcript_title"), desc: t("feat_transcript_desc") },
     { title: t("feat_exon_title"),       desc: t("feat_exon_desc") },
@@ -416,10 +327,10 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
 
         <div className="home-hero-inner">
 
-          {/* animation */}
-          <QpcrCatAnimation />
+          <ProductEvidenceGraphic locale={locale} />
 
           {/* headline */}
+          <div className="home-hero-kicker">PRIMERCAT · {locale === "zh" ? "生命科学设计工具" : "LIFE SCIENCE DESIGN TOOLS"}</div>
           <h1 className="hero-headline">
             {locale === "zh" ? (
               <>
@@ -560,8 +471,8 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
                   "--card-shadow-color": card.shadowColor,
                 } as React.CSSProperties}
               >
-                <div className="home-tool-icon" style={{ background: card.iconBg }}>
-                  <span style={{ color: "#fff", fontSize: 16, fontWeight: 800 }}>{card.icon}</span>
+                <div className="home-tool-icon" style={{ "--tool-tone": card.tagColor } as React.CSSProperties}>
+                  <span>{card.icon}</span>
                 </div>
                 <span className="home-tool-tag" style={{ color: card.tagColor }}>{card.tag}</span>
                 <p className="home-tool-title">{card.title}</p>
@@ -585,7 +496,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
           <div className="home-features-grid">
             {features.map((f, i) => (
               <div key={f.title} className="home-feat-card">
-                <div className="home-feat-icon">{featIcons[i]}</div>
+                <div className="home-feat-icon">{featMarkers[i]}</div>
                 <p className="home-feat-title">{f.title}</p>
                 <p className="home-feat-desc">{f.desc}</p>
               </div>

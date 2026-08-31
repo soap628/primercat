@@ -1,5 +1,6 @@
 import { Link } from "@/navigation";
 import { getTranslations } from "next-intl/server";
+import type { CSSProperties } from "react";
 
 export default async function ToolsPage({ params: { locale } }: { params: { locale: string } }) {
   const t = await getTranslations({ locale, namespace: "tools" });
@@ -11,6 +12,9 @@ export default async function ToolsPage({ params: { locale } }: { params: { loca
       body: t("card_pcr_body"),
       href: "/pcr",
       cta: t("card_pcr_cta"),
+      code: "PCR",
+      tone: "#17856f",
+      system: "Primer3 · thermodynamics",
     },
     {
       eyebrow: t("card_primer_eyebrow"),
@@ -18,6 +22,9 @@ export default async function ToolsPage({ params: { locale } }: { params: { loca
       body: t("card_primer_body"),
       href: "/primer",
       cta: t("card_primer_cta"),
+      code: "QP",
+      tone: "#c454a9",
+      system: "RefSeq · Primer3 · BLAST",
     },
     {
       eyebrow: t("card_grna_eyebrow"),
@@ -25,6 +32,9 @@ export default async function ToolsPage({ params: { locale } }: { params: { loca
       body: t("card_grna_body"),
       href: "/grna",
       cta: t("card_grna_cta"),
+      code: "CR",
+      tone: "#2f70b8",
+      system: "CRISPR · off-target ranking",
     },
     {
       eyebrow: t("card_blast_eyebrow"),
@@ -32,6 +42,9 @@ export default async function ToolsPage({ params: { locale } }: { params: { loca
       body: t("card_blast_body"),
       href: "/blast",
       cta: t("card_blast_cta"),
+      code: "BL",
+      tone: "#b7670c",
+      system: "NCBI BLAST · sequence search",
     },
     {
       eyebrow: t("card_mw_eyebrow"),
@@ -39,6 +52,9 @@ export default async function ToolsPage({ params: { locale } }: { params: { loca
       body: t("card_mw_body"),
       href: "/mw-calc",
       cta: t("card_mw_cta"),
+      code: "MW",
+      tone: "#667085",
+      system: "formula · dilution · conversion",
     },
     {
       eyebrow: t("card_solutions_eyebrow"),
@@ -46,6 +62,9 @@ export default async function ToolsPage({ params: { locale } }: { params: { loca
       body: t("card_solutions_body"),
       href: "/solutions",
       cta: t("card_solutions_cta"),
+      code: "SL",
+      tone: "#497d70",
+      system: "recipes · scaling · records",
     },
     {
       eyebrow: t("card_safety_eyebrow"),
@@ -53,6 +72,9 @@ export default async function ToolsPage({ params: { locale } }: { params: { loca
       body: t("card_safety_body"),
       href: "/chemical-safety",
       cta: t("card_safety_cta"),
+      code: "HS",
+      tone: "#b5473c",
+      system: "GHS · SDS · PubChem",
     },
   ];
 
@@ -112,16 +134,19 @@ export default async function ToolsPage({ params: { locale } }: { params: { loca
 
           <div className="tools-directory-list">
             {section.cards.map((card, index) => (
-              <Link key={card.title} href={card.href} className="tools-directory-item">
-                <span className="tools-directory-index">
-                  {String(section.startIndex + index + 1).padStart(2, "0")}
+              <Link key={card.title} href={card.href} className="tools-directory-item" style={{ "--tool-tone": card.tone } as CSSProperties}>
+                <span className="tools-directory-signal" aria-hidden="true">
+                  <i />
+                  <strong>{card.code}</strong>
+                  <small>{String(section.startIndex + index + 1).padStart(2, "0")}</small>
                 </span>
                 <div className="tools-directory-item-copy">
                   <div className="tools-directory-eyebrow">{card.eyebrow}</div>
                   <h3>{card.title}</h3>
                   <p>{card.body}</p>
+                  <span className="tools-directory-system">{card.system}</span>
                 </div>
-                <span className="tools-directory-cta">{card.cta} →</span>
+                <span className="tools-directory-cta"><span>{card.cta}</span><b aria-hidden="true">→</b></span>
               </Link>
             ))}
           </div>

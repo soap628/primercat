@@ -756,6 +756,54 @@ function exportHTMLReport(result: GenePrimerResult) {
   const a = document.createElement("a"); a.href=url; a.download=`PrimerCat_${result.gene_name||"report"}_${new Date().toISOString().slice(0,10)}.html`; a.click(); URL.revokeObjectURL(url);
 }
 
+function SpeciesChoice({
+  value,
+  checked,
+  label,
+  onChange,
+}: {
+  value: "human" | "mouse";
+  checked: boolean;
+  label: string;
+  onChange: () => void;
+}) {
+  return (
+    <label className="primer-choice-tile" data-selected={checked ? "true" : "false"}>
+      <input type="radio" name="species" value={value} checked={checked} onChange={onChange} />
+      <span className="primer-species-code" aria-hidden="true">{value === "human" ? "Hs" : "Mm"}</span>
+      <span className="primer-species-copy"><strong>{label}</strong><small>{value === "human" ? "H. sapiens" : "M. musculus"}</small></span>
+      <span className="primer-species-check" aria-hidden="true">✓</span>
+    </label>
+  );
+}
+
+function PrimerEmptyPreview({ locale }: { locale: string }) {
+  const isZh = locale === "zh";
+  return (
+    <div className="primer-output-preview" aria-label={isZh ? "候选引物结果示意" : "Illustrative primer candidate result"}>
+      <div className="primer-output-preview-head">
+        <div><span>{isZh ? "结果示意" : "Result preview"}</span><strong>{isZh ? "候选引物如何呈现" : "How candidates are presented"}</strong></div>
+        <span className="primer-preview-badge"><i />{isZh ? "待输入" : "Awaiting input"}</span>
+      </div>
+      <div className="primer-preview-transcript">
+        <div className="primer-preview-coordinates"><span>5′</span><span>{isZh ? "外显子结构" : "Exon structure"}</span><span>3′</span></div>
+        <div className="primer-preview-gene" aria-hidden="true"><i /><b /><i /><b /><i /></div>
+        <div className="primer-preview-arrows" aria-hidden="true"><span>F&nbsp; 5′→3′</span><span>3′←5′ &nbsp;R</span></div>
+      </div>
+      <div className="primer-preview-candidate">
+        <div><span>{isZh ? "候选 01" : "Candidate 01"}</span><strong>{isZh ? "跨外显子优先" : "Exon-spanning preferred"}</strong></div>
+        <dl>
+          <div><dt>Tm</dt><dd>— °C</dd></div>
+          <div><dt>GC</dt><dd>— %</dd></div>
+          <div><dt>{isZh ? "产物" : "Product"}</dt><dd>— bp</dd></div>
+          <div><dt>{isZh ? "评分" : "Score"}</dt><dd>— / 100</dd></div>
+        </dl>
+      </div>
+      <p>{isZh ? "输入基因名或序列后，这里将显示候选序列、质量指标、外显子位置和 BLAST 特异性证据。" : "Enter a gene or sequence to see candidate sequences, quality metrics, exon placement, and BLAST specificity evidence."}</p>
+    </div>
+  );
+}
+
 export default function PrimerPage() {
   const t = useTranslations("primer");
   const tCommon = useTranslations("common");
@@ -1018,18 +1066,19 @@ export default function PrimerPage() {
             {mode === "gene" ? (
               <>
                 <div>
-                  <label className="label-caps" style={{ display: "block", marginBottom: 8 }}>{t("gene_label")}</label>
-                  <input className="input-field" style={{ width: "100%", padding: "10px 14px" }} placeholder={t("gene_placeholder")} value={geneName} onChange={e => setGeneName(e.target.value)} required />
+                  <div className="primer-field-heading">
+                    <label className="label-caps" htmlFor="primer-gene-name">{t("gene_label")}</label>
+                    <button type="button" className="primer-example-button" onClick={() => { setGeneName("TP53"); setSpecies("human"); }}>
+                      {locale === "zh" ? "载入示例 TP53" : "Load example TP53"}
+                    </button>
+                  </div>
+                  <input id="primer-gene-name" className="input-field" style={{ width: "100%", padding: "10px 14px" }} placeholder={t("gene_placeholder")} value={geneName} onChange={e => setGeneName(e.target.value)} required />
+                  <p className="primer-input-helper">{locale === "zh" ? "支持 HGNC / MGI 标准基因符号，例如 TP53、BRCA1。" : "Use an HGNC / MGI gene symbol, such as TP53 or BRCA1."}</p>
                 </div>
                 <div>
                   <label className="label-caps" style={{ display: "block", marginBottom: 8 }}>{t("species_label")}</label>
                   <div className="primer-species-grid">
-                    {(["human", "mouse"] as const).map(s => (
-                      <label key={s} className="primer-choice-tile" data-selected={species === s ? "true" : "false"}>
-                        <input type="radio" name="species" value={s} checked={species === s} onChange={() => setSpecies(s)} style={{ display: "none" }} />
-                        {s === "human" ? "🧑 " + t("human_short") : "🐭 " + t("mouse_short")}
-                      </label>
-                    ))}
+                    {(["human", "mouse"] as const).map(s => <SpeciesChoice key={s} value={s} checked={species === s} label={s === "human" ? t("human_short") : t("mouse_short")} onChange={() => setSpecies(s)} />)}
                   </div>
                 </div>
               </>
@@ -1043,12 +1092,7 @@ export default function PrimerPage() {
                 <div>
                   <label className="label-caps" style={{ display: "block", marginBottom: 8 }}>{t("species_label")}</label>
                   <div className="primer-species-grid">
-                    {(["human", "mouse"] as const).map(s => (
-                      <label key={s} className="primer-choice-tile" data-selected={species === s ? "true" : "false"}>
-                        <input type="radio" name="species" value={s} checked={species === s} onChange={() => setSpecies(s)} style={{ display: "none" }} />
-                        {s === "human" ? "🧑 " + t("human_short") : "🐭 " + t("mouse_short")}
-                      </label>
-                    ))}
+                    {(["human", "mouse"] as const).map(s => <SpeciesChoice key={s} value={s} checked={species === s} label={s === "human" ? t("human_short") : t("mouse_short")} onChange={() => setSpecies(s)} />)}
                   </div>
                 </div>
               </>
@@ -1134,10 +1178,13 @@ export default function PrimerPage() {
                 </Fragment>
               ))}
             </div>
-            <div className="primer-feature-grid">
-              {[{ icon: "🧬", text: t("feat_transcript") },{ icon: "🔗", text: t("feat_exon_design") },{ icon: "🎯", text: t("feat_blast_verify") },{ icon: "📊", text: t("feat_score_range") }].map(f => (
-                <div key={f.text} className="primer-feature-pill"><span className="primer-feature-icon">{f.icon}</span><span className="primer-feature-text">{f.text}</span></div>
-              ))}
+            <div className="primer-empty-body">
+              <PrimerEmptyPreview locale={locale} />
+              <div className="primer-feature-grid">
+                {[{ marker: "TX", text: t("feat_transcript") },{ marker: "EX", text: t("feat_exon_design") },{ marker: "SP", text: t("feat_blast_verify") },{ marker: "RK", text: t("feat_score_range") }].map(f => (
+                  <div key={f.text} className="primer-feature-pill"><span className="primer-feature-icon">{f.marker}</span><span className="primer-feature-text">{f.text}</span></div>
+                ))}
+              </div>
             </div>
           </div>
         )}
