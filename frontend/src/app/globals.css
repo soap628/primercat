@@ -6484,16 +6484,22 @@ html[data-theme="light"] { color-scheme: light; }
   font-size: 10px;
 }
 .home-page-v4 .hero-cta-row {
+  display: grid;
+  width: min(100%, 500px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
   grid-area: actions;
-  justify-content: flex-start;
   margin: 0 0 30px;
 }
 .home-page-v4 .hero-cta,
 .home-page-v4 .hero-cta-ghost {
+  width: 100%;
   min-height: 40px;
   border-radius: 5px;
   box-shadow: none;
   backdrop-filter: none;
+  letter-spacing: 0.04em;
+  text-transform: none;
 }
 .home-page-v4 .hero-cta:hover,
 .home-page-v4 .hero-cta-ghost:hover { transform: none; box-shadow: none; }
