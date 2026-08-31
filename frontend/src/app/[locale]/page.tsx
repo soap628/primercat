@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/navigation";
-import HomeTopBar from "../HomeTopBar";
 import { useEffect, useState, useRef } from "react";
 
 function PrimerCatMascot({ locale, onActivate, expanded }: { locale: string; onActivate: () => void; expanded: boolean }) {
@@ -486,8 +485,6 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
           </div>
         </div>
       )}
-
-      <HomeTopBar locale={locale} />
 
       {/* ══ HERO ══ */}
       <section className="home-hero-wrap home-breakout">

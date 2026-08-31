@@ -6,8 +6,6 @@ import NavLinks from "./NavLinks";
 
 export default function SiteHeader({ locale }: { locale: string }) {
   const pathname = usePathname();
-  if (pathname === "/") return null;
-
   const isGrna = pathname === "/grna" || pathname.startsWith("/grna/");
 
   return (
