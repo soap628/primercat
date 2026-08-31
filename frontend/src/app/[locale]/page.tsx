@@ -71,7 +71,7 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
           <span>{isZh ? "示意预览" : "Illustrative preview"}</span>
           <strong>TP53 · NM_000546</strong>
         </div>
-        <span className="home-evidence-status"><i />{isZh ? "特异性通过" : "Specificity passed"}</span>
+        <span className="home-evidence-status"><i />{isZh ? "RNA 特异性通过" : "RNA specificity passed"}</span>
       </div>
 
       <div className="home-evidence-track" aria-hidden="true">
@@ -85,15 +85,14 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
       </div>
 
       <div className="home-evidence-metrics">
-        <div><span>{isZh ? "正向 Tm" : "Forward Tm"}</span><strong>60.4 °C</strong></div>
-        <div><span>{isZh ? "反向 Tm" : "Reverse Tm"}</span><strong>60.1 °C</strong></div>
+        <div><span>ΔTm</span><strong>0.3 °C</strong></div>
         <div><span>GC</span><strong>55%</strong></div>
         <div><span>{isZh ? "扩增子" : "Amplicon"}</span><strong>152 bp</strong></div>
       </div>
 
       <div className="home-evidence-footer">
         <div className="home-evidence-score"><strong>94</strong><span>/ 100<br />{isZh ? "综合评分" : "ranked score"}</span></div>
-        <div className="home-evidence-sources"><span>Primer3</span><span>NCBI RefSeq</span><span>RNA BLAST</span></div>
+        <div className="home-evidence-sources"><span>NCBI RefSeq</span><span>Primer3</span><span>RNA BLAST</span></div>
       </div>
     </div>
   );
