@@ -4,7 +4,7 @@ import { Link } from "@/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
-export type ToolCategory = "design" | "lab" | "knowledge";
+export type ToolCategory = "calculation" | "reference";
 
 export type ToolApp = {
   id: string;
@@ -16,7 +16,6 @@ export type ToolApp = {
   tone: string;
   system: string;
   status: string;
-  featured?: boolean;
   actions: Array<{ href: string; label: string }>;
 };
 
@@ -44,10 +43,9 @@ export default function ToolsAppLauncher({ locale, title, intro, note, apps }: T
   const searchRef = useRef<HTMLInputElement>(null);
 
   const categories: Array<{ id: "all" | ToolCategory; label: string; short: string }> = [
-    { id: "all", label: isZh ? "全部应用" : "All apps", short: isZh ? "全部" : "All" },
-    { id: "design", label: isZh ? "序列设计" : "Sequence design", short: isZh ? "设计" : "Design" },
-    { id: "lab", label: isZh ? "实验工作台" : "Lab bench", short: isZh ? "实验" : "Lab" },
-    { id: "knowledge", label: isZh ? "方法与可信度" : "Methods & trust", short: isZh ? "知识" : "Trust" },
+    { id: "all", label: isZh ? "全部小工具" : "All utilities", short: isZh ? "全部" : "All" },
+    { id: "calculation", label: isZh ? "计算与配制" : "Calculate & prepare", short: isZh ? "计算" : "Calculate" },
+    { id: "reference", label: isZh ? "安全资料" : "Safety references", short: isZh ? "资料" : "Reference" },
   ];
 
   const visibleApps = useMemo(() => {
@@ -84,7 +82,7 @@ export default function ToolsAppLauncher({ locale, title, intro, note, apps }: T
     <div className="tools-launcher-v5">
       <section className="tools-launcher-head">
         <div className="tools-launcher-heading">
-          <span className="tools-launcher-kicker">PRIMERCAT · APP LIBRARY</span>
+          <span className="tools-launcher-kicker">PRIMERCAT · LAB UTILITIES</span>
           <h1>{title}</h1>
           <p>{intro}</p>
         </div>
@@ -99,7 +97,7 @@ export default function ToolsAppLauncher({ locale, title, intro, note, apps }: T
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder={isZh ? "搜索工具、任务或数据源…" : "Search tools, tasks, or data sources…"}
+              placeholder={isZh ? "搜索小工具或实验任务…" : "Search utilities or lab tasks…"}
               autoComplete="off"
             />
             {query ? (
@@ -113,9 +111,9 @@ export default function ToolsAppLauncher({ locale, title, intro, note, apps }: T
       </section>
 
       <section className="tools-launcher-workspace">
-        <aside className="tools-launcher-sidebar" aria-label={isZh ? "应用分类" : "App categories"}>
+        <aside className="tools-launcher-sidebar" aria-label={isZh ? "小工具分类" : "Utility categories"}>
           <div className="tools-launcher-sidebar-head">
-            <span>{isZh ? "应用空间" : "Spaces"}</span>
+            <span>{isZh ? "小工具分类" : "Utility groups"}</span>
             <strong>{String(apps.length).padStart(2, "0")}</strong>
           </div>
           <div className="tools-launcher-categories">
@@ -134,7 +132,7 @@ export default function ToolsAppLauncher({ locale, title, intro, note, apps }: T
           </div>
           <div className="tools-launcher-sidebar-note">
             <i />
-            <span>{isZh ? "所有入口均可实际使用" : "Every listed app is live"}</span>
+            <span>{isZh ? "所有小工具均可实际使用" : "Every listed utility is live"}</span>
           </div>
         </aside>
 
@@ -142,9 +140,9 @@ export default function ToolsAppLauncher({ locale, title, intro, note, apps }: T
           <header className="tools-launcher-results-head">
             <div>
               <span>{categories.find((item) => item.id === category)?.short}</span>
-              <strong>{isZh ? `${visibleApps.length} 个应用` : `${visibleApps.length} apps`}</strong>
+              <strong>{isZh ? `${visibleApps.length} 个小工具` : `${visibleApps.length} utilities`}</strong>
             </div>
-            <p>{isZh ? "选择一个应用开始工作" : "Choose an app to begin"}</p>
+            <p>{isZh ? "选择一个小工具开始工作" : "Choose a utility to begin"}</p>
           </header>
 
           {visibleApps.length > 0 ? (
@@ -152,7 +150,7 @@ export default function ToolsAppLauncher({ locale, title, intro, note, apps }: T
               {visibleApps.map((app) => (
                 <article
                   key={app.id}
-                  className={`tools-launcher-app${app.featured ? " is-featured" : ""}`}
+                  className="tools-launcher-app"
                   style={{ "--app-tone": app.tone } as CSSProperties}
                 >
                   <div className="tools-launcher-app-top">
@@ -182,10 +180,10 @@ export default function ToolsAppLauncher({ locale, title, intro, note, apps }: T
           ) : (
             <div className="tools-launcher-empty">
               <span>00</span>
-              <h2>{isZh ? "没有找到匹配的应用" : "No matching apps"}</h2>
-              <p>{isZh ? "换一个关键词，或返回全部应用。" : "Try another keyword or return to all apps."}</p>
+              <h2>{isZh ? "没有找到匹配的小工具" : "No matching utilities"}</h2>
+              <p>{isZh ? "换一个关键词，或返回全部小工具。" : "Try another keyword or return to all utilities."}</p>
               <button type="button" onClick={() => { setQuery(""); setCategory("all"); }}>
-                {isZh ? "查看全部应用" : "Show all apps"}
+                {isZh ? "查看全部小工具" : "Show all utilities"}
               </button>
             </div>
           )}

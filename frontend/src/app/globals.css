@@ -10007,7 +10007,6 @@ html[data-theme="light"] { color-scheme: light; }
   transform: translateY(-2px);
 }
 [data-theme="dark"] .tools-launcher-app:hover { box-shadow: 0 16px 36px rgba(0, 0, 0, .22); }
-.tools-launcher-app.is-featured { grid-column: span 2; }
 .tools-launcher-app-top {
   display: flex;
   align-items: flex-start;
@@ -10083,7 +10082,6 @@ html[data-theme="light"] { color-scheme: light; }
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
-.tools-launcher-app.is-featured .tools-launcher-app-copy p { max-width: 580px; }
 .tools-launcher-app-system {
   margin-top: auto;
   padding-top: 14px;
@@ -10148,14 +10146,13 @@ html[data-theme="light"] { color-scheme: light; }
 
 @media (max-width: 1040px) {
   .tools-launcher-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .tools-launcher-app.is-featured { grid-column: span 1; }
 }
 @media (max-width: 860px) {
   .tools-launcher-head { grid-template-columns: 1fr; gap: 30px; }
   .tools-launcher-workspace { grid-template-columns: 1fr; gap: 24px; }
   .tools-launcher-sidebar { position: static; padding: 0 0 17px; border-right: 0; border-bottom: 1px solid var(--border); }
   .tools-launcher-sidebar-head { margin-bottom: 9px; }
-  .tools-launcher-categories { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+  .tools-launcher-categories { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
   .tools-launcher-categories button { min-height: 40px; }
   .tools-launcher-sidebar-note { display: none; }
 }
@@ -10166,8 +10163,11 @@ html[data-theme="light"] { color-scheme: light; }
   .tools-launcher-heading p { font-size: 12px; }
   .tools-launcher-command > p { font-size: 9px; }
   .tools-launcher-workspace { padding-top: 22px; }
-  .tools-launcher-categories { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tools-launcher-categories { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .tools-launcher-grid { grid-template-columns: 1fr; gap: 10px; }
   .tools-launcher-app { min-height: 230px; }
   .tools-launcher-results-head p { display: none; }
+}
+@media (max-width: 480px) {
+  .tools-launcher-categories { grid-template-columns: 1fr; }
 }

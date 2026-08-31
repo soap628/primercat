@@ -3,7 +3,7 @@ import Link from "next/link";
 const COPY = {
   zh: {
     brandDesc: "分子生物学科研工具。每个决策都展示，每个数字都有来源。",
-    product: "工具",
+    product: "设计功能",
     productLinks: [
       { label: "qPCR 引物设计 — PrimerCat", href: "/primer" },
       { label: "常规 PCR 引物设计", href: "/pcr" },
@@ -15,7 +15,7 @@ const COPY = {
       { label: "方法说明", href: "/methods" },
       { label: "可信度说明", href: "/validation" },
     ],
-    addOns: "实验室工作台",
+    addOns: "小工具",
     addOnLinks: [
       { label: "分子量计算器", href: "/mw-calc" },
       { label: "溶液配制指南", href: "/solutions" },
@@ -35,7 +35,7 @@ const COPY = {
   },
   en: {
     brandDesc: "Molecular biology research tools. Every decision shown. Every number has a source.",
-    product: "Tools",
+    product: "Design",
     productLinks: [
       { label: "qPCR Primer Design — PrimerCat", href: "/primer" },
       { label: "Endpoint PCR Primer Design", href: "/pcr" },
@@ -47,7 +47,7 @@ const COPY = {
       { label: "Methods", href: "/methods" },
       { label: "Trust & Limitations", href: "/validation" },
     ],
-    addOns: "Lab Bench",
+    addOns: "Utilities",
     addOnLinks: [
       { label: "MW Calculator", href: "/mw-calc" },
       { label: "Solution Preparation", href: "/solutions" },

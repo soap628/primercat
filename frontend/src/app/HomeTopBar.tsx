@@ -109,7 +109,7 @@ export default function HomeTopBar({ locale }: { locale: string }) {
         { href: "/grna", label: "CRISPR" },
         { href: "/solutions", label: "溶液配制" },
         { href: "/chemical-safety", label: "试剂安全" },
-        { href: "/tools", label: "全部工具" },
+        { href: "/tools", label: "小工具" },
       ]
     : [
         { href: "/primer", label: "Primer design" },
@@ -117,7 +117,7 @@ export default function HomeTopBar({ locale }: { locale: string }) {
         { href: "/grna", label: "CRISPR" },
         { href: "/solutions", label: "Solutions" },
         { href: "/chemical-safety", label: "Chemical safety" },
-        { href: "/tools", label: "All tools" },
+        { href: "/tools", label: "Utilities" },
       ];
 
   useEffect(() => {
