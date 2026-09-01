@@ -126,6 +126,7 @@ export default function BlastPage() {
     { id: "parse" as const, title: t("loading_stage_parse"), desc: t("loading_stage_parse_desc") },
   ];
   const activeStageIndex = loadingStages.findIndex((stage) => stage.id === loadingStage);
+  const topHit = result?.hits[0] ?? null;
 
   function clearStageTimers() {
     timerRef.current.forEach(clearTimeout);
@@ -146,6 +147,9 @@ export default function BlastPage() {
     const normalized = message.toLowerCase();
 
     if (!message) return tCommon("request_failed");
+    if (normalized === "not found" || normalized === "internal server error" || normalized.includes("http 404") || normalized.includes("http 500")) {
+      return `${t("error_service")} ${tCommon("retry_later")}`;
+    }
     if (normalized.includes("failed to fetch") || normalized.includes("networkerror")) {
       return tCommon("network_error");
     }
@@ -217,10 +221,9 @@ export default function BlastPage() {
           <h1>{t("title")}</h1>
           <p>{t("subtitle")}</p>
         </div>
-        <div className="sequence-workspace-flow" aria-label={locale === "zh" ? "检索流程" : "Search workflow"}>
-          <span><b>01</b>{locale === "zh" ? "程序" : "Program"}</span>
-          <span><b>02</b>{locale === "zh" ? "数据库" : "Database"}</span>
-          <span><b>03</b>{locale === "zh" ? "比对结果" : "Alignments"}</span>
+        <div className="sequence-workspace-flow blast-hero-meta" aria-label={locale === "zh" ? "检索引擎" : "Search engine"}>
+          <span><b>{t("hero_meta_label")}</b><strong>{t("hero_meta_method")}</strong></span>
+          <p>{t("hero_meta_body")}</p>
         </div>
       </section>
 
@@ -381,21 +384,9 @@ export default function BlastPage() {
         </form>
 
         {error && (
-          <div
-            className="card"
-            style={{
-              marginTop: 12,
-              padding: 12,
-              background: "var(--red-soft)",
-              boxShadow: "none",
-              border: "1px solid #fecaca",
-              fontSize: 13,
-              color: "var(--red)",
-              borderRadius: "var(--r-md)",
-            }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>{error}</div>
-            <div style={{ fontSize: 12, color: "#b91c1c" }}>{tCommon("retry_later")}</div>
+          <div className="workbench-alert is-error" role="alert">
+            <span aria-hidden="true">!</span>
+            <div><strong>{tCommon("request_failed")}</strong><p>{error}</p></div>
           </div>
         )}
       </aside>
@@ -403,8 +394,19 @@ export default function BlastPage() {
       <main className="sequence-result-panel blast-result-panel" style={{ flex: 1, minWidth: 0 }}>
         {!result && !loading && (
           <div className="empty-state sequence-empty-state blast-empty-state-v5">
-            <div className="empty-state-icon">BLAST</div>
-            <p className="sequence-empty-title" style={{ fontSize: 17, fontWeight: 600, color: "var(--text-1)", marginBottom: 8 }}>{t("empty_title")}</p>
+            <div className="blast-empty-head">
+              <div>
+                <span>{t("output_kicker")}</span>
+                <strong>{t("empty_title")}</strong>
+              </div>
+              <small>{t("output_state")}</small>
+            </div>
+            <div className="blast-empty-preview" aria-hidden="true">
+              <div className="blast-empty-scale"><span>0</span><i /><span>100%</span></div>
+              <div className="blast-empty-alignment is-query"><b>QUERY</b><i /><span>5′→3′</span></div>
+              <div className="blast-empty-match"><b>MATCH</b><code>||||||||||··||||||||||||</code></div>
+              <div className="blast-empty-alignment is-subject"><b>SUBJECT</b><i /><span>5′→3′</span></div>
+            </div>
             <p className="sequence-empty-copy" style={{ fontSize: 13, color: "var(--text-2)", maxWidth: 320, lineHeight: 1.65, marginBottom: 24 }}>
               {t("empty_subtitle")}
             </p>
@@ -427,7 +429,7 @@ export default function BlastPage() {
 
         {loading && (
           <div
-            className="card sequence-loading-state blast-loading-state"
+            className="card sequence-loading-state blast-loading-state workbench-loading-state"
             style={{
               padding: 24,
               minHeight: 300,
@@ -437,6 +439,7 @@ export default function BlastPage() {
               gap: 18,
             }}
           >
+            <div className="workbench-state-head"><span>PROCESS · NCBI BLAST</span><small>{activeStageIndex + 1} / {loadingStages.length}</small></div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <svg className="animate-spin" style={{ width: 28, height: 28, color: "var(--blast-color)" }} viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -501,7 +504,7 @@ export default function BlastPage() {
 
         {result && (
           <div className="blast-results-v5">
-            <div className="sequence-results-head" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+            <div className="sequence-results-head blast-results-head" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <div>
                 <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-1)", marginBottom: 4 }}>{t("result_title")}</h2>
                 <p style={{ fontSize: 12, color: "var(--text-3)" }}>
@@ -532,6 +535,15 @@ export default function BlastPage() {
               </div>
             </div>
 
+            {topHit && (
+              <div className="blast-result-kpis">
+                <div><span>{t("hits_label")}</span><strong>{result.hits.length}</strong><small>{result.program} · {result.database}</small></div>
+                <div><span>{t("top_identity")}</span><strong>{topHit.best_hsp.identity_pct}%</strong><small>{topHit.accession}</small></div>
+                <div><span>{t("best_evalue")}</span><strong>{fmt(topHit.best_hsp.expect)}</strong><small>{topHit.best_hsp.bits} bits</small></div>
+                <div><span>{t("alignment_length")}</span><strong>{topHit.best_hsp.align_length}</strong><small>{t("residues_unit")}</small></div>
+              </div>
+            )}
+
             {result.hits.length === 0 ? (
               <div className="card" style={{ padding: 40, textAlign: "center" }}>
                 <p style={{ color: "var(--text-3)", fontSize: 14 }}>{t("no_hits")}</p>
@@ -546,6 +558,7 @@ export default function BlastPage() {
                     <div key={hit.rank} className={`blast-result-item fade-in-up delay-${Math.min(idx + 1, 5)}`}>
                       <div
                         className="card tool-card blast-hit-card"
+                        data-top={idx === 0 ? "true" : "false"}
                         onClick={() => setSelectedHit(isSelected ? null : hit)}
                         style={{
                           padding: "13px 18px",
@@ -585,6 +598,7 @@ export default function BlastPage() {
                             >
                               {hit.accession}
                             </code>
+                            {idx === 0 && <span className="result-best-label blast-top-label">{t("top_hit")}</span>}
                           </div>
                           <p
                             style={{
@@ -602,8 +616,9 @@ export default function BlastPage() {
                           <div style={{ fontWeight: 600, color: "var(--text-1)" }}>{hit.best_hsp.bits} bits</div>
                           <div style={{ fontFamily: "monospace", color: evalueColor(hit.best_hsp.expect), marginTop: 2 }}>E: {fmt(hit.best_hsp.expect)}</div>
                         </div>
-                        <div style={{ fontWeight: 700, fontSize: 14, color: identityColor, flexShrink: 0, width: 48, textAlign: "right" }}>
-                          {hit.best_hsp.identity_pct}%
+                        <div className="blast-identity-cell" style={{ color: identityColor }}>
+                          <strong>{hit.best_hsp.identity_pct}%</strong>
+                          <span aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, hit.best_hsp.identity_pct))}%` }} /></span>
                         </div>
                         <span
                           style={{

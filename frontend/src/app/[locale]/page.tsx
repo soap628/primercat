@@ -462,14 +462,12 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
     },
   ];
 
-  const featMarkers = ["TX", "EX", "SP", "RK", "QC", "RP"];
+  const featMarkers = ["TX", "EX", "SP", "QC"];
   const features = [
     { title: t("feat_transcript_title"), desc: t("feat_transcript_desc") },
     { title: t("feat_exon_title"),       desc: t("feat_exon_desc") },
     { title: t("feat_blast_title"),      desc: t("feat_blast_desc") },
     { title: t("feat_score_title"),      desc: t("feat_score_desc") },
-    { title: t("feat_props_title"),      desc: t("feat_props_desc") },
-    { title: t("feat_export_title"),     desc: t("feat_export_desc") },
   ];
 
   const openLabel = t("tools_open");
@@ -521,15 +519,15 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
           <h1 className="hero-headline">
             {locale === "zh" ? (
               <>
-                <span style={{ color: "#ffffff" }}>引物</span><span style={{ color: "#ffb1ee" }}>猫</span>
-                <span style={{ fontWeight: 300, color: "rgba(255,255,255,0.85)" }}>：{t("page_headline_2")}</span>
+                <span className="hero-name">引物<strong>猫</strong>：</span>
+                <span className="hero-promise">全自动生成</span>
+                <span className="hero-promise hero-promise-last">可追溯的候选引物</span>
               </>
             ) : (
               <>
-                <span style={{ fontWeight: 400 }}>
-                  <span style={{ color: "#ffffff" }}>Primer</span><span style={{ color: "#ffb1ee" }}>Cat</span>
-                </span>
-                <span style={{ fontWeight: 300, color: "rgba(255,255,255,0.85)" }}>{" — "}{t("page_headline_2")}</span>
+                <span className="hero-name">Primer<strong>Cat</strong></span>
+                <span className="hero-promise">Design primers.</span>
+                <span className="hero-promise hero-promise-last">Keep the evidence.</span>
               </>
             )}
           </h1>
@@ -627,10 +625,6 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
           <h2 className="home-section-title" style={{ color: "#ffffff" }}>
             {t("tools_title")}
           </h2>
-          <p className="home-section-sub" style={{ color: "rgba(255,255,255,0.45)" }}>
-            {t("tools_sub")}
-          </p>
-
           <div className="home-tools-grid">
             {toolCards.map((card) => (
               <Link

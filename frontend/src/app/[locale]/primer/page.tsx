@@ -782,8 +782,8 @@ function PrimerEmptyPreview({ locale }: { locale: string }) {
   return (
     <div className="primer-output-preview" aria-label={isZh ? "候选引物结果示意" : "Illustrative primer candidate result"}>
       <div className="primer-output-preview-head">
-        <div><span>{isZh ? "结果示意" : "Result preview"}</span><strong>{isZh ? "候选引物如何呈现" : "How candidates are presented"}</strong></div>
-        <span className="primer-preview-badge"><i />{isZh ? "待输入" : "Awaiting input"}</span>
+        <div><span>OUTPUT</span><strong>{isZh ? "候选引物" : "Primer candidates"}</strong></div>
+        <span className="primer-preview-badge"><i />{isZh ? "等待输入" : "Awaiting input"}</span>
       </div>
       <div className="primer-preview-transcript">
         <div className="primer-preview-coordinates"><span>5′</span><span>{isZh ? "外显子结构" : "Exon structure"}</span><span>3′</span></div>
@@ -799,7 +799,7 @@ function PrimerEmptyPreview({ locale }: { locale: string }) {
           <div><dt>{isZh ? "评分" : "Score"}</dt><dd>— / 100</dd></div>
         </dl>
       </div>
-      <p>{isZh ? "输入基因名或序列后，这里将显示候选序列、质量指标、外显子位置和 BLAST 特异性证据。" : "Enter a gene or sequence to see candidate sequences, quality metrics, exon placement, and BLAST specificity evidence."}</p>
+      <p>{isZh ? "输入目标后显示候选序列、质量指标和筛查依据。" : "Enter a target to see candidate sequences, quality metrics, and screening evidence."}</p>
     </div>
   );
 }
@@ -930,6 +930,9 @@ export default function PrimerPage() {
     const normalized = message.toLowerCase();
 
     if (!message) return tCommon("request_failed");
+    if (normalized === "not found" || normalized === "internal server error" || normalized.includes("http 404") || normalized.includes("http 500")) {
+      return `${tCommon("service_unavailable")} ${tCommon("retry_later")}`;
+    }
     if (normalized.includes("failed to fetch") || normalized.includes("networkerror")) {
       return tCommon("network_error");
     }
@@ -1068,8 +1071,6 @@ export default function PrimerPage() {
       ? `${result.transcript_id} · ${result.sequence_length} bp · ${result.exons.length} ${t("viz_exon")} · ${result.message}`
       : `${result.sequence_length} bp · ${result.message}`
     : "";
-  const featureHighlights = [t("feat_transcript"), t("feat_exon_design"), t("feat_blast_verify"), t("feat_score_range")];
-
   return (
     <div className="primer-designer-page design-workspace-v3">
       <section className="design-hero qpcr-design-hero">
@@ -1079,9 +1080,9 @@ export default function PrimerPage() {
           <p>{t("subtitle")}</p>
         </div>
         <aside className="design-hero-meta">
-          <span>Primer3 · NCBI RefSeq · RNA BLAST</span>
-          <strong>{locale === "zh" ? "基因或序列 → 候选引物" : "Gene or sequence → primer pairs"}</strong>
-          <p>{featureHighlights.join(" · ")}</p>
+          <span>{locale === "zh" ? "设计引擎" : "DESIGN ENGINE"}</span>
+          <strong>Primer3 + RefSeq RNA</strong>
+          <p>{locale === "zh" ? "候选序列、质量参数与筛查依据" : "Sequences, quality metrics, and screening evidence"}</p>
         </aside>
       </section>
 
@@ -1090,8 +1091,8 @@ export default function PrimerPage() {
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
             <div>
-              <div className="primer-panel-kicker">01 · {locale === "zh" ? "设计输入" : "Design input"}</div>
-              <h2 className="primer-page-headline">{mode === "gene" ? t("mode_gene") : t("mode_sequence")}</h2>
+              <div className="primer-panel-kicker">INPUT · 01</div>
+              <h2 className="primer-page-headline">{mode === "gene" ? (locale === "zh" ? "基因名" : "Gene") : (locale === "zh" ? "DNA 序列" : "DNA sequence")}</h2>
             </div>
             <button
               type="button"
@@ -1105,7 +1106,7 @@ export default function PrimerPage() {
               ?
             </button>
           </div>
-          <p className="primer-panel-subtitle">{locale === "zh" ? "选择输入方式并设置物种，结果将在右侧生成。" : "Choose an input mode and species; results will appear in the workspace."}</p>
+          <p className="primer-panel-subtitle">{locale === "zh" ? "设置目标与物种，候选结果在右侧生成。" : "Set a target and species. Candidates appear on the right."}</p>
         </div>
         <div className="tab-bar primer-tab-shell mb-5" style={{ width: "100%" }}>
           {(["gene", "sequence"] as const).map(m => (
@@ -1206,8 +1207,8 @@ export default function PrimerPage() {
             </div>
           </div>
         )}
-        {notice && <div className="card primer-alert-card notice">{notice}</div>}
-        {error && <div className="card primer-alert-card error">{error}</div>}
+        {notice && <div className="workbench-alert is-notice" role="status"><span aria-hidden="true">i</span><div><p>{notice}</p></div></div>}
+        {error && <div className="workbench-alert is-error" role="alert"><span aria-hidden="true">!</span><div><strong>{tCommon("request_failed")}</strong><p>{error}</p></div></div>}
       </aside>
 
       <main className="primer-main-panel" style={{ flex: 1, minWidth: 0 }}>
@@ -1238,6 +1239,21 @@ export default function PrimerPage() {
                   <div key={f.text} className="primer-feature-pill"><span className="primer-feature-icon">{f.marker}</span><span className="primer-feature-text">{f.text}</span></div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+        {loading && (
+          <div className="primer-main-loading workbench-loading-state">
+            <div className="workbench-state-head"><span>PROCESS · qPCR PIPELINE</span><small>{lastStep?.step ?? 1} / 4</small></div>
+            <div className="workbench-loading-body">
+              <span className="workbench-spinner" />
+              <div>
+                <strong>{lastStep ? getProgressLabel(lastStep.step) : t("designing_btn")}</strong>
+                <p>{lastStep ? getProgressMessage(lastStep) : t("wait_body")}</p>
+              </div>
+            </div>
+            <div className="workbench-stage-grid">
+              {[1, 2, 3, 4].map((step) => <i key={step} data-active={step <= (lastStep?.step ?? 1) ? "true" : "false"} />)}
             </div>
           </div>
         )}
@@ -1312,19 +1328,21 @@ export default function PrimerPage() {
                 const passN = [p.left_tm>=58&&p.left_tm<=62&&p.right_tm>=58&&p.right_tm<=62, tmDiff2<2, p.left_gc>=40&&p.left_gc<=60&&p.right_gc>=40&&p.right_gc<=60, (p.left_props?.gc_clamp??0)>=1&&(p.right_props?.gc_clamp??0)>=1, (p.left_props?.hairpin_th??0)<24&&(p.right_props?.hairpin_th??0)<24, (p.left_props?.self_end_th??0)<35&&(p.right_props?.self_end_th??0)<35, blastOk2, p.exon_span.spans_junction].filter(Boolean).length;
                 const scoreColor = p.score.total >= 75 ? "var(--green)" : p.score.total >= 50 ? "var(--primer-color)" : "var(--red)";
                 return (
-                  <div key={p.rank} className={`primer-pair-result fade-in-up delay-${Math.min(idx + 1, 5)}`} data-expanded={isExpanded ? "true" : "false"} style={{ borderTop: idx > 0 ? "1px solid var(--border)" : undefined, background: isExpanded ? "var(--bg-card)" : "var(--bg-page)" }}>
+                  <div key={p.rank} className={`primer-pair-result fade-in-up delay-${Math.min(idx + 1, 5)}`} data-expanded={isExpanded ? "true" : "false"} data-top={idx === 0 ? "true" : "false"} style={{ borderTop: idx > 0 ? "1px solid var(--border)" : undefined, background: isExpanded ? "var(--bg-card)" : "var(--bg-page)" }}>
                     {/* Summary row */}
                     <div className="primer-pair-summary" onClick={() => setExpandedRow(isExpanded ? null : p.rank)}>
                       {/* Score box */}
                       <div className="primer-pair-score" style={{ background: isExpanded ? "var(--bg-inset)" : "var(--bg-card)" }}>
                         <div style={{ fontSize: 18, fontWeight: 700, color: scoreColor, lineHeight: 1 }}>{p.score.total}</div>
-                        <div style={{ fontSize: 9, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>score</div>
+                        <div style={{ fontSize: 9, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>{t("score_short")}</div>
+                        <span className="primer-score-meter" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, p.score.total))}%` }} /></span>
                       </div>
                       {/* Main content */}
                       <div className="primer-pair-main">
                         {/* badges row */}
                         <div className="primer-pair-badges">
                           <span style={{ fontSize: 11, color: "var(--text-3)", fontWeight: 700 }}>#{p.rank}</span>
+                          {idx === 0 && <span className="result-best-label">{t("best_candidate")}</span>}
                           <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-2)", background: "var(--bg-inset)", border: "1px solid var(--border)", borderRadius: 3, padding: "1px 6px" }}>{p.product_size} bp</span>
                           <span style={{ fontSize: 11, color: "var(--text-3)" }}>Tm {p.left_tm}° / {p.right_tm}°</span>
                           <span style={{ fontSize: 11, color: "var(--text-3)" }}>GC {p.left_gc}% / {p.right_gc}%</span>

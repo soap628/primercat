@@ -241,6 +241,26 @@ export default function GrnaPage() {
 
   const parsedTargetLocus = parseTargetLocusInput(targetLocusText);
 
+  function mapGrnaError(raw: string) {
+    const message = raw.trim();
+    const normalized = message.toLowerCase();
+    if (
+      !message ||
+      normalized === "not found" ||
+      normalized === "internal server error" ||
+      normalized.includes("http 404") ||
+      normalized.includes("http 500") ||
+      normalized.includes("failed to fetch") ||
+      normalized.includes("networkerror") ||
+      normalized.includes("timeout") ||
+      normalized.includes("gateway") ||
+      normalized.includes("upstream service")
+    ) {
+      return `${tCommon("service_unavailable")} ${tCommon("retry_later")}`;
+    }
+    return message;
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -296,18 +316,9 @@ export default function GrnaPage() {
       setResult(response);
       if (user) toast("已保存到历史记录");
     } catch (err: any) {
-      const rawMessage = err?.message || "";
-      const normalized = rawMessage.toLowerCase();
-      const isRemoteFailure =
-        normalized.includes("timeout") ||
-        normalized.includes("gateway") ||
-        normalized.includes("upstream service") ||
-        normalized.includes("http 504");
       const msg = err?.name === "AbortError"
         ? tCommon("service_unavailable")
-        : isRemoteFailure
-          ? tCommon("service_unavailable")
-          : (rawMessage || tCommon("request_failed"));
+        : mapGrnaError(err?.message || "");
       setError(msg);
     } finally {
       setLoading(false);
@@ -355,10 +366,10 @@ export default function GrnaPage() {
           <h1>{t("title")}</h1>
           <p>{t("subtitle")}</p>
         </div>
-        <div className="sequence-workspace-flow" aria-label={locale === "zh" ? "设计流程" : "Design workflow"}>
-          <span><b>01</b>{locale === "zh" ? "Cas 核酸酶" : "Cas nuclease"}</span>
-          <span><b>02</b>{locale === "zh" ? "靶序列" : "Target sequence"}</span>
-          <span><b>03</b>{locale === "zh" ? "脱靶筛查" : "Off-target screen"}</span>
+        <div className="sequence-workspace-flow grna-hero-meta" aria-label={locale === "zh" ? "设计引擎" : "Design engine"}>
+          <span>{t("hero_meta_label")}</span>
+          <strong>{t("hero_meta_method")}</strong>
+          <p>{t("hero_meta_body")}</p>
         </div>
       </section>
 
@@ -590,171 +601,49 @@ export default function GrnaPage() {
         </div>
 
         {error ? (
-          <div
-            className="card"
-            style={{
-              marginTop: 12,
-              padding: 12,
-              background: "var(--red-soft)",
-              boxShadow: "none",
-              border: "1px solid #fecaca",
-              fontSize: 13,
-              color: "var(--red)",
-              borderRadius: 16,
-            }}
-          >
-            {error}
+          <div className="workbench-alert is-error" role="alert">
+            <span aria-hidden="true">!</span>
+            <div><strong>{tCommon("request_failed")}</strong><p>{error}</p></div>
           </div>
         ) : null}
       </aside>
 
       <main className="grna-main-panel sequence-result-panel" style={{ flex: 1, minWidth: 0 }}>
         {!result && !loading ? (
-          <div
-            className="grna-empty-state sequence-empty-state"
-            style={{
-              minHeight: 520,
-              padding: "40px clamp(24px, 4vw, 48px)",
-              borderRadius: 34,
-              border: "1px solid var(--border)",
-              background: "radial-gradient(ellipse at 80% 20%, rgba(83,157,245,0.10) 0%, transparent 60%), radial-gradient(ellipse at 10% 80%, rgba(83,157,245,0.06) 0%, transparent 50%), var(--bg-card)",
-              boxShadow: "var(--shadow-lg)",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            {/* DNA helix decoration */}
-            <svg
-              width="180" height="340"
-              viewBox="0 0 180 340"
-              style={{ position: "absolute", right: -20, top: 0, opacity: 0.12, pointerEvents: "none" }}
-              aria-hidden="true"
-            >
-              {Array.from({ length: 14 }, (_, i) => {
-                const y = i * 24 + 20;
-                const phase = (i / 14) * Math.PI * 2;
-                const x1 = 90 + Math.sin(phase) * 60;
-                const x2 = 90 - Math.sin(phase) * 60;
-                return (
-                  <g key={i}>
-                    <line x1={x1} y1={y} x2={x2} y2={y} stroke="#539df5" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
-                    <circle cx={x1} cy={y} r="5" fill="#539df5" />
-                    <circle cx={x2} cy={y} r="5" fill="#93c5fd" />
-                  </g>
-                );
-              })}
-              <path
-                d={Array.from({ length: 60 }, (_, i) => {
-                  const y = i * 5.5 + 10;
-                  const x = 90 + Math.sin((i / 60) * Math.PI * 4) * 60;
-                  return `${i === 0 ? "M" : "L"} ${x} ${y}`;
-                }).join(" ")}
-                fill="none" stroke="#539df5" strokeWidth="2" strokeLinecap="round"
-              />
-              <path
-                d={Array.from({ length: 60 }, (_, i) => {
-                  const y = i * 5.5 + 10;
-                  const x = 90 - Math.sin((i / 60) * Math.PI * 4) * 60;
-                  return `${i === 0 ? "M" : "L"} ${x} ${y}`;
-                }).join(" ")}
-                fill="none" stroke="#93c5fd" strokeWidth="2" strokeLinecap="round"
-              />
-            </svg>
-
-            <div className="sequence-empty-kicker" style={{
-              display: "inline-flex", padding: "6px 14px", borderRadius: 999,
-              background: "rgba(83,157,245,0.14)", border: "1px solid rgba(83,157,245,0.25)",
-              color: "#539df5", fontSize: 11, fontWeight: 700,
-              letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 20,
-            }}>
-              ✂️ &nbsp;{t("badge")}
+          <div className="grna-empty-state sequence-empty-state">
+            <div className="grna-empty-head">
+              <div>
+                <span>{t("output_kicker")}</span>
+                <strong>{t("empty_title")}</strong>
+              </div>
+              <small>{t("output_state")}</small>
             </div>
-            <h2 className="sequence-empty-title" style={{
-              fontSize: "clamp(32px, 4vw, 52px)",
-              lineHeight: 1.04, letterSpacing: "-0.04em",
-              color: "var(--text-1)", marginBottom: 14, maxWidth: 640,
-            }}>
-              {t("empty_title")}
-            </h2>
-            <p className="sequence-empty-copy" style={{ fontSize: 15, lineHeight: 1.8, color: "var(--text-2)", maxWidth: 580 }}>{t("empty_subtitle")}</p>
-            <div className="sequence-feature-grid" style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: 14, width: "100%", marginTop: 32,
-            }}>
-              {[
-                { eyebrow: t("feature_activity_eyebrow"), title: t("feature_activity_title"), body: t("feature_activity_body"), icon: "⚡" },
-                { eyebrow: t("feature_offtarget_eyebrow"), title: t("feature_offtarget_title"), body: t("feature_offtarget_body"), icon: "🎯" },
-                { eyebrow: t("feature_evidence_eyebrow"), title: t("feature_evidence_title"), body: t("feature_evidence_body"), icon: "🔬" },
-              ].map((feature) => (
-                <div
-                  key={feature.title}
-                  className="tool-card sequence-feature-item"
-                  style={{
-                    padding: 20,
-                    borderRadius: 24,
-                    background: "var(--bg-inset)",
-                    border: "1px solid var(--border)",
-                    boxShadow: "var(--shadow-sm)",
-                  }}
-                >
-                  <div style={{ fontSize: 22, marginBottom: 8 }}>{feature.icon}</div>
-                  <div style={{
-                    fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
-                    textTransform: "uppercase", color: "#539df5", marginBottom: 6,
-                  }}>
-                    {feature.eyebrow}
-                  </div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)", marginBottom: 8 }}>{feature.title}</div>
-                  <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--text-2)" }}>{feature.body}</p>
-                </div>
-              ))}
+            <div className="grna-empty-preview" aria-hidden="true">
+              <div className="grna-preview-strand"><b>TARGET</b><code>5′—ATGCGTACCTGACCGGTTAC—3′</code></div>
+              <div className="grna-preview-track">
+                <span className="is-guide">20 nt guide</span>
+                <span className="is-pam">NGG</span>
+                <i />
+              </div>
+              <div className="grna-preview-cut"><b>CUT</b><span>−3 bp</span></div>
+            </div>
+            <p className="sequence-empty-copy">{t("empty_subtitle")}</p>
+            <div className="grna-empty-features">
+              <span>{t("feat_scan")}</span>
+              <span>{t("feat_score")}</span>
+              <span>{t("feat_risk")}</span>
             </div>
           </div>
         ) : null}
 
         {loading ? (
-          <div className="sequence-loading-state" style={{
-            minHeight: 420,
-            display: "flex", flexDirection: "column", justifyContent: "center",
-            padding: "36px clamp(24px, 4vw, 42px)",
-            borderRadius: 34,
-            border: "1px solid rgba(83,157,245,0.25)",
-            background: "radial-gradient(ellipse at center, rgba(83,157,245,0.07) 0%, var(--bg-card) 70%)",
-            boxShadow: "var(--shadow-lg)",
-          }}>
-            {/* Animated scissors icon */}
-            <div style={{
-              width: 60, height: 60, borderRadius: 20,
-              display: "grid", placeItems: "center",
-              background: "rgba(83,157,245,0.14)",
-              border: "1px solid rgba(83,157,245,0.25)",
-              marginBottom: 22,
-            }}>
-              <svg className="animate-spin" style={{ width: 28, height: 28, color: "#539df5" }} viewBox="0 0 24 24" fill="none">
-                <circle cx="6" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-                <circle cx="6" cy="18" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M8.5 8L18.5 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-                <path d="M8.5 16L18.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <circle cx="19" cy="12" r="1.5" fill="currentColor" />
-              </svg>
+          <div className="sequence-loading-state workbench-loading-state grna-loading-state">
+            <div className="workbench-state-head"><span>PROCESS · PAM SCAN</span><small>01 / 01</small></div>
+            <div className="workbench-loading-body">
+              <span className="workbench-spinner" />
+              <div><strong>{t("searching_btn")}</strong><p>{t("scanning_msg")}</p></div>
             </div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: "var(--text-1)", marginBottom: 10, letterSpacing: "-0.02em" }}>
-              {t("searching_btn")}
-            </div>
-            <p style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text-2)", maxWidth: 520 }}>{t("scanning_msg")}</p>
-            {/* Progress bar */}
-            <div style={{
-              marginTop: 24, height: 3, borderRadius: 999,
-              background: "var(--border)", overflow: "hidden", maxWidth: 360,
-            }}>
-              <div style={{
-                height: "100%", borderRadius: 999,
-                background: "linear-gradient(90deg, #539df5, #93c5fd, #539df5)",
-                backgroundSize: "200% 100%",
-                animation: "shimmer 1.6s linear infinite",
-              }} />
-            </div>
+            <div className="workbench-progress-line"><i /></div>
           </div>
         ) : null}
 
@@ -1093,7 +982,9 @@ export default function GrnaPage() {
                 return (
                   <article
                     key={guide.rank}
-                    className={`tool-card fade-in-up delay-${Math.min(index + 1, 5)}`}
+                    className={`tool-card grna-guide-card fade-in-up delay-${Math.min(index + 1, 5)}`}
+                    data-top={index === 0 ? "true" : "false"}
+                    data-expanded={expanded ? "true" : "false"}
                     style={{
                       borderRadius: 30,
                       border: "1px solid var(--border)",
@@ -1105,6 +996,7 @@ export default function GrnaPage() {
                   >
                     <button
                       type="button"
+                      className="grna-guide-toggle"
                       onClick={() => setExpandedRank(expanded ? null : guide.rank)}
                       aria-expanded={expanded}
                       style={{
@@ -1139,6 +1031,7 @@ export default function GrnaPage() {
                         </div>
                         <div style={{ minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+                            {index === 0 && <span className="result-best-label">{t("best_candidate")}</span>}
                             <code
                               style={{
                                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
@@ -1164,7 +1057,7 @@ export default function GrnaPage() {
                                 flexShrink: 0,
                               }}
                             >
-                              Copy
+                              {t("copy")}
                             </button>
                             <code
                               style={{
@@ -1200,9 +1093,10 @@ export default function GrnaPage() {
                     </button>
 
                     {expanded ? (
-                      <div style={{ borderTop: "1px solid var(--border)", padding: "16px 20px 20px" }}>
+                      <div className="grna-guide-expanded" style={{ borderTop: "1px solid var(--border)", padding: "16px 20px 20px" }}>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
                           <div
+                            className="grna-analysis-panel is-activity"
                             style={{
                               padding: 18,
                               borderRadius: 24,
@@ -1251,6 +1145,7 @@ export default function GrnaPage() {
                           </div>
 
                           <div
+                            className="grna-analysis-panel is-offtarget"
                             style={{
                               padding: 18,
                               borderRadius: 24,

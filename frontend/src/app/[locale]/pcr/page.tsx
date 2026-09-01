@@ -97,6 +97,8 @@ function SequenceRow({
 
 function PrimerPairCard({
   pair,
+  templateLength,
+  recommended,
   specificityResult,
   specificityLoading,
   specificityBusy,
@@ -104,6 +106,8 @@ function PrimerPairCard({
   onScreenSpecificity,
 }: {
   pair: PCRPrimerPair;
+  templateLength: number;
+  recommended: boolean;
   specificityResult?: PCRPairSpecificityResponse;
   specificityLoading: boolean;
   specificityBusy: boolean;
@@ -123,6 +127,18 @@ function PrimerPairCard({
   const maxHairpin = Math.max(pair.left_hairpin_th, pair.right_hairpin_th);
   const maxSelfEnd = Math.max(pair.left_self_end_th, pair.right_self_end_th);
   const clampOk = [pair.left_gc_clamp, pair.right_gc_clamp].every((value) => value >= 1 && value <= 3);
+  const qualityPassCount = [
+    pair.tm_difference <= 2,
+    maxHairpin < 24,
+    maxSelfEnd < 35,
+    pair.pair_compl_end_th < 35,
+    clampOk,
+  ].filter(Boolean).length;
+  const safeTemplateLength = Math.max(templateLength, 1);
+  const ampliconLeft = Math.max(0, Math.min(100, ((pair.amplicon_start - 1) / safeTemplateLength) * 100));
+  const ampliconWidth = Math.max(2, Math.min(100 - ampliconLeft, (pair.product_size / safeTemplateLength) * 100));
+  const forwardPosition = Math.max(0, Math.min(100, (pair.left_start / safeTemplateLength) * 100));
+  const reversePosition = Math.max(0, Math.min(100, (pair.right_end / safeTemplateLength) * 100));
   const specificityTitle = specificityResult?.verdict === "one_paired_record"
     ? t("specificity_result_single")
     : specificityResult?.verdict === "multiple_paired_records"
@@ -132,16 +148,32 @@ function PrimerPairCard({
         : t("specificity_result_unavailable");
 
   return (
-    <article className="pcr-pair-card">
+    <article className={`pcr-pair-card${recommended ? " is-recommended" : ""}`}>
       <div className="pcr-pair-header">
         <div className="pcr-pair-rank">#{pair.pair_index}</div>
         <div className="pcr-pair-headline">
-          <strong>{pair.product_size} bp</strong>
+          <div className="pcr-pair-titleline">
+            <strong>{pair.product_size} bp</strong>
+            {recommended && <span className="result-best-label">{t("best_candidate")}</span>}
+          </div>
           <span>{t("primer3_penalty")} {pair.penalty.toFixed(2)}</span>
         </div>
         <div className="pcr-annealing-badge">
           <span>{t("annealing_estimate")}</span>
           <strong>{pair.annealing_temp_estimate.toFixed(1)}°C</strong>
+        </div>
+      </div>
+
+      <div className="pcr-amplicon-map" aria-label={`${t("amplicon_range")} ${pair.amplicon_start}–${pair.amplicon_end} bp`}>
+        <div className="pcr-amplicon-map-meta">
+          <span>5′</span>
+          <strong>{pair.amplicon_start}–{pair.amplicon_end} / {templateLength} bp</strong>
+          <span>3′</span>
+        </div>
+        <div className="pcr-amplicon-track" aria-hidden="true">
+          <i style={{ left: `${ampliconLeft}%`, width: `${ampliconWidth}%` }} />
+          <b className="is-forward" style={{ left: `${forwardPosition}%` }}>F</b>
+          <b className="is-reverse" style={{ left: `${reversePosition}%` }}>R</b>
         </div>
       </div>
 
@@ -169,6 +201,7 @@ function PrimerPairCard({
       </div>
 
       <div className="pcr-quality-row">
+        <div className="pcr-quality-summary"><strong>{qualityPassCount}/5</strong><span>{t("quality_checks")}</span></div>
         <QualityChip pass={pair.tm_difference <= 2}>{t("tm_diff")} {pair.tm_difference.toFixed(2)}°C</QualityChip>
         <QualityChip pass={maxHairpin < 24}>{t("hairpin")} {maxHairpin.toFixed(1)}°C</QualityChip>
         <QualityChip pass={maxSelfEnd < 35}>{t("self_end")} {maxSelfEnd.toFixed(1)}°C</QualityChip>
@@ -302,6 +335,7 @@ function PrimerPairCard({
 
 export default function PCRPage() {
   const t = useTranslations("pcr");
+  const tCommon = useTranslations("common");
   const locale = useLocale();
   const resultRef = useRef<HTMLDivElement>(null);
   const [preset, setPreset] = useState<PCRPreset>("standard");
@@ -357,6 +391,26 @@ export default function PCRPage() {
     return known[code] || t("error_generic");
   }
 
+  function messageForRequestError(requestError: unknown) {
+    const message = requestError instanceof Error ? requestError.message.trim() : "";
+    const normalized = message.toLowerCase();
+    if (
+      !message ||
+      normalized === "not found" ||
+      normalized === "internal server error" ||
+      normalized.includes("http 404") ||
+      normalized.includes("http 500") ||
+      normalized.includes("failed to fetch") ||
+      normalized.includes("networkerror") ||
+      normalized.includes("timeout") ||
+      normalized.includes("gateway") ||
+      normalized.includes("upstream service")
+    ) {
+      return `${tCommon("service_unavailable")} ${tCommon("retry_later")}`;
+    }
+    return message;
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError("");
@@ -406,7 +460,7 @@ export default function PCRPage() {
       setResult(response);
       window.setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t("error_generic"));
+      setError(messageForRequestError(requestError));
     } finally {
       setLoading(false);
     }
@@ -496,7 +550,9 @@ export default function PCRPage() {
           <p>{t("subtitle")}</p>
         </div>
         <div className="pcr-hero-flow" aria-label={t("workflow_label")}>
-          <span>DNA / FASTA</span><b>→</b><span>Primer3</span><b>→</b><span>{t("amplicon")}</span>
+          <span>{t("hero_meta_label")}</span>
+          <strong>{t("hero_meta_method")}</strong>
+          <small>{t("hero_meta_body")}</small>
         </div>
       </section>
 
@@ -563,7 +619,12 @@ export default function PCRPage() {
             </div>
           </details>
 
-          {error && <div className="pcr-error" role="alert">{error}</div>}
+          {error && (
+            <div className="workbench-alert is-error" role="alert">
+              <span aria-hidden="true">!</span>
+              <div><strong>{tCommon("request_failed")}</strong><p>{error}</p></div>
+            </div>
+          )}
           <button className="pcr-submit" type="submit" disabled={loading}>
             {loading ? <><span className="pcr-spinner" />{t("designing")}</> : t("design_button")}
           </button>
@@ -573,22 +634,35 @@ export default function PCRPage() {
         <main className="pcr-results" ref={resultRef}>
           {!result && !loading && (
             <section className="pcr-empty-card">
-              <div className="pcr-empty-icon">PCR</div>
-              <h2>{t("empty_title")}</h2>
+              <div className="pcr-empty-head">
+                <div>
+                  <span>{t("output_kicker")}</span>
+                  <strong>{t("empty_title")}</strong>
+                </div>
+                <small>{t("output_state")}</small>
+              </div>
+              <div className="pcr-empty-preview" aria-hidden="true">
+                <span className="pcr-empty-primer is-forward">F&nbsp;&nbsp;5′→3′</span>
+                <div className="pcr-empty-track"><i /><b /><i /></div>
+                <span className="pcr-empty-primer is-reverse">3′←5′&nbsp;&nbsp;R</span>
+              </div>
               <p>{t("empty_body")}</p>
               <div className="pcr-empty-features">
-                <span>✓ {t("empty_feature_amplicon")}</span>
-                <span>✓ {t("empty_feature_structure")}</span>
-                <span>✓ {t("empty_feature_export")}</span>
+                <span>{t("empty_feature_amplicon")}</span>
+                <span>{t("empty_feature_structure")}</span>
+                <span>{t("empty_feature_export")}</span>
               </div>
             </section>
           )}
 
           {loading && (
-            <section className="pcr-empty-card pcr-loading-card">
-              <span className="pcr-spinner is-large" />
-              <h2>{t("designing")}</h2>
-              <p>{t("loading_body")}</p>
+            <section className="pcr-loading-card workbench-loading-state">
+              <div className="workbench-state-head"><span>PROCESS · PRIMER3</span><small>01 / 01</small></div>
+              <div className="workbench-loading-body">
+                <span className="pcr-spinner is-large" />
+                <div><strong>{t("designing")}</strong><p>{t("loading_body")}</p></div>
+              </div>
+              <div className="workbench-progress-line"><i /></div>
             </section>
           )}
 
@@ -628,6 +702,8 @@ export default function PCRPage() {
                   <PrimerPairCard
                     key={pair.pair_index}
                     pair={pair}
+                    templateLength={result.sequence_length}
+                    recommended={pair.pair_index === result.primer_pairs[0]?.pair_index}
                     specificityResult={specificityResults[pair.pair_index]}
                     specificityLoading={specificityLoadingPair === pair.pair_index}
                     specificityBusy={specificityLoadingPair !== null}
