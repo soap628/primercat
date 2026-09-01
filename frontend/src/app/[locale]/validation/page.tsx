@@ -1,668 +1,134 @@
+import { AcademicHeader, AcademicSection, Cite, ReferenceList, type AcademicReference } from "@/components/AcademicDocument";
 import { Link } from "@/navigation";
 
-const TONE_STYLES: Record<string, { bg: string; border: string; dot: string }> = {
-  green: { bg: "rgba(34,197,94,0.07)",  border: "rgba(34,197,94,0.22)",  dot: "#22c55e" },
-  amber: { bg: "rgba(251,191,36,0.07)", border: "rgba(251,191,36,0.25)", dot: "#f59e0b" },
-  red:   { bg: "rgba(239,68,68,0.07)",  border: "rgba(239,68,68,0.20)",  dot: "#ef4444" },
-};
+const REFERENCES: AcademicReference[] = [
+  { id: 1, authors: "Bustin SA, et al.", year: "2025", title: "MIQE 2.0: Revision of the Minimum Information for Publication of Quantitative Real-Time PCR Experiments Guidelines", journal: "Clinical Chemistry", detail: "71:634–651.", doi: "10.1093/clinchem/hvaf043", href: "https://pubmed.ncbi.nlm.nih.gov/40272429/" },
+  { id: 2, authors: "Untergasser A, et al.", year: "2012", title: "Primer3—new capabilities and interfaces", journal: "Nucleic Acids Research", detail: "40:e115.", doi: "10.1093/nar/gks596", href: "https://pubmed.ncbi.nlm.nih.gov/22730293/" },
+  { id: 3, authors: "Ye J, et al.", year: "2012", title: "Primer-BLAST: a tool to design target-specific primers for polymerase chain reaction", journal: "BMC Bioinformatics", detail: "13:134.", doi: "10.1186/1471-2105-13-134", href: "https://pubmed.ncbi.nlm.nih.gov/22708584/" },
+  { id: 4, authors: "Langmead B, Salzberg SL.", year: "2012", title: "Fast gapped-read alignment with Bowtie 2", journal: "Nature Methods", detail: "9:357–359.", doi: "10.1038/nmeth.1923", href: "https://pubmed.ncbi.nlm.nih.gov/22388286/" },
+  { id: 5, authors: "Doench JG, et al.", year: "2016", title: "Optimized sgRNA design to maximize activity and minimize off-target effects of CRISPR-Cas9", journal: "Nature Biotechnology", detail: "34:184–191.", doi: "10.1038/nbt.3437", href: "https://pubmed.ncbi.nlm.nih.gov/26780180/" },
+  { id: 6, authors: "Hsu PD, et al.", year: "2013", title: "DNA targeting specificity of RNA-guided Cas9 nucleases", journal: "Nature Biotechnology", detail: "31:827–832.", doi: "10.1038/nbt.2647", href: "https://pubmed.ncbi.nlm.nih.gov/23873081/" },
+  { id: 7, authors: "Tsai SQ, et al.", year: "2015", title: "GUIDE-seq enables genome-wide profiling of off-target cleavage by CRISPR-Cas nucleases", journal: "Nature Biotechnology", detail: "33:187–197.", doi: "10.1038/nbt.3117", href: "https://pubmed.ncbi.nlm.nih.gov/25513782/" },
+  { id: 8, authors: "Camacho C, et al.", year: "2009", title: "BLAST+: architecture and applications", journal: "BMC Bioinformatics", detail: "10:421.", doi: "10.1186/1471-2105-10-421", href: "https://pubmed.ncbi.nlm.nih.gov/20003500/" },
+  { id: 9, authors: "O’Leary NA, et al.", year: "2016", title: "Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation", journal: "Nucleic Acids Research", detail: "44:D733–D745.", doi: "10.1093/nar/gkv1189", href: "https://pubmed.ncbi.nlm.nih.gov/26553804/" },
+  { id: 10, authors: "Kim S, et al.", year: "2025", title: "PubChem 2025 update", journal: "Nucleic Acids Research", detail: "53:D1516–D1525.", doi: "10.1093/nar/gkae1059", href: "https://pubmed.ncbi.nlm.nih.gov/39558165/" },
+];
 
 const COPY = {
   zh: {
-    badge: "结果依据与边界",
-    title: "如何解读计算结果",
-    intro:
-      "结果页同时展示参数、评分依据、筛查状态与适用边界。这里说明各项数据来自哪里、可支持什么判断，以及不能替代哪些验证。",
-
-    heroAsideTitle: "判读原则",
-    heroAsideBody:
-      "评分用于比较候选，不代表实验成功率。Tm、GC%、跨外显子状态、Bowtie2 / BLAST 命中等证据与限制会在结果页分别标注。",
-    heroMetricLabel: "主要证据维度",
-    heroMetricValue: "6 项",
-    heroMetricBody: "不同工具按需展示序列参数、热力学特性、特异性证据、结构风险、外显子结构与活性估算。",
-
-    evidenceTitle: "结果页提供的主要证据",
-    evidenceIntro:
-      "不同工具会显示下列相关信息。具体字段以当前结果页为准，方法与阈值仍应结合实验体系复核。",
-    evidenceItems: [
-      {
-        icon: "01",
-        title: "模板来源与转录本 ID",
-        body: "系统从 NCBI RefSeq 按规则选择的参考转录本编号（NM_XXXXXX.X）、外显子数量、CDS 长度及选择依据。",
-      },
-      {
-        icon: "02",
-        title: "热力学参数",
-        body: "左右引物的 Tm（熔解温度）、GC%、发卡 Tm 与 3' 端自互补参数由 Primer3 计算；候选按当前约束条件生成和筛选。",
-      },
-      {
-        icon: "03",
-        title: "特异性证据与筛查范围",
-        body: "结果会显示本次使用的筛查后端。本地索引可提供基因组层面命中；未配置索引时使用 RefSeq RNA BLAST，并明确标为转录本层面初筛。",
-      },
-      {
-        icon: "04",
-        title: "外显子跨越状态",
-        body: "扩增子是否横跨至少一个外显子–外显子连接处，标记为「跨外显子 ✓」或「同一外显子」，以及扩增子长度（bp）。",
-      },
-      {
-        icon: "05",
-        title: "综合评分细项",
-        body: "总分由 Tm、GC%、当前特异性证据、外显子跨越和二聚体风险五项加权合并；每项得分可在结果卡中查看。",
-      },
-      {
-        icon: "06",
-        title: "gRNA 活性估算维度",
-        body: "gRNA 结果页包含 GC%、种子区连续 G 计数、PAM 邻近区碱基偏好、脱靶命中数——四项均为序列特征估算，结果页已标注「需实验验证」。",
-      },
+    eyebrow: "PRIMERCAT · 证据与验证说明", title: "如何判断结果的可信度", abstractLabel: "摘要",
+    abstract: "PrimerCat 的“可信度”不等同于一个统一准确率，而是由输入质量、算法输出、数据库覆盖、启发式假设和实验验证共同决定。本页给出证据分级、可支持的结论、已知限制与建议验证路径。",
+    meta: ["证据框架 1.0", "更新：2026-09-01", "研究用途"], asideTitle: "核心结论",
+    aside: "数值可精确计算，不代表生物学结论同样确定；数据库未见命中，不代表真实样本中不存在风险；排名第一，不代表实验必然成功。",
+    tocTitle: "本文目录", toc: [["01", "证据分级", "evidence"], ["02", "各工具可支持的结论", "claims"], ["03", "状态标签解释", "status"], ["04", "实验验证建议", "experimental"], ["05", "复现与变更因素", "reproducibility"], ["06", "当前验证状态", "current-status"], ["REF", "参考文献", "references"]],
+    evidenceTitle: "证据分级", evidenceLead: "不同类型的输出不能放在同一把尺子上评价。下列分级描述证据来源，而不是给结果打“可信度百分比”。",
+    evidenceHead: ["等级", "证据类型", "典型输出", "正确解释"],
+    evidenceRows: [
+      ["C1", "确定性计算", "序列长度、GC%、坐标、配方换算、Primer3 返回参数", "在相同输入、参数和软件版本下应可复现；仍可能受输入错误或模型假设影响。"],
+      ["D1", "数据库依赖筛查", "RefSeq 模板、BLAST/Bowtie2 命中、accession", "只对结果标注的数据库/参考组装、检索日期、阈值和 hit 上限成立。"],
+      ["H1", "启发式排序", "qPCR 综合分、gRNA 活性分、Low/Medium/High 标签", "用于候选间排序；没有校准为概率，也不能跨工具或跨实验直接比较。"],
+      ["R1", "人工整理参考", "Protocol、配方说明、化学品危险摘要", "用于准备与核对，不替代原始论文、产品说明、SDS、SOP 或风险评估。"],
+      ["X0", "实验确认", "效率、单一产物、真实编辑率、真实脱靶、样本适用性", "不由 PrimerCat 产生；必须在用户的实验体系内建立。"],
     ],
-
-    toolsTitle: "每个工具的覆盖范围与边界",
-    toolsIntro:
-      "下面列出每个工具明确覆盖的内容（✓），以及它不处理或边界情况（⚠）。",
-    tools: [
-      {
-        tag: "qPCR",
-        color: "#22c55e",
-        title: "qPCR 引物设计",
-        solid: [
-          "Primer3 热力学过滤（Tm、GC%、hairpin、二聚体）",
-          "配置 hg38/mm10 索引时使用 Bowtie2；否则使用批量 RefSeq RNA BLAST 初筛",
-          "外显子–外显子跨越检测（基于 RefSeq 注释的外显子坐标）",
-          "扩增子大小 80–200 bp（qPCR 优化范围）",
-          "综合评分排序（5 项加权）",
-          "设计依据完整展示在结果页",
-        ],
-        limit: [
-          "基因组 DNA 中的内含子命中被保守标记为脱靶（RT-qPCR 的 cDNA 模板不含内含子，此保守性可接受）",
-          "SNP / 多态性位点不检查——引物覆盖区域若含常见 SNP 可能导致扩增失败",
-          "不做湿实验验证（扩增效率、熔解曲线和产物大小需自行验证）",
-          "引物浓度、缓冲液组成等实验条件由用户自行优化",
-        ],
-      },
-      {
-        tag: "CRISPR",
-        color: "#7c3aed",
-        title: "CRISPR gRNA 设计",
-        solid: [
-          "配置本地基因组索引时执行基因组筛查；否则使用明确标注的 BLAST 回退",
-          "支持 SpCas9（NGG）、SpCas9-NG（NG）、Cas12a（TTTV）三种 PAM",
-          "正反链全覆盖扫描",
-          "GC%、种子区连续 G、PAM 临近碱基偏好等序列特征评估",
-          "脱靶命中数与最高相似度展示",
-        ],
-        limit: [
-          "活性评分为序列特征估算，未纳入染色质可及性、DNA 甲基化等表观遗传因素",
-          "脱靶筛查限于 ≤3 错配的完全对齐命中；RNA / DNA 泡形结构或插入/缺失错配不在范围内",
-          "编辑效率和脱靶切割需在细胞系中实测验证",
-          "不提供 HDR 供体模板设计",
-        ],
-      },
-      {
-        tag: "BLAST",
-        color: "#3b82f6",
-        title: "BLAST 序列比对",
-        solid: [
-          "NCBI BLAST（blastn / blastp / blastx / tblastn）标准查询",
-          "E-value、比对得分、覆盖率、Identity% 完整展示",
-          "支持自定义序列输入",
-          "结果中展示物种来源与 GenBank 登录号",
-        ],
-        limit: [
-          "依赖 NCBI 服务器响应速度（高峰期可能超时）",
-          "结果时效性取决于 NCBI 数据库更新周期",
-          "不做 MSA（多序列比对）或系统发育分析",
-        ],
-      },
+    separationTitle: "三个概念必须分开",
+    separation: [["计算完成", "算法已返回数值或候选。"], ["筛查通过", "在特定数据库、阈值和返回范围内未触发警示。"], ["实验有效", "在目标样本、试剂、设备和对照下获得符合预设标准的结果。"]],
+    claimsTitle: "各工具可支持的结论", claimsLead: "下表采用保守表述：页面能支持什么，以及不能从结果继续推导什么。",
+    claimsHead: ["模块", "可以据此判断", "不能据此断言", "证据"],
+    claimsRows: [
+      ["qPCR 引物", "候选满足当前 Primer3 约束；比较 Tm/GC、结构指标、外显子跨越与当前筛查命中。", "扩增效率合格、单一熔解峰、无 gDNA 干扰、适用于全部转录异构体或人群变异。", "C1 + D1 + H1"],
+      ["常规 PCR", "候选在提交模板上的坐标、产物长度、结构参数；可选 BLAST 返回集中可形成的配对记录。", "全基因组唯一、目标样本一定有单条带、退火温度无需优化。", "C1 + D1"],
+      ["CRISPR gRNA", "PAM/链/位置；序列特征优先级；当前后端发现的近似位点。", "真实 on-target 编辑率、细胞内无脱靶、适用于任何 Cas 变体/递送系统。", "C1 + D1 + H1"],
+      ["BLAST", "选定数据库和参数下的局部相似命中及其统计量。", "功能相同、同源关系成立、物种鉴定完成或未命中即不存在。", "D1"],
+      ["溶液/Protocol/安全", "按给定数值计算用量；查阅结构化参考与来源链接。", "配方适配所有实验、网页摘要等同 SOP/SDS、危险分类适用于所有浓度和混合物。", "C1 或 R1"],
     ],
-
-    signalTitle: "如何解读筛查状态",
-    signalItems: [
-      {
-        signal: "✓ 未见明显非目标命中",
-        meaning: "当前后端与阈值下未发现需要警示的非目标命中。该状态仅适用于结果页标注的数据库和筛查范围，仍需凝胶、熔解曲线或其他实验验证。",
-        tone: "green",
-      },
-      {
-        signal: "⚠ 需要复核",
-        meaning: "发现潜在非目标命中、筛查范围受限或证据不完整。使用前应查看命中位置、相似度、产物长度和数据库范围。",
-        tone: "amber",
-      },
-      {
-        signal: "✗ 存在明显非目标风险",
-        meaning: "当前筛查发现多个高相似度非目标命中。应优先比较其他候选，并在使用前进行更完整的计算与实验验证。",
-        tone: "red",
-      },
-      {
-        signal: "— 无命中",
-        meaning: "当前筛查后端未返回满足条件的命中。应结合结果中标注的数据库范围解读；BLAST 无命中不能证明全基因组唯一。",
-        tone: "amber",
-      },
+    variabilityTitle: "影响结果的主要变量", variability: ["输入序列、转录本与基因组版本", "物种过滤与数据库更新状态", "阈值、返回 hit 数和超时/回退后端", "聚合酶、缓冲液、模板质量与样本变异", "细胞类型、染色质、Cas 变体与递送方式"],
+    statusTitle: "状态标签如何解释", statusLead: "状态只总结当前筛查，不把“没有证据”误写成“安全”或“特异”。",
+    statusRows: [
+      ["通过 / Low", "当前后端返回集中没有达到警示规则的额外命中。", "继续查看数据库范围、hit 上限和 on-target 识别方式；仍需实验确认。"],
+      ["复核 / Medium", "存在中等相似的额外命中，或证据不足以直接排除。", "比较候选、检查基因区域与错配位置，必要时使用更完整的专用工具。"],
+      ["高风险 / High", "发现额外完美/高相似命中、较多候选命中，或给定目标坐标未被锚定。", "通常优先更换候选；若必须使用，先完成针对性计算与实验验证。"],
+      ["无命中 / no hits", "该后端没有返回通过过滤条件的命中。", "检查查询是否正确、数据库是否覆盖目标，以及短序列搜索是否受限；不能视为“唯一”。"],
+      ["未检查 / error / skipped", "筛查未运行、超时或服务不可用。", "不得授予特异性或低风险结论；重试或改用独立工具。"],
     ],
-
-    solidLabel: "✓ 覆盖范围",
-    limitLabel: "⚠ 边界 / 限制",
-
-    ctaTitle: "查看结果前，先确认筛查范围",
-    ctaBody: "先确认模板、数据库、阈值和未覆盖风险，再决定需要补充哪些计算或实验验证。",
-    ctaPrimer: "设计 qPCR 引物",
-    ctaMethods: "查看工作原理",
-    ctaGrna: "设计 CRISPR gRNA",
+    experimentalTitle: "建议的实验验证路径", experimentalLead: "以下是最低限度的验证方向，不是统一 SOP；具体接受标准应在实验计划中预先定义。",
+    validationGroups: [
+      ["RT-qPCR / qPCR", ["确认 accession、目标异构体与扩增子序列；必要时检查常见变异位点。", "设置 NTC 与 no-RT 对照；验证单一产物（熔解曲线和/或凝胶）。", "用标准曲线评估扩增效率、线性范围与检测限；报告引物序列、浓度、反应条件和原始数据。", "表达定量使用经验证的参考基因与适当归一化，并遵循 MIQE 2.0。"]],
+      ["常规 PCR", ["先做退火温度梯度，并同时设置阳性、阴性和无模板对照。", "用凝胶确认产物数量与大小；关键应用用 Sanger 或其他方法确认序列。", "针对真实样本来源检查基因组版本、变异和模板复杂度。"]],
+      ["CRISPR", ["使用独立、基因组感知的设计工具复核候选，并优先提供明确的目标基因座。", "在目标细胞中用 amplicon sequencing 或等效方法测量 on-target 编辑和 indel 谱。", "按应用风险选择预测位点测序或 GUIDE-seq 等无偏方法；计算筛查不能替代细胞内脱靶测量。"]],
+      ["BLAST 与参考资料", ["以 accession 与原始记录复核关键结论，必要时使用多序列比对、结构域和系统发育分析。", "Protocol 与配方回到原始来源和本机构 SOP；化学品操作核对当前瓶身、供应商 SDS 与 EHS 要求。"]],
+    ],
+    reproTitle: "复现与变更因素", reproLead: "要让另一位研究者能够重建本次结果，输出必须携带计算上下文，而不只是复制一条候选序列。",
+    reproHead: ["必须记录", "原因"], reproRows: [["原始输入或 accession + version", "数据库 accession 更新后序列可能改变。"], ["物种与参考组装", "同一序列在不同组装中的命中和坐标不同。"], ["全部设计参数", "预设只是初值，实际提交值决定候选。"], ["筛查后端、数据库和日期", "本地 Bowtie2 与 NCBI BLAST 的覆盖范围不同，远程数据库持续更新。"], ["返回上限与异常状态", "hit 截断、超时或回退会改变可见证据。"], ["PrimerCat/依赖版本", "Primer3、Biopython、索引和评分规则变更可能改变输出。"]],
+    currentTitle: "当前验证状态", currentLead: "公开说明当前尚未建立的证据，防止把软件可用性误写成学术验证。",
+    currentItems: [
+      ["尚无独立基准集", "目前没有公开的、预注册的独立数据集用于估计 PrimerCat qPCR 成功率、gRNA 编辑率或脱靶分类的敏感度/特异度。"],
+      ["尚无临床验证", "本工具仅用于研究设计，不用于诊断、治疗决策、临床报告或监管提交。"],
+      ["算法组件有同行评议依据", "Primer3、BLAST、Bowtie2、RefSeq、MIQE 与 CRISPR 研究为组件和验证框架提供依据，但不等于对 PrimerCat 整体性能的背书。"],
+      ["结果可审计但仍需改进", "页面展示参数、筛查范围和限制；后续应补充软件版本快照、可下载运行清单、回归基准和公开验证数据。"],
+    ],
+    refsTitle: "参考文献", refsIntro: "参考文献覆盖算法基础、数据库、qPCR 报告规范和 CRISPR 实验脱靶验证。",
+    ctaTitle: "把“可信”变成可检查的记录", ctaBody: "先确认输入与后端，再阅读命中详情，最后按实际实验体系完成验证。", methods: "查看完整方法", primer: "开始 qPCR 设计",
   },
-
   en: {
-    badge: "Evidence & Boundaries",
-    title: "How to interpret computational results",
-    intro:
-      "Result pages display parameters, ranking evidence, screening status, and scope boundaries together. This page explains where those values come from, what they support, and which validations they cannot replace.",
-
-    heroAsideTitle: "Interpretation principle",
-    heroAsideBody:
-      "Scores compare candidates; they are not experimental success rates. Evidence such as Tm, GC%, exon-spanning status, and Bowtie2 or BLAST hits is shown separately from its limitations.",
-    heroMetricLabel: "Main evidence dimensions",
-    heroMetricValue: "6",
-    heroMetricBody: "Tools display the relevant subset of sequence parameters, thermodynamics, specificity evidence, structural risk, exon architecture, and activity estimates.",
-
-    evidenceTitle: "Evidence provided on result pages",
-    evidenceIntro:
-      "Different tools display the relevant items below. Review the current result page and interpret its methods and thresholds in the context of your assay.",
-    evidenceItems: [
-      {
-        icon: "01",
-        title: "Template source & transcript ID",
-        body: "The RefSeq transcript accession (NM_XXXXXX.X) selected by stated rules, exon count, CDS length, and selection rationale.",
-      },
-      {
-        icon: "02",
-        title: "Thermodynamic parameters",
-        body: "Tm, GC%, hairpin Tm, and 3′-end self-complementarity parameters for both primers are computed by Primer3; candidates are generated and filtered under the active constraints.",
-      },
-      {
-        icon: "03",
-        title: "Specificity evidence and screening scope",
-        body: "The result identifies the backend used. A local index provides genome-level hits; without one, RefSeq RNA BLAST is used and explicitly labeled as transcript-level screening.",
-      },
-      {
-        icon: "04",
-        title: "Exon-spanning status",
-        body: "Whether the amplicon crosses at least one exon–exon junction (flagged ✓ Exon-spanning or Same exon), plus amplicon length in bp.",
-      },
-      {
-        icon: "05",
-        title: "Composite score breakdown",
-        body: "Total score combines five weighted dimensions: Tm, GC%, available specificity evidence, exon-spanning design, and dimer risk. Expand a result card to inspect each score.",
-      },
-      {
-        icon: "06",
-        title: "gRNA activity estimate dimensions",
-        body: "gRNA results include GC%, seed-region consecutive-G count, PAM-proximal nucleotide preference, and off-target hit count — all sequence-feature estimates; the page already flags 'experimental validation required'.",
-      },
-    ],
-
-    toolsTitle: "Coverage and boundaries per tool",
-    toolsIntro:
-      "Below are what each tool explicitly covers (✓) and what it does not handle or where it has known limits (⚠).",
-    tools: [
-      {
-        tag: "qPCR",
-        color: "#22c55e",
-        title: "qPCR Primer Design",
-        solid: [
-          "Primer3 thermodynamic filtering (Tm, GC%, hairpin, dimer)",
-          "Bowtie2 when an hg38/mm10 index is configured; otherwise batched RefSeq RNA BLAST screening",
-          "Exon–exon junction spanning detection (based on RefSeq exon coordinates)",
-          "Amplicon size 80–200 bp (qPCR-optimised range)",
-          "Composite score ranking (5 weighted dimensions)",
-          "Full design rationale displayed on the results page",
-        ],
-        limit: [
-          "Intronic genomic hits are conservatively flagged as off-target (acceptable for RT-qPCR on cDNA, which lacks introns)",
-          "SNP / polymorphism sites not checked — a primer overlapping a common SNP may fail in certain individuals",
-          "No wet-lab validation (amplification efficiency curves, melt curves must be verified experimentally)",
-          "Primer concentration and buffer conditions are left to the user to optimise",
-        ],
-      },
-      {
-        tag: "CRISPR",
-        color: "#7c3aed",
-        title: "CRISPR gRNA Design",
-        solid: [
-          "Genome screening when a local index is configured; otherwise an explicitly labeled BLAST fallback",
-          "Supports SpCas9 (NGG), SpCas9-NG (NG), Cas12a (TTTV) PAMs",
-          "Both-strand full-length scanning",
-          "GC%, seed-region consecutive-G, PAM-proximal nucleotide preference scoring",
-          "Off-target hit count and top identity displayed",
-        ],
-        limit: [
-          "Activity scores are sequence-feature estimates — chromatin accessibility, DNA methylation, and other epigenetic factors are not considered",
-          "Off-target screening limited to ≤3-mismatch end-to-end alignments; RNA/DNA bulge mismatches or indel mismatches are out of scope",
-          "Editing efficiency and off-target cleavage must be validated experimentally in your cell line",
-          "HDR donor template design is not provided",
-        ],
-      },
-      {
-        tag: "BLAST",
-        color: "#3b82f6",
-        title: "BLAST Sequence Search",
-        solid: [
-          "Standard NCBI BLAST queries (blastn / blastp / blastx / tblastn)",
-          "Full display of E-value, score, coverage, and Identity%",
-          "Supports custom sequence input",
-          "Species of origin and GenBank accession shown in results",
-        ],
-        limit: [
-          "Dependent on NCBI server response time (may time out during peak hours)",
-          "Result freshness depends on the NCBI database update cycle",
-          "No MSA (multiple sequence alignment) or phylogenetic analysis",
-        ],
-      },
-    ],
-
-    signalTitle: "How to read screening-status labels",
-    signalItems: [
-      {
-        signal: "✓ No evident non-target hit",
-        meaning: "No reportable non-target hit was found under the active backend and thresholds. This applies only to the database and scope shown on the result page; gel, melt-curve, or other experimental confirmation is still required.",
-        tone: "green",
-      },
-      {
-        signal: "⚠ Review required",
-        meaning: "Potential non-target hits, limited screening scope, or incomplete evidence was detected. Review hit locations, identity, product size, and database scope before use.",
-        tone: "amber",
-      },
-      {
-        signal: "✗ Evident non-target risk",
-        meaning: "The active screen found multiple high-identity non-target hits. Compare other candidates and perform more complete computational and experimental validation before use.",
-        tone: "red",
-      },
-      {
-        signal: "— No hit",
-        meaning: "The active screening backend returned no qualifying hit. Interpret this against the database scope shown in the result; no BLAST hit does not prove genome-wide uniqueness.",
-        tone: "amber",
-      },
-    ],
-
-    solidLabel: "✓ Coverage",
-    limitLabel: "⚠ Limits / Caveats",
-
-    ctaTitle: "Confirm the screening scope before using a result",
-    ctaBody: "Review the template, database, thresholds, and uncovered risks before deciding which additional computational or experimental checks are required.",
-    ctaPrimer: "Design qPCR primers",
-    ctaMethods: "How it works",
-    ctaGrna: "Design CRISPR gRNA",
+    eyebrow: "PRIMERCAT · EVIDENCE & VALIDATION NOTE", title: "How to assess confidence in a result", abstractLabel: "Abstract",
+    abstract: "PrimerCat does not assign one universal accuracy value. Confidence depends on input quality, algorithmic output, database coverage, heuristic assumptions, and experimental confirmation. This page defines evidence classes, supported claims, known limitations, and validation paths.",
+    meta: ["Evidence framework 1.0", "Updated 2026-09-01", "Research use only"], asideTitle: "Central conclusion", aside: "A value can be computed precisely while the biological conclusion remains uncertain. No database hit does not prove absence of risk, and a first-ranked candidate is not guaranteed to work.",
+    tocTitle: "Contents", toc: [["01", "Evidence classes", "evidence"], ["02", "Supported claims", "claims"], ["03", "Status labels", "status"], ["04", "Experimental validation", "experimental"], ["05", "Reproducibility", "reproducibility"], ["06", "Current validation status", "current-status"], ["REF", "References", "references"]],
+    evidenceTitle: "Evidence classes", evidenceLead: "Outputs with different origins should not be judged on one scale. These classes describe where evidence comes from; they are not confidence percentages.",
+    evidenceHead: ["Class", "Evidence type", "Typical output", "Correct interpretation"],
+    evidenceRows: [["C1", "Deterministic computation", "Sequence length, GC%, coordinates, solution arithmetic, Primer3 fields", "Reproducible under the same input, parameters, and software version; still vulnerable to input error and model assumptions."], ["D1", "Database-dependent screen", "RefSeq template, BLAST/Bowtie2 hits, accessions", "Valid only for the stated database/assembly, query date, thresholds, and hit cap."], ["H1", "Heuristic rank", "qPCR composite score, gRNA activity score, Low/Medium/High labels", "Candidate prioritisation only; not calibrated as probability and not comparable across tools or experiments."], ["R1", "Curated reference", "Protocols, recipe notes, chemical-hazard summaries", "A preparation and review aid; not a substitute for primary literature, product instructions, SDS, SOP, or risk assessment."], ["X0", "Experimental confirmation", "Efficiency, single product, measured editing, measured off-targets, sample suitability", "Not produced by PrimerCat; it must be established in the user's experimental system."]],
+    separationTitle: "Keep three concepts separate", separation: [["Computation complete", "The algorithm returned values or candidates."], ["Screen passed", "No warning rule was triggered in a defined database, threshold, and return set."], ["Experiment valid", "The target sample, reagents, instrument, and controls met pre-specified acceptance criteria."]],
+    claimsTitle: "Claims supported by each tool", claimsLead: "The table uses conservative language: what the result supports, and what cannot be inferred from it.",
+    claimsHead: ["Module", "Supported interpretation", "Unsupported inference", "Evidence"], claimsRows: [["qPCR primers", "Candidates meet current Primer3 constraints; compare Tm/GC, structure fields, exon spanning, and current-screen hits.", "Acceptable efficiency, one melt peak, no gDNA interference, or suitability for every isoform and population variant.", "C1 + D1 + H1"], ["Endpoint PCR", "Coordinates, product size, and structure fields on the submitted template; paired records in the optional returned BLAST set.", "Whole-genome uniqueness, a single band in the sample, or no need to optimise annealing temperature.", "C1 + D1"], ["CRISPR gRNA", "PAM/strand/position, sequence-feature priority, and near matches found by the current backend.", "Measured on-target editing, absence of cellular off-targets, or portability across Cas variants and delivery systems.", "C1 + D1 + H1"], ["BLAST", "Local-similarity hits and statistics under the selected database and parameters.", "Shared function, proven homology, completed species identification, or absence when no hit is returned.", "D1"], ["Solutions/protocols/safety", "Calculate amounts from stated values and inspect structured references with source links.", "Universal recipe suitability, equivalence to an SOP/SDS, or hazard classification across all concentrations and mixtures.", "C1 or R1"]],
+    variabilityTitle: "Major sources of variability", variability: ["Input sequence, transcript, and genome version", "Species filter and database update state", "Thresholds, hit cap, timeout, and fallback backend", "Polymerase, buffer, template quality, and sample variants", "Cell type, chromatin, Cas variant, and delivery method"],
+    statusTitle: "How to read status labels", statusLead: "A status summarises the current screen. It must not convert absence of evidence into a claim of safety or specificity.",
+    statusRows: [["Pass / Low", "No additional returned hit met the active warning rule.", "Review scope, hit cap, and on-target identification; experimental confirmation is still required."], ["Review / Medium", "Moderately similar extra hits exist, or evidence is insufficient for exclusion.", "Compare candidates, inspect genomic context and mismatch positions, and use a more complete specialist tool when needed."], ["High risk / High", "An extra perfect/high-similarity hit, several candidate hits, or failure to anchor the supplied target locus was found.", "Usually prefer another candidate; if use is necessary, perform targeted computation and experiments first."], ["No hits", "The backend returned no hit passing its filters.", "Check the query, database coverage, and short-query limitations; never treat this as proof of uniqueness."], ["Not checked / error / skipped", "The screen did not run, timed out, or was unavailable.", "Do not assign specificity or low risk; retry or use an independent method."]],
+    experimentalTitle: "Recommended experimental validation", experimentalLead: "These are minimum validation directions, not a universal SOP. Pre-specify acceptance criteria for the actual study.",
+    validationGroups: [["RT-qPCR / qPCR", ["Confirm the accession, target isoform, and amplicon; inspect common variants when relevant.", "Include NTC and no-RT controls and confirm a single product by melt curve and/or gel.", "Use a standard curve to assess efficiency, linear range, and detection limit; report sequences, concentrations, chemistry, and raw data.", "Use validated reference genes and appropriate normalisation; follow MIQE 2.0."]], ["Endpoint PCR", ["Run an annealing-temperature gradient with positive, negative, and no-template controls.", "Confirm product count and size by gel; confirm sequence by Sanger or another method for critical applications.", "Check the relevant assembly and sample variation for the real specimen source."]], ["CRISPR", ["Cross-check candidates in an independent genome-aware design tool and provide an explicit target locus where possible.", "Measure on-target editing and indel spectrum in the target cells by amplicon sequencing or an equivalent assay.", "Choose targeted-site sequencing or an unbiased method such as GUIDE-seq according to application risk; computational screening cannot replace cellular off-target measurement."]], ["BLAST & references", ["Verify critical claims against the accession and primary record; add MSA, domain, and phylogenetic analysis when required.", "Return from protocols and recipes to the primary source and institutional SOP; for chemicals, check the current label, supplier SDS, and EHS requirements."]]],
+    reproTitle: "Reproducibility and change factors", reproLead: "To reconstruct a run, the output must carry its computational context, not only a copied candidate sequence.",
+    reproHead: ["Record", "Why"], reproRows: [["Original input or accession + version", "The sequence can change when an accession is revised."], ["Species and reference assembly", "Hits and coordinates differ between assemblies."], ["All submitted parameters", "Presets initialise controls; submitted values determine candidates."], ["Backend, database, and date", "Local Bowtie2 and NCBI BLAST have different scope, and remote databases evolve."], ["Hit caps and exception states", "Truncation, timeout, and fallback alter the visible evidence."], ["PrimerCat and dependency versions", "Primer3, Biopython, index, and score-rule changes may alter output."]],
+    currentTitle: "Current validation status", currentLead: "Stating missing evidence prevents software availability from being mistaken for academic validation.",
+    currentItems: [["No independent benchmark yet", "There is currently no public, pre-registered independent dataset estimating PrimerCat qPCR success, gRNA editing accuracy, or off-target classification sensitivity/specificity."], ["No clinical validation", "The tool is for research design only and is not intended for diagnosis, treatment decisions, clinical reporting, or regulatory submission."], ["Components have peer-reviewed foundations", "Primer3, BLAST, Bowtie2, RefSeq, MIQE, and CRISPR studies support components and validation frameworks; they do not endorse PrimerCat's end-to-end performance."], ["Auditable, with more work planned", "Pages expose parameters, screening scope, and limitations. Future work should add dependency snapshots, downloadable run manifests, regression benchmarks, and public validation data."]],
+    refsTitle: "References", refsIntro: "References cover algorithmic foundations, databases, qPCR reporting standards, and experimental CRISPR off-target validation.",
+    ctaTitle: "Turn confidence into an inspectable record", ctaBody: "Confirm the input and backend, inspect hit details, then validate in the actual experimental system.", methods: "Read full methods", primer: "Start qPCR design",
   },
-};
+} as const;
 
-export default function ValidationPage({
-  params: { locale },
-}: {
-  params: { locale: string };
-}) {
+function Table({ head, rows }: { head: readonly string[]; rows: readonly (readonly string[])[] }) {
+  return <div className="academic-table-wrap"><table className="academic-table"><thead><tr>{head.map((cell) => <th key={cell}>{cell}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row[0]}>{row.map((cell, index) => index === 0 ? <th key={cell}>{cell}</th> : <td key={cell}>{cell}</td>)}</tr>)}</tbody></table></div>;
+}
+
+export default function ValidationPage({ params: { locale } }: { params: { locale: string } }) {
   const copy = locale === "zh" ? COPY.zh : COPY.en;
-
+  const zh = locale === "zh";
   return (
-    <main
-      className="vp-main validation-page-v6"
-      style={{
-        maxWidth: 860,
-        margin: "0 auto",
-        padding: "48px 24px 96px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 72,
-      }}
-    >
-      {/* ── Hero ──────────────────────────────────────────────── */}
-      <section style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-        <span
-          style={{
-            display: "inline-block",
-            alignSelf: "flex-start",
-            fontSize: 12,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "var(--accent)",
-            background: "rgba(var(--accent-rgb),0.10)",
-            borderRadius: 6,
-            padding: "3px 10px",
-          }}
-        >
-          {copy.badge}
-        </span>
-
-        <h1
-          style={{
-            fontSize: "clamp(28px, 5vw, 42px)",
-            fontWeight: 800,
-            lineHeight: 1.2,
-            color: "var(--text-1)",
-            margin: 0,
-          }}
-        >
-          {copy.title}
-        </h1>
-
-        <p style={{ fontSize: 17, lineHeight: 1.75, color: "var(--text-2)", margin: 0, maxWidth: 680 }}>
-          {copy.intro}
-        </p>
-
-        {/* aside + metric row */}
-        <div className="vp-hero-aside-row">
-          <div
-            style={{
-              background: "var(--surface-2)",
-              border: "1px solid var(--border)",
-              borderRadius: 12,
-              padding: "20px 24px",
-            }}
-          >
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-2)", marginBottom: 8 }}>
-              {copy.heroAsideTitle}
-            </div>
-            <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-2)", margin: 0 }}>
-              {copy.heroAsideBody}
-            </p>
-          </div>
-
-          <div
-            className="vp-metric-tile"
-            style={{
-              background: "var(--surface-2)",
-              border: "1px solid var(--border)",
-              borderRadius: 12,
-              padding: "20px 24px",
-            }}
-          >
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-3)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-              {copy.heroMetricLabel}
-            </div>
-            <div style={{ fontSize: 40, fontWeight: 900, color: "var(--accent)", lineHeight: 1 }}>
-              {copy.heroMetricValue}
-            </div>
-            <div style={{ fontSize: 12, color: "var(--text-3)", lineHeight: 1.5 }}>
-              {copy.heroMetricBody}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Evidence cards ──────────────────────────────────────── */}
-      <section style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-1)", margin: "0 0 8px" }}>
-            {copy.evidenceTitle}
-          </h2>
-          <p style={{ fontSize: 15, color: "var(--text-2)", margin: 0, lineHeight: 1.7 }}>
-            {copy.evidenceIntro}
-          </p>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-            gap: 14,
-          }}
-        >
-          {copy.evidenceItems.map((item) => (
-            <div
-              key={item.icon}
-              style={{
-                background: "var(--surface-2)",
-                border: "1px solid var(--border)",
-                borderRadius: 12,
-                padding: "18px 20px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 10,
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 800,
-                  letterSpacing: "0.10em",
-                  color: "var(--accent)",
-                  background: "rgba(var(--accent-rgb),0.10)",
-                  borderRadius: 6,
-                  padding: "2px 8px",
-                  alignSelf: "flex-start",
-                }}
-              >
-                {item.icon}
-              </span>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-1)" }}>
-                {item.title}
-              </div>
-              <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--text-2)", margin: 0 }}>
-                {item.body}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Per-tool scope ─────────────────────────────────────── */}
-      <section style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-1)", margin: "0 0 8px" }}>
-            {copy.toolsTitle}
-          </h2>
-          <p style={{ fontSize: 15, color: "var(--text-2)", margin: 0, lineHeight: 1.7 }}>
-            {copy.toolsIntro}
-          </p>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {copy.tools.map((tool) => (
-            <div
-              key={tool.title}
-              style={{
-                background: "var(--surface-2)",
-                border: "1px solid var(--border)",
-                borderRadius: 14,
-                overflow: "hidden",
-              }}
-            >
-              {/* tool header */}
-              <div
-                style={{
-                  padding: "14px 20px",
-                  borderBottom: "1px solid var(--border)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: "0.06em",
-                    color: tool.color,
-                    background: `${tool.color}18`,
-                    borderRadius: 6,
-                    padding: "2px 9px",
-                  }}
-                >
-                  {tool.tag}
-                </span>
-                <span style={{ fontSize: 15, fontWeight: 700, color: "var(--text-1)" }}>
-                  {tool.title}
-                </span>
-              </div>
-
-              {/* solid + limit columns */}
-              <div className="vp-tool-columns">
-                <div className="vp-tool-col-solid">
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      letterSpacing: "0.07em",
-                      textTransform: "uppercase",
-                      color: "#22c55e",
-                      marginBottom: 12,
-                    }}
-                  >
-                    {copy.solidLabel}
-                  </div>
-                  <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
-                    {tool.solid.map((s, i) => (
-                      <li key={i} style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-2)", display: "flex", gap: 7, alignItems: "flex-start" }}>
-                        <span style={{ color: "#22c55e", flexShrink: 0, marginTop: 2 }}>✓</span>
-                        <span>{s}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="vp-tool-col-limit">
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      letterSpacing: "0.07em",
-                      textTransform: "uppercase",
-                      color: "#f59e0b",
-                      marginBottom: 12,
-                    }}
-                  >
-                    {copy.limitLabel}
-                  </div>
-                  <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
-                    {tool.limit.map((l, i) => (
-                      <li key={i} style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-2)", display: "flex", gap: 7, alignItems: "flex-start" }}>
-                        <span style={{ color: "#f59e0b", flexShrink: 0, marginTop: 2 }}>⚠</span>
-                        <span>{l}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Signal guide ──────────────────────────────────────── */}
-      <section style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-1)", margin: 0 }}>
-          {copy.signalTitle}
-        </h2>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {copy.signalItems.map((item) => {
-            const ts = TONE_STYLES[item.tone];
-            return (
-              <div
-                key={item.signal}
-                className="vp-signal-row"
-                style={{
-                  border: `1px solid ${ts.border}`,
-                }}
-              >
-                <div
-                  className="vp-signal-label"
-                  style={{
-                    background: ts.bg,
-                    borderRight: `1px solid ${ts.border}`,
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      background: ts.dot,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: ts.dot }}>
-                    {item.signal}
-                  </span>
-                </div>
-                <div className="vp-signal-body">
-                  <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: "var(--text-2)" }}>
-                    {item.meaning}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ── CTA ──────────────────────────────────────────────────── */}
-      <section
-        style={{
-          background: "var(--surface-2)",
-          border: "1px solid var(--border)",
-          borderRadius: 16,
-          padding: "36px 32px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 16,
-          textAlign: "center",
-        }}
-      >
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-1)", margin: 0 }}>
-          {copy.ctaTitle}
-        </h2>
-        <p style={{ fontSize: 15, lineHeight: 1.75, color: "var(--text-2)", margin: 0, maxWidth: 520 }}>
-          {copy.ctaBody}
-        </p>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", marginTop: 8 }}>
-          <Link
-            href="/primer"
-            style={{
-              display: "inline-block",
-              padding: "10px 22px",
-              borderRadius: 8,
-              background: "var(--accent)",
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: 14,
-              textDecoration: "none",
-            }}
-          >
-            {copy.ctaPrimer}
-          </Link>
-          <Link
-            href="/methods"
-            style={{
-              display: "inline-block",
-              padding: "10px 22px",
-              borderRadius: 8,
-              background: "var(--surface-3)",
-              color: "var(--text-1)",
-              fontWeight: 700,
-              fontSize: 14,
-              textDecoration: "none",
-              border: "1px solid var(--border)",
-            }}
-          >
-            {copy.ctaMethods}
-          </Link>
-          <Link
-            href="/grna"
-            style={{
-              display: "inline-block",
-              padding: "10px 22px",
-              borderRadius: 8,
-              background: "var(--surface-3)",
-              color: "var(--text-1)",
-              fontWeight: 700,
-              fontSize: 14,
-              textDecoration: "none",
-              border: "1px solid var(--border)",
-            }}
-          >
-            {copy.ctaGrna}
-          </Link>
-        </div>
-      </section>
-    </main>
+    <div className="academic-page validation-academic-page">
+      <AcademicHeader eyebrow={copy.eyebrow} title={copy.title} abstractLabel={copy.abstractLabel} abstract={copy.abstract} meta={[...copy.meta]} asideTitle={copy.asideTitle} aside={copy.aside} />
+      <div className="academic-document-grid">
+        <nav className="academic-toc" aria-label={copy.tocTitle}><span>{copy.tocTitle}</span>{copy.toc.map(([number, label, href]) => <a key={href} href={`#${href}`}><b>{number}</b>{label}</a>)}</nav>
+        <article className="academic-article">
+          <AcademicSection number="01" id="evidence" title={copy.evidenceTitle} lead={copy.evidenceLead}>
+            <Table head={copy.evidenceHead} rows={copy.evidenceRows} />
+            <h3>{copy.separationTitle}</h3><div className="academic-definition-row">{copy.separation.map(([title, body]) => <div key={title}><span>{title}</span><p>{body}</p></div>)}</div>
+          </AcademicSection>
+          <AcademicSection number="02" id="claims" title={copy.claimsTitle} lead={copy.claimsLead}>
+            <Table head={copy.claimsHead} rows={copy.claimsRows} />
+            <div className="academic-evidence-block"><h3>{copy.variabilityTitle}</h3><ul>{copy.variability.map((item) => <li key={item}>{item}</li>)}</ul><p>{zh ? "算法与数据库组件已有同行评议文献，但具体网站组合流程的可信度仍取决于实现细节和验证数据。" : "Algorithms and databases have peer-reviewed foundations, but confidence in this site's combined workflow still depends on implementation details and validation data."}<Cite ids={[2, 3, 4, 5, 8, 9]} /></p></div>
+          </AcademicSection>
+          <AcademicSection number="03" id="status" title={copy.statusTitle} lead={copy.statusLead}><Table head={zh ? ["状态", "页面实际表达", "下一步"] : ["Status", "What it actually means", "Next action"]} rows={copy.statusRows} /></AcademicSection>
+          <AcademicSection number="04" id="experimental" title={copy.experimentalTitle} lead={copy.experimentalLead}>
+            <div className="academic-validation-groups">{copy.validationGroups.map(([title, items]) => <section key={title}><h3>{title}</h3><ol>{items.map((item) => <li key={item}>{item}</li>)}</ol></section>)}</div>
+            <div className="academic-note-grid"><aside><span>{zh ? "qPCR 报告框架" : "qPCR reporting framework"}</span><p>{zh ? "MIQE 2.0 要求透明报告样本、反应、效率、动态范围、质控与数据分析；它比“选出一对引物”覆盖更完整的证据链。" : "MIQE 2.0 calls for transparent reporting of samples, reactions, efficiency, dynamic range, quality controls, and analysis—a much broader evidence chain than selecting a primer pair."}<Cite ids={[1]} /></p></aside><aside><span>{zh ? "CRISPR 脱靶" : "CRISPR off-targets"}</span><p>{zh ? "错配数量与位置会改变 Cas9 容忍度；GUIDE-seq 等细胞实验能发现计算方法遗漏的切割位点，因此高风险应用不能只依赖序列筛查。" : "Cas9 tolerance depends on mismatch number and position. Cell-based methods such as GUIDE-seq can detect cleavage sites missed computationally, so high-risk work cannot rely on sequence screening alone."}<Cite ids={[6, 7]} /></p></aside></div>
+          </AcademicSection>
+          <AcademicSection number="05" id="reproducibility" title={copy.reproTitle} lead={copy.reproLead}><Table head={copy.reproHead} rows={copy.reproRows} /></AcademicSection>
+          <AcademicSection number="06" id="current-status" title={copy.currentTitle} lead={copy.currentLead}>
+            <div className="academic-audit-list">{copy.currentItems.map(([title, body], index) => <div key={title}><span>{String(index + 1).padStart(2, "0")}</span><div><h3>{title}</h3><p>{body}</p></div></div>)}</div>
+            <p className="academic-caveat">{zh ? "化学安全条目采用 PubChem 等代表性来源，但真实操作必须回到当前产品 SDS；聚合数据库的存在不构成针对具体产品的安全保证。" : "Chemical-safety records use representative sources such as PubChem, but actual work must return to the current product SDS; an aggregated database is not a safety guarantee for a specific product."}<Cite ids={[10]} /></p>
+          </AcademicSection>
+          <ReferenceList title={copy.refsTitle} intro={copy.refsIntro} references={REFERENCES} />
+          <section className="academic-cta"><div><span>{zh ? "判读原则" : "Interpretation principle"}</span><h2>{copy.ctaTitle}</h2><p>{copy.ctaBody}</p></div><div><Link href="/methods">{copy.methods}</Link><Link href="/primer">{copy.primer}</Link></div></section>
+        </article>
+      </div>
+    </div>
   );
 }

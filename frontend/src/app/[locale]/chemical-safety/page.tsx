@@ -264,11 +264,6 @@ export default function ChemicalSafetyPage({
           <h1>{copy.title}</h1>
           <p>{copy.intro}</p>
         </div>
-        <aside className="chemical-hero-meta">
-          <span>{copy.heroMetric}</span>
-          <strong>{CHEMICAL_SAFETY_RECORDS.length} {copy.reagentUnit}</strong>
-          <p>{copy.heroBody}</p>
-        </aside>
       </section>
 
       <section className="chem-emergency-banner">
@@ -278,7 +273,6 @@ export default function ChemicalSafetyPage({
 
       <section className="chem-interaction-section">
         <header>
-          <span className="chemical-section-number">01</span>
           <div>
             <span className="lab-kicker">{copy.interactionKicker}</span>
             <h2>{copy.interactionTitle}</h2>
@@ -298,7 +292,7 @@ export default function ChemicalSafetyPage({
 
       <section className="chem-browser">
         <header className="chemical-library-header">
-          <div><span className="chemical-section-number">02</span><h2>{copy.searchLabel}</h2></div>
+          <div><h2>{copy.searchLabel}</h2></div>
           <span><strong>{records.length}</strong> {copy.results}</span>
         </header>
         <div className="chem-search-block">

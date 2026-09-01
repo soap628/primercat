@@ -1,520 +1,128 @@
+import { AcademicHeader, AcademicSection, Cite, ReferenceList, type AcademicReference } from "@/components/AcademicDocument";
 import { Link } from "@/navigation";
+
+const REFERENCES: AcademicReference[] = [
+  { id: 1, authors: "Morales J, et al.", year: "2022", title: "A joint NCBI and EMBL-EBI transcript set for clinical genomics and research", journal: "Nature", detail: "604:310–315.", doi: "10.1038/s41586-022-04558-8", href: "https://pubmed.ncbi.nlm.nih.gov/35388217/" },
+  { id: 2, authors: "O’Leary NA, et al.", year: "2016", title: "Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation", journal: "Nucleic Acids Research", detail: "44:D733–D745.", doi: "10.1093/nar/gkv1189", href: "https://pubmed.ncbi.nlm.nih.gov/26553804/" },
+  { id: 3, authors: "Untergasser A, et al.", year: "2012", title: "Primer3—new capabilities and interfaces", journal: "Nucleic Acids Research", detail: "40:e115.", doi: "10.1093/nar/gks596", href: "https://pubmed.ncbi.nlm.nih.gov/22730293/" },
+  { id: 4, authors: "Ye J, et al.", year: "2012", title: "Primer-BLAST: a tool to design target-specific primers for polymerase chain reaction", journal: "BMC Bioinformatics", detail: "13:134.", doi: "10.1186/1471-2105-13-134", href: "https://pubmed.ncbi.nlm.nih.gov/22708584/" },
+  { id: 5, authors: "Langmead B, Salzberg SL.", year: "2012", title: "Fast gapped-read alignment with Bowtie 2", journal: "Nature Methods", detail: "9:357–359.", doi: "10.1038/nmeth.1923", href: "https://pubmed.ncbi.nlm.nih.gov/22388286/" },
+  { id: 6, authors: "Camacho C, et al.", year: "2009", title: "BLAST+: architecture and applications", journal: "BMC Bioinformatics", detail: "10:421.", doi: "10.1186/1471-2105-10-421", href: "https://pubmed.ncbi.nlm.nih.gov/20003500/" },
+  { id: 7, authors: "Doench JG, et al.", year: "2016", title: "Optimized sgRNA design to maximize activity and minimize off-target effects of CRISPR-Cas9", journal: "Nature Biotechnology", detail: "34:184–191.", doi: "10.1038/nbt.3437", href: "https://pubmed.ncbi.nlm.nih.gov/26780180/" },
+  { id: 8, authors: "Hsu PD, et al.", year: "2013", title: "DNA targeting specificity of RNA-guided Cas9 nucleases", journal: "Nature Biotechnology", detail: "31:827–832.", doi: "10.1038/nbt.2647", href: "https://pubmed.ncbi.nlm.nih.gov/23873081/" },
+  { id: 9, authors: "Nishimasu H, et al.", year: "2018", title: "Engineered CRISPR-Cas9 nuclease with expanded targeting space", journal: "Science", detail: "361:1259–1262.", doi: "10.1126/science.aas9129", href: "https://pubmed.ncbi.nlm.nih.gov/30166441/" },
+  { id: 10, authors: "Zetsche B, et al.", year: "2015", title: "Cpf1 is a single RNA-guided endonuclease of a class 2 CRISPR-Cas system", journal: "Cell", detail: "163:759–771.", doi: "10.1016/j.cell.2015.09.038", href: "https://pubmed.ncbi.nlm.nih.gov/26422227/" },
+  { id: 11, authors: "Bustin SA, et al.", year: "2025", title: "MIQE 2.0: Revision of the Minimum Information for Publication of Quantitative Real-Time PCR Experiments Guidelines", journal: "Clinical Chemistry", detail: "71:634–651.", doi: "10.1093/clinchem/hvaf043", href: "https://pubmed.ncbi.nlm.nih.gov/40272429/" },
+  { id: 12, authors: "Kim S, et al.", year: "2025", title: "PubChem 2025 update", journal: "Nucleic Acids Research", detail: "53:D1516–D1525.", doi: "10.1093/nar/gkae1059", href: "https://pubmed.ncbi.nlm.nih.gov/39558165/" },
+];
 
 const COPY = {
   zh: {
-    badge: "工作原理",
-    title: "设计方法与计算流程",
-    intro:
-      "PrimerCat 提供 qPCR 引物、常规 PCR 引物、CRISPR gRNA 与 BLAST 序列比对。以下说明各工具的数据来源、计算步骤、输出内容与适用边界。",
-
-    whyTitle: "结果如何保持可追溯",
-    whyCards: [
-      {
-        title: "按规则选择参考模板",
-        body: "输入基因名称后，系统查询 NCBI RefSeq，并按 CDS 完整性和外显子数等规则选择参考转录本；结果页显示所用序列及选择依据。",
-      },
-      {
-        title: "排序依据逐项展示",
-        body: "引物或 gRNA 候选旁会显示 Tm、GC%、筛查状态、跨外显子信息等指标，用于解释当前排序。",
-      },
-      {
-        title: "筛查边界明确标注",
-        body: "结果页注明所用数据库、比对后端和未覆盖的风险，避免把转录本初筛误解为全基因组或实验验证。",
-      },
-    ],
-
-    bgTitle: "关键概念",
-    bgConcepts: [
-      {
-        tag: "qPCR",
-        color: "#22c55e",
-        title: "实时定量 PCR（qPCR）",
-        body: "qPCR 通过荧光染料或探针，在每个 PCR 循环实时监测扩增产物的积累量。荧光信号超过背景阈值时的循环数称为 Ct 值——Ct 越小，起始模板量越多。这使得 qPCR 成为检测基因表达量（mRNA 水平）的标准方法。",
-      },
-      {
-        tag: "RT-qPCR",
-        color: "#22c55e",
-        title: "RT-qPCR：从 mRNA 到 cDNA",
-        body: "检测基因表达时，先用逆转录酶将 RNA 转换为 cDNA，再以 cDNA 为模板进行 qPCR。基因组 DNA 是常见干扰源；跨外显子设计可降低风险，但仍需设置 no-RT 对照。",
-      },
-      {
-        tag: "引物设计",
-        color: "#3b82f6",
-        title: "Tm 和 GC%：候选引物的基础参数",
-        body: "Tm 反映引物–模板双链的热稳定性，常用于设定退火温度的起始范围；GC% 也会影响结合稳定性。PrimerCat 默认以 Tm 58–62°C、GC% 40–60% 作为设计目标，实际条件仍应结合聚合酶、缓冲液和实验体系优化。",
-      },
-      {
-        tag: "引物设计",
-        color: "#3b82f6",
-        title: "跨外显子设计与基因组 DNA 干扰",
-        body: "成熟 mRNA 已去除内含子，而基因组 DNA 保留内含子。将引物置于外显子连接处，或让引物对跨越较大内含子，可降低基因组 DNA 干扰；实际效果仍取决于引物位置、内含子长度和反应条件。",
-      },
-      {
-        tag: "引物设计",
-        color: "#3b82f6",
-        title: "发卡结构与引物二聚体",
-        body: "引物自身折叠形成的发卡结构（hairpin）会阻碍其与模板结合；两条引物相互配对形成的二聚体会竞争消耗引物，降低扩增效率。PrimerCat 通过 Primer3 的热力学模型在设计阶段筛除这类结构风险高的候选引物。",
-      },
-      {
-        tag: "CRISPR",
-        color: "#7c3aed",
-        title: "CRISPR-Cas9 如何编辑基因",
-        body: "guide RNA（gRNA，约 20 nt）通过碱基互补配对定位到基因组目标位点，引导 Cas9 核酸酶在 PAM 位点上游 3 bp 处切割双链 DNA。细胞修复时发生非同源末端连接（NHEJ，产生插入/缺失突变，用于基因敲除）或同源定向修复（HDR，用于精准替换）。",
-      },
-      {
-        tag: "CRISPR",
-        color: "#7c3aed",
-        title: "PAM 位点：Cas 蛋白识别 DNA 的钥匙",
-        body: "PAM（原型间隔子邻近基序）是紧邻 gRNA 靶序列的短核苷酸序列，是 Cas 蛋白识别并结合 DNA 的必要条件。SpCas9 需要 NGG，SpCas9-NG 放宽为 NG，Cas12a 识别靶序列 5' 端的 TTTV。PAM 位点密度决定了给定序列可设计的 gRNA 数量上限。",
-      },
-      {
-        tag: "分子生物学",
-        color: "#64748b",
-        title: "RefSeq：从基因名到参考序列",
-        body: "NCBI RefSeq 收录参考转录本（NM_ 编号）和蛋白序列（NP_ 编号）。同一基因可能对应多个转录本。PrimerCat 按 CDS 完整性和外显子数等规则选择设计模板，并记录转录本 ID 与选择依据。",
-      },
-    ],
-
-    qpcrTitle: "qPCR 引物设计",
-    qpcrIntro:
-      "输入基因名称，系统自动完成模板查找、引物生成、特异性初筛、综合排序，最后把推荐理由和设计依据一起展示给你。",
-    qpcrSteps: [
-      {
-        title: "1. 按规则选择参考转录本",
-        body: "系统从 NCBI RefSeq 数据库实时查询，筛选编码蛋白质的转录本，优先选 CDS 最完整、外显子最多的主要转录本作为设计模板。",
-      },
-      {
-        title: "2. 按约束条件批量生成候选",
-        body: "基于转录本序列，在 Tm、GC%、产物长度、发卡结构和二聚体风险的约束下批量生成引物，初步按评分过滤。",
-      },
-      {
-        title: "3. 特异性初筛（按可用后端）",
-        body: "配置了 hg38/mm10 本地索引时，候选引物由 Bowtie2 做基因组层面筛查；索引不可用时，系统将候选批量提交至 NCBI RefSeq RNA BLAST，并在结果中明确标注筛查范围。",
-      },
-      {
-        title: "4. 多维打分 + 推荐理由",
-        body: "引物按 Tm、GC%、当前特异性证据、跨外显子能力、二聚体风险五个维度综合排序。未完成远程筛查的候选不会获得特异性分。",
-      },
-    ],
-    qpcrReadTitle: "结果页包含",
-    qpcrReadItems: [
-      "本次使用的参考转录本及选择依据",
-      "每对引物的 Tm、GC%、产物大小、特异性状态",
-      "每对引物为什么排在当前位置的具体推荐理由",
-      "扩增子序列，可直接用于后续分析",
-    ],
-    qpcrBoundaryTitle: "需要了解的边界",
-    qpcrBoundaryBody:
-      "结果页会注明本次使用的是本地基因组 Bowtie2 还是 RefSeq RNA BLAST。只有前者覆盖完整参考基因组；后者属于转录本层面初筛。两者都不等同于实验室 PCR 验证。",
-
-    grnaTitle: "CRISPR gRNA 设计",
-    grnaIntro:
-      "输入基因名称或直接粘贴序列，系统扫描全部 PAM 位点、按活性打分排序，并根据当前可用后端执行脱靶风险初筛。",
-    grnaSteps: [
-      {
-        title: "1. 自动获取目标序列",
-        body: "输入基因名称，系统自动从 NCBI RefSeq 获取编码序列。也可以直接粘贴任意 DNA 序列，灵活适配不同场景。",
-      },
-      {
-        title: "2. 全序列 PAM 位点扫描",
-        body: "在正链和互补链上扫描全部 PAM 位点，支持 SpCas9（NGG）、SpCas9-NG（NG）、Cas12a（TTTV）三种核酸酶。",
-      },
-      {
-        title: "3. 活性评分排序",
-        body: "基于 GC 含量、种子区序列特征、3' 末端偏好等序列特征对每条 gRNA 打分，按预测活性排序，把最有潜力的候选排在前面。",
-      },
-      {
-        title: "4. 脱靶风险初筛（按可用后端）",
-        body: "配置本地基因组索引时执行全基因组候选匹配；否则使用 NCBI BLAST 进行基础筛查。结果会明确显示使用的后端、证据强度与命中详情。",
-      },
-    ],
-    grnaReadTitle: "结果页包含",
-    grnaReadItems: [
-      "按活性评分排序的全部候选 gRNA",
-      "每条 gRNA 的 GC%、PAM 序列、位置和链方向",
-      "脱靶筛查状态：低风险 / 中风险 / 高风险，附具体命中信息",
-      "使用了哪条参考序列（基因名模式下显示转录本 ID）",
-    ],
-    grnaBoundaryTitle: "需要了解的边界",
-    grnaBoundaryBody:
-      "活性分数基于序列特征估算，不是经实验验证的预测值。BLAST 回退模式不覆盖完整基因组；即使使用本地索引，正式 CRISPR 实验前仍建议进行更严格的脱靶分析和湿实验验证。",
-
-    sourceTitle: "数据来源",
-    sources: [
-      "NCBI RefSeq：转录本和模板序列（引物 + gRNA）",
-      "Primer3：qPCR 与常规 PCR 引物设计算法及热力学结构检查",
-      "Bowtie2 + hg38/mm10（配置后）：基因组层面筛查；NCBI BLAST：索引不可用时的转录本或序列相似性初筛",
-    ],
-
-    ctaTitle: "先理解证据范围，再使用计算结果",
-    ctaBody:
-      "PrimerCat 在结果页同时显示设计依据与局限。计算结果用于候选筛选和实验规划，不能替代实验验证。",
-    ctaPrimer: "设计 qPCR 引物",
-    ctaGrna: "设计 gRNA",
-    ctaValidation: "查看可信度说明",
+    eyebrow: "PRIMERCAT · 方法学说明", title: "计算方法、参数与适用范围", abstractLabel: "摘要",
+    abstract: "本文档说明 PrimerCat 如何选择参考序列、生成候选、执行数据库筛查并形成排序。所有阈值均对应当前实现；计算评分只用于候选间比较，不表示实验成功概率。",
+    meta: ["文档版本 1.0", "更新：2026-09-01", "适用：PrimerCat Web"], asideTitle: "阅读约定",
+    aside: "“设计”指按约束生成候选；“筛查”指在明确数据库与阈值下寻找相似命中；二者均不等于实验验证。",
+    tocTitle: "本文目录",
+    toc: [["01", "输入与参考序列", "inputs"], ["02", "qPCR 引物", "qpcr"], ["03", "常规 PCR 引物", "pcr"], ["04", "CRISPR gRNA", "crispr"], ["05", "BLAST 比对", "blast"], ["06", "实验室参考资料", "reference-data"], ["REF", "参考文献", "references"]],
+    scopeTitle: "输入与参考序列", scopeLead: "模板选择决定后续所有坐标、候选和筛查结论，因此系统把所用 accession 与选择理由作为结果的一部分。",
+    templateTitle: "基因名称模式", templateBody: "当前支持人和小鼠。系统在 NCBI Nucleotide 中检索 RefSeq mRNA，优先选择检索记录中的 MANE Select；若无 MANE Select，则在 NM_ 编码转录本中选择 CDS 最长者。设计窗口为 CDS 上下游各延伸 200 bp，并限制在 3,000 bp 内。",
+    templateLimit: "该规则只作用于本次实际取回的记录（最多检索 10 个 ID、读取前 5 条 GenBank 记录），不是对该基因全部异构体的穷尽比较。小鼠记录通常没有 MANE Select，因此更多依赖 CDS 长度回退规则。",
+    customTitle: "自定义序列模式", customBody: "输入序列经过去空白、转大写与字符检查。qPCR/PCR 允许 A、C、G、T、N；N 比例超过 10% 时拒绝设计。CRISPR 直接在提供的 DNA 序列上扫描，不推断其物种、基因组版本或基因座。",
+    qpcrTitle: "qPCR 引物设计", qpcrLead: "qPCR 流程由模板解析、Primer3 候选生成、可用后端筛查和五维启发式排序组成。", workflowLabel: "计算流程",
+    qpcrSteps: [["01", "候选生成", "Primer3 最多生成 30 对候选，并按 Primer3 pair penalty 由低到高预排序。"], ["02", "候选缩减", "仅筛查排序靠前的 max(2 × 请求返回数, 10) 对；因此后续排名针对该子集，不代表所有可能引物对。"], ["03", "特异性筛查", "本地参考基因组与 Bowtie2 可用时执行短序列端到端比对；否则回退到按物种过滤的 NCBI RefSeq RNA BLAST。"], ["04", "综合排序", "总分由 Tm、GC%、当前特异性证据、跨外显子状态和简化 3′ 互补风险组成，最高截断为 100。筛查失败时特异性项记 0，不把未知当作通过。"]],
+    paramsTitle: "默认设计约束", paramHead: ["参数", "当前值", "方法学含义"],
+    qpcrParams: [["引物长度", "18–25 nt；最优 20 nt", "用于 Primer3 候选生成"], ["Tm", "58–62 °C；最优 60 °C", "单条引物目标范围"], ["GC", "40–60%", "单条引物目标范围"], ["扩增子", "80–200 bp", "RT-qPCR 默认区间"], ["同聚核苷酸", "最多 4 nt", "PRIMER_MAX_POLY_X"], ["结构阈值", "self-any 45 °C；self-end 35 °C；hairpin 24 °C", "Primer3 热力学上限；引物对互补上限同为 45/35 °C"]],
+    scoreTitle: "排序分数不是成功率", scoreBody: "Tm 最高 30 分、GC 最高 20 分、特异性最高 30 分、跨外显子最高 19 分、简化二聚体项最高 10 分，总和截断至 100。该分数是 PrimerCat 内部的相对排序规则，没有经过独立数据集校准，不能解释为“成功率 92%”。",
+    specificityTitle: "两种筛查后端不可等同",
+    specificityRows: [["Bowtie2 本地索引", "参考基因组", "端到端；保留覆盖 ≥85%、≤2 个错配的命中；每条引物最多请求 10 个比对。", "可发现外显子外命中，但仍受参考组装、索引版本和命中上限限制。"], ["NCBI RefSeq RNA BLAST", "物种过滤的参考转录本", "短序列 BLAST；每条引物最多 5 个 hits；统计覆盖 ≥85% 的 HSP。", "只支持转录本层面初筛，不能证明全基因组唯一。"]],
+    pcrTitle: "常规 PCR 引物设计", pcrLead: "常规 PCR 使用用户提供的单条 DNA 模板。预设只改变参数起点，用户提交时的实际参数才是本次计算依据。",
+    pcrSteps: [["设计", "Primer3 使用 18–25 nt、GC 40–60%、最多 4 个连续相同碱基及与 qPCR 相同的热力学结构上限。标准、菌落 PCR、高保真预设的默认产物区间分别为 150–800、200–1,500、500–3,000 bp。"], ["目标区间", "若用户给出 1-based 闭区间，系统要求返回的扩增子完整包含该区域；结果同时报告引物与扩增子的模板坐标。"], ["退火建议", "显示值是简单起始估计：较低引物 Tm − 3 °C；建议梯度为较低 Tm − 5 至 −1 °C。它不是针对具体聚合酶/缓冲液拟合的热循环条件。"], ["可选特异性筛查", "两条引物分别在 NCBI nt 中检索物种过滤的 RefSeq genomic 记录，再配对同一 accession 上方向相反、间距合规的命中。"]],
+    pcrCriteriaTitle: "配对筛查判定", pcrCriteria: ["单条引物查询覆盖率 ≥85%", "总错配 ≤3", "引物 3′ 端最后 3 nt 必须完全匹配", "默认扩增子范围 50–5,000 bp", "每条引物最多检索 100 个 hits；页面最多展示 10 个配对记录"],
+    pcrLimit: "“找到 1 个配对记录”只描述本次 BLAST 返回集。结果达到 hit 上限时会标记可能截断；该流程不是 in-silico PCR 的全基因组穷举，也不检查常见变异位点。",
+    crisprTitle: "CRISPR gRNA 设计", crisprLead: "系统先在正链与反向互补链扫描 PAM，再将序列特征分数与脱靶筛查结果分开计算，最后优先按脱靶标签、其次按活性启发分排序。",
+    pamHead: ["核酸酶", "PAM", "候选结构", "实现说明"], pamRows: [["SpCas9", "NGG（3′）", "20 nt + PAM", "双链扫描"], ["SpCas9-NG", "NG（3′）", "20 nt + PAM", "放宽 PAM，不代表与野生型具有相同活性"], ["Cas12a", "TTTV（5′）", "PAM + 20 nt", "V = A/C/G"]],
+    activityTitle: "活性分数", activityBody: "SpCas9/SpCas9-NG 分数受 Doench Rule Set 2 启发，但当前代码只使用缩减后的位点碱基权重、GC 区间、poly-T/poly-G、种子区同聚序列与末端偏好；Cas12a 使用另一套简化规则。它不是原论文模型的完整复现，也未考虑染色质可及性、细胞类型、递送方式或表达系统。",
+    offTargetTitle: "脱靶筛查", offTargetRows: [["本地 Bowtie2", "参考基因组", "20 nt 端到端比对、默认 ≤3 错配、最多 32 个比对；随后检查候选位点是否具有对应的规范 PAM。可选目标坐标用于锚定 on-target。"], ["NCBI nt BLAST 回退", "物种过滤的 nt", "短查询、最多 15 个 hits；过滤有 gap、长度不足与 >4 错配的 HSP。若未提供可用基因座，最强命中被启发式视为 on-target。"]],
+    crisprLimit: "Bowtie2/BLAST 的相似序列筛查不能预测真实切割，也不覆盖 bulge、结构变异、样本特异变异和细胞状态。低风险标签是候选优先级，不是生物安全结论。",
+    blastTitle: "BLAST 序列比对", blastLead: "BLAST 页面将查询提交给 NCBI，支持 blastn、blastp、blastx、tblastn 与 nt、nr、RefSeq RNA、RefSeq protein、Swiss-Prot 数据库的兼容组合。",
+    blastBody: "请求携带用户选择的 E-value 阈值和 hit 数量（1–50）。每个数据库 hit 仅展示 bit score 最高的 HSP，并报告 E-value、raw/bit score、identity、gap、坐标和 accession；页面中的序列片段限制为 300 个字符。BLAST 是局部相似性检索，不自动给出同源关系、功能注释、系统发育关系或统计多重检验结论。",
+    referenceTitle: "实验室参考资料的方法边界", referenceLead: "溶液、Protocol 与试剂安全属于人工整理的参考资料，与实时计算/数据库检索的证据性质不同。",
+    refRows: [["溶液配制", "按摩尔浓度、稀释倍数或百分浓度执行确定性换算；常用配方按目标终体积线性缩放。", "配方中的 pH、温度、纯度、水合物和加样顺序仍以原始来源与实验室 SOP 为准。"], ["Protocol", "把常见工作流整理为适用范围、材料、步骤、质控点和安全提示。", "属于研究参考，不是经过本站实验验证的标准操作规程。"], ["化学品安全", "静态条目汇总代表性 PubChem LCSS/GHS 信息并链接来源。", "不是实时法规数据库；纯物质、浓度、混合物和供应商会改变分类，实际操作以瓶身和当前 SDS 为准。"]],
+    referencesTitle: "参考文献", referencesIntro: "文献用于说明算法、数据库与实验验证框架。引用某篇论文不表示 PrimerCat 完整复现其全部模型。",
+    ctaTitle: "将方法说明与结果记录一起保存", ctaBody: "复现实验时至少记录输入序列或 accession、物种、参数、筛查后端、数据库范围、运行日期与候选序列。", validation: "查看可信度与验证", primer: "设计 qPCR 引物",
   },
   en: {
-    badge: "How It Works",
-    title: "Design methods and computational workflow",
-    intro:
-      "PrimerCat provides qPCR primer design, endpoint PCR primer design, CRISPR gRNA design, and BLAST sequence search. This page documents each tool's data sources, computational steps, outputs, and scope boundaries.",
-
-    whyTitle: "How results remain traceable",
-    whyCards: [
-      {
-        title: "Selects a reference template by stated rules",
-        body: "After a gene name is entered, the system queries NCBI RefSeq and selects a transcript using CDS completeness, exon count, and related rules. The selected sequence and rationale are recorded.",
-      },
-      {
-        title: "Ranking evidence is shown item by item",
-        body: "Primer and gRNA candidates display Tm, GC%, screening status, exon-spanning information, and other metrics used in the current ranking.",
-      },
-      {
-        title: "Scope boundaries are stated clearly",
-        body: "Each result identifies the database, alignment backend, and uncovered risks so transcript-level screening is not mistaken for genome-wide or experimental validation.",
-      },
-    ],
-
-    bgTitle: "Key concepts",
-    bgConcepts: [
-      {
-        tag: "qPCR",
-        color: "#22c55e",
-        title: "Real-time quantitative PCR (qPCR)",
-        body: "qPCR monitors amplicon accumulation in real time using a fluorescent dye or probe. The cycle at which fluorescence crosses a background threshold is called the Ct value — the lower the Ct, the more starting template was present. This makes qPCR the standard method for measuring gene expression (mRNA levels).",
-      },
-      {
-        tag: "RT-qPCR",
-        color: "#22c55e",
-        title: "RT-qPCR: from mRNA to cDNA",
-        body: "For expression analysis, RNA is reverse-transcribed into cDNA before qPCR. Genomic DNA is a common source of interference; exon-spanning design can reduce that risk, but a no-RT control is still required.",
-      },
-      {
-        tag: "Primer Design",
-        color: "#3b82f6",
-        title: "Tm and GC%: baseline primer parameters",
-        body: "Tm reflects primer–template duplex stability and helps define a starting annealing-temperature range; GC% also affects binding stability. PrimerCat uses Tm 58–62°C and GC% 40–60% as default design targets. Actual conditions should be optimised for the polymerase, buffer, and assay system.",
-      },
-      {
-        tag: "Primer Design",
-        color: "#3b82f6",
-        title: "Exon-spanning design and genomic-DNA interference",
-        body: "Mature mRNA lacks introns while genomic DNA retains them. A primer across an exon junction, or a pair spanning a sufficiently large intron, can reduce genomic-DNA interference. Performance still depends on primer placement, intron length, and assay conditions.",
-      },
-      {
-        tag: "Primer Design",
-        color: "#3b82f6",
-        title: "Hairpins and primer dimers",
-        body: "A hairpin forms when a primer folds back on itself, blocking template binding. Primer dimers form when two primers hybridise to each other, consuming the primers and reducing yield. PrimerCat uses Primer3's thermodynamic models to screen out high-risk candidates at the design stage.",
-      },
-      {
-        tag: "CRISPR",
-        color: "#7c3aed",
-        title: "How CRISPR-Cas9 edits a gene",
-        body: "A guide RNA (~20 nt) base-pairs with the genomic target and recruits Cas9 to cut both DNA strands 3 bp upstream of the PAM site. Repair by non-homologous end joining (NHEJ) introduces insertions/deletions for gene knockout; homology-directed repair (HDR) enables precise sequence substitution.",
-      },
-      {
-        tag: "CRISPR",
-        color: "#7c3aed",
-        title: "PAM sites: how Cas proteins find DNA",
-        body: "The PAM (protospacer adjacent motif) is a short DNA sequence adjacent to the target site that is required for Cas binding. SpCas9 requires NGG; SpCas9-NG relaxes this to NG; Cas12a recognises TTTV on the 5′ side of the target. PAM density sets the ceiling on how many guides can be designed for any given sequence.",
-      },
-      {
-        tag: "Molecular Biology",
-        color: "#64748b",
-        title: "RefSeq: from gene name to reference sequence",
-        body: "NCBI RefSeq provides reference transcripts (NM_ accessions) and proteins (NP_ accessions). A gene may have multiple transcripts. PrimerCat selects a design template using CDS completeness, exon count, and related rules, then records the transcript ID and rationale.",
-      },
-    ],
-
-    qpcrTitle: "qPCR Primer Design",
-    qpcrIntro:
-      "Enter a gene name and the system handles transcript selection, primer generation, specificity screening, and ranked output — with the design rationale on the same page.",
-    qpcrSteps: [
-      {
-        title: "1. Select a reference transcript by rule",
-        body: "The system queries NCBI RefSeq in real time, filters protein-coding transcripts, and selects a design template using CDS completeness, exon count, and related rules.",
-      },
-      {
-        title: "2. Generate candidates under design constraints",
-        body: "Primers are generated from the transcript sequence under Tm, GC%, product size, hairpin, and dimer constraints, then pre-filtered by penalty score.",
-      },
-      {
-        title: "3. Specificity screening with the available backend",
-        body: "When an hg38/mm10 local index is configured, Bowtie2 provides genome-level screening. Otherwise, candidates are batched into an NCBI RefSeq RNA BLAST request and the narrower transcript-level scope is labeled in the result.",
-      },
-      {
-        title: "4. Multi-factor ranking with rationale",
-        body: "Primers are ranked across five dimensions — Tm, GC%, available specificity evidence, exon-spanning design, and dimer risk. Candidates with an incomplete remote screen receive no specificity points.",
-      },
-    ],
-    qpcrReadTitle: "Every result page includes",
-    qpcrReadItems: [
-      "Which reference transcript was used and why",
-      "Tm, GC%, product size, and specificity status for each primer pair",
-      "The specific reason each pair is ranked where it is",
-      "Amplicon sequence ready for downstream use",
-    ],
-    qpcrBoundaryTitle: "Scope boundary",
-    qpcrBoundaryBody:
-      "The result page states whether local-genome Bowtie2 or RefSeq RNA BLAST was used. Only the former covers the full reference genome; the latter is transcript-level screening. Neither is equivalent to wet-lab PCR validation.",
-
-    grnaTitle: "CRISPR gRNA Design",
-    grnaIntro:
-      "Enter a gene name or paste a sequence directly. The system scans all PAM sites, ranks candidates by predicted activity, and screens off-target risk using whichever backend is currently available.",
-    grnaSteps: [
-      {
-        title: "1. Automatically fetch the target sequence",
-        body: "Enter a gene name and the system fetches the coding sequence from NCBI RefSeq automatically. You can also paste any DNA sequence directly for full flexibility.",
-      },
-      {
-        title: "2. Full-sequence PAM site scan",
-        body: "Both strands are scanned for all valid PAM sites. Supports SpCas9 (NGG), SpCas9-NG (NG), and Cas12a (TTTV) in the same interface.",
-      },
-      {
-        title: "3. Activity scoring and ranking",
-        body: "Each guide is scored on GC content, seed-region sequence features, and 3′ nucleotide preferences. Candidates are ranked so the most promising guides appear first.",
-      },
-      {
-        title: "4. Off-target screening with the available backend",
-        body: "A configured local-genome index enables genome-wide candidate matching; otherwise, NCBI BLAST provides a basic screen. The result identifies the backend, evidence strength, and supporting hits.",
-      },
-    ],
-    grnaReadTitle: "Every result page includes",
-    grnaReadItems: [
-      "All candidate gRNAs ranked by predicted activity score",
-      "GC%, PAM sequence, position, and strand for each guide",
-      "Off-target risk label (Low / Medium / High) with supporting hit details",
-      "Which reference sequence was used (transcript ID shown in gene-name mode)",
-    ],
-    grnaBoundaryTitle: "Scope boundary",
-    grnaBoundaryBody:
-      "Activity scores are sequence-feature estimates, not validated wet-lab predictions. BLAST fallback mode does not cover the complete genome; even with a local index, formal CRISPR work still requires rigorous off-target analysis and wet-lab confirmation.",
-
-    sourceTitle: "Data sources",
-    sources: [
-      "NCBI RefSeq: transcript and template sequences (primers + gRNA)",
-      "Primer3: qPCR and endpoint PCR primer design plus thermodynamic structure checks",
-      "Bowtie2 + hg38/mm10 (when configured): genome-level screening; NCBI BLAST: transcript or sequence-similarity screening when an index is unavailable",
-    ],
-
-    ctaTitle: "Understand the evidence before using the output",
-    ctaBody:
-      "PrimerCat shows design evidence and limitations together. Computational results support candidate selection and experiment planning; they do not replace experimental validation.",
-    ctaPrimer: "Design qPCR Primers",
-    ctaGrna: "Design gRNAs",
-    ctaValidation: "View Confidence Scope",
+    eyebrow: "PRIMERCAT · METHODS NOTE", title: "Computational methods, parameters, and scope", abstractLabel: "Abstract",
+    abstract: "This document describes how PrimerCat selects reference sequences, generates candidates, performs database screens, and ranks outputs. Thresholds reflect the current implementation; scores compare candidates and are not probabilities of experimental success.",
+    meta: ["Document v1.0", "Updated 2026-09-01", "Applies to PrimerCat Web"], asideTitle: "Reading convention", aside: "Design means candidate generation under constraints. Screening means searching a stated database under stated thresholds. Neither constitutes experimental validation.",
+    tocTitle: "Contents", toc: [["01", "Inputs & references", "inputs"], ["02", "qPCR primers", "qpcr"], ["03", "Endpoint PCR primers", "pcr"], ["04", "CRISPR gRNA", "crispr"], ["05", "BLAST search", "blast"], ["06", "Laboratory references", "reference-data"], ["REF", "References", "references"]],
+    scopeTitle: "Inputs and reference sequences", scopeLead: "Template choice determines every downstream coordinate, candidate, and screening statement, so the selected accession and rationale are part of the result.",
+    templateTitle: "Gene-name mode", templateBody: "Human and mouse are currently supported. RefSeq mRNAs are retrieved from NCBI Nucleotide. A MANE Select record is preferred when present; otherwise the NM_ coding transcript with the longest CDS is selected. The working window extends the CDS by 200 bp on each side and is capped at 3,000 bp.",
+    templateLimit: "The rule applies only to records retrieved for that request (up to 10 IDs; the first five GenBank records are read), not an exhaustive comparison of every isoform. Mouse records generally lack MANE Select and therefore rely more often on the longest-CDS fallback.",
+    customTitle: "Custom-sequence mode", customBody: "Whitespace is removed, text is uppercased, and characters are validated. qPCR/PCR accepts A, C, G, T, and N and rejects templates with >10% N. CRISPR scans the supplied DNA directly and does not infer its species, genome assembly, or locus.",
+    qpcrTitle: "qPCR primer design", qpcrLead: "The qPCR pipeline combines template resolution, Primer3 generation, backend-dependent screening, and a five-component heuristic rank.", workflowLabel: "Computational workflow",
+    qpcrSteps: [["01", "Candidate generation", "Primer3 generates up to 30 pairs and pre-ranks them by ascending pair penalty."], ["02", "Candidate reduction", "Only the top max(2 × requested return count, 10) pairs are screened; the final rank therefore applies to this subset, not every possible pair."], ["03", "Specificity screen", "A local reference genome plus Bowtie2 is used when available; otherwise the system falls back to species-filtered NCBI RefSeq RNA BLAST."], ["04", "Composite rank", "Tm, GC%, available specificity evidence, exon spanning, and a simplified 3′ complementarity check are combined. Failed screening contributes zero specificity points rather than treating unknown evidence as a pass."]],
+    paramsTitle: "Default design constraints", paramHead: ["Parameter", "Current value", "Methodological role"], qpcrParams: [["Primer length", "18–25 nt; optimum 20 nt", "Primer3 candidate generation"], ["Tm", "58–62 °C; optimum 60 °C", "Per-primer target range"], ["GC", "40–60%", "Per-primer target range"], ["Amplicon", "80–200 bp", "Default RT-qPCR interval"], ["Homopolymer", "Maximum 4 nt", "PRIMER_MAX_POLY_X"], ["Structure ceilings", "self-any 45 °C; self-end 35 °C; hairpin 24 °C", "Primer3 thermodynamic ceilings; pair complementarity uses 45/35 °C"]],
+    scoreTitle: "The rank is not a success probability", scoreBody: "Tm contributes up to 30 points, GC up to 20, specificity up to 30, exon spanning up to 19, and simplified dimer risk up to 10; the sum is capped at 100. This is an internal relative-ranking rule that has not been calibrated on an independent validation set and must not be read as “92% success.”",
+    specificityTitle: "The two screening backends are not equivalent", specificityRows: [["Local Bowtie2 index", "Reference genome", "End-to-end; retains hits with ≥85% coverage and ≤2 mismatches; up to 10 alignments requested per primer.", "Can detect non-exonic hits, but remains limited by assembly, index version, and hit cap."], ["NCBI RefSeq RNA BLAST", "Species-filtered reference transcripts", "Short-query BLAST; up to five hits per primer; HSPs with ≥85% coverage are evaluated.", "Transcript-level preliminary screening only; it cannot establish genome-wide uniqueness."]],
+    pcrTitle: "Endpoint PCR primer design", pcrLead: "Endpoint PCR uses a single user-provided DNA template. Presets only initialise the controls; the submitted values define the run.",
+    pcrSteps: [["Design", "Primer3 uses 18–25 nt, GC 40–60%, no more than four identical consecutive bases, and the same thermodynamic ceilings as qPCR. Standard, colony-PCR, and high-fidelity presets start at 150–800, 200–1,500, and 500–3,000 bp."], ["Target interval", "When a 1-based closed interval is supplied, the returned amplicon must contain it. Primer and amplicon template coordinates are reported."], ["Annealing guidance", "The displayed starting estimate is lower primer Tm − 3 °C; the gradient is lower Tm − 5 to −1 °C. It is not fitted to a particular polymerase or buffer."], ["Optional specificity screen", "Each primer is searched against species-filtered RefSeq genomic records in NCBI nt, then compatible opposite-strand hits on the same accession are paired."]],
+    pcrCriteriaTitle: "Pair-screen criteria", pcrCriteria: ["Query coverage ≥85%", "Total mismatches ≤3", "Exact match across the final three 3′ nucleotides", "Default amplicon window 50–5,000 bp", "Up to 100 hits per primer; up to 10 paired records displayed"], pcrLimit: "“One paired record” describes only the returned BLAST set. A truncation flag is shown when the hit cap is reached. This is not an exhaustive whole-genome in-silico PCR and common variants are not checked.",
+    crisprTitle: "CRISPR gRNA design", crisprLead: "PAM candidates are scanned on both strands. Sequence-feature activity and off-target screening are computed separately; final order prioritises the off-target label, then the activity heuristic.",
+    pamHead: ["Nuclease", "PAM", "Candidate", "Implementation"], pamRows: [["SpCas9", "NGG (3′)", "20 nt + PAM", "Both-strand scan"], ["SpCas9-NG", "NG (3′)", "20 nt + PAM", "Relaxed PAM does not imply wild-type-equivalent activity"], ["Cas12a", "TTTV (5′)", "PAM + 20 nt", "V = A/C/G"]],
+    activityTitle: "Activity score", activityBody: "The SpCas9/SpCas9-NG score is inspired by Doench Rule Set 2 but the implementation uses a reduced set of positional weights plus GC bands, poly-T/poly-G, seed homopolymers, and terminal preferences. Cas12a uses a separate simplified rule set. This is not a complete reproduction of the published model and excludes chromatin accessibility, cell type, delivery, and expression system.",
+    offTargetTitle: "Off-target screen", offTargetRows: [["Local Bowtie2", "Reference genome", "20-nt end-to-end alignment, ≤3 mismatches by default, up to 32 alignments; candidate loci are then checked for the appropriate canonical PAM. Optional target coordinates anchor the on-target locus."], ["NCBI nt BLAST fallback", "Species-filtered nt", "Short query, up to 15 hits; gapped, short, and >4-mismatch HSPs are excluded. Without a usable locus, the strongest hit is heuristically treated as on-target."]],
+    crisprLimit: "Bowtie2/BLAST sequence-similarity screening does not predict cleavage and omits bulges, structural variants, sample-specific variants, and cell state. A low-risk label is a prioritisation aid, not a biosafety conclusion.",
+    blastTitle: "BLAST sequence search", blastLead: "The BLAST page submits requests to NCBI and supports compatible combinations of blastn, blastp, blastx, and tblastn with nt, nr, RefSeq RNA, RefSeq protein, and Swiss-Prot.", blastBody: "The request carries the selected E-value and hit count (1–50). For each database hit, only the highest-bit-score HSP is displayed with E-value, raw/bit score, identity, gaps, coordinates, and accession; displayed query/subject strings are capped at 300 characters. A local-alignment search does not by itself establish homology, function, phylogeny, or multiple-testing conclusions.",
+    referenceTitle: "Method boundaries for laboratory references", referenceLead: "Solutions, protocols, and safety records are curated reference material and have a different evidence character from live computation or database search.",
+    refRows: [["Solution preparation", "Deterministic molarity, dilution, or percentage calculations; curated recipes scale linearly to final volume.", "pH, temperature, purity, hydrate state, and addition order remain governed by the primary source and laboratory SOP."], ["Protocols", "Common workflows are structured by applicability, materials, steps, quality controls, and safety notes.", "Research reference only; not a standard operating procedure experimentally validated by PrimerCat."], ["Chemical safety", "Static records summarise representative PubChem LCSS/GHS information and link to sources.", "Not a live regulatory database. Form, concentration, mixture, and supplier alter classification; the container label and current SDS govern actual work."]],
+    referencesTitle: "References", referencesIntro: "These sources document algorithms, databases, and validation frameworks. Citation does not imply that PrimerCat reproduces every part of a published model.",
+    ctaTitle: "Save the method context with each result", ctaBody: "For reproducibility, record at least the input sequence or accession, species, parameters, screening backend, database scope, run date, and candidate sequences.", validation: "Confidence & validation", primer: "Design qPCR primers",
   },
 } as const;
 
+function Table({ head, rows }: { head: readonly string[]; rows: readonly (readonly string[])[] }) {
+  return <div className="academic-table-wrap"><table className="academic-table"><thead><tr>{head.map((cell) => <th key={cell}>{cell}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row[0]}>{row.map((cell, index) => index === 0 ? <th key={cell}>{cell}</th> : <td key={cell}>{cell}</td>)}</tr>)}</tbody></table></div>;
+}
+
 export default function MethodsPage({ params: { locale } }: { params: { locale: string } }) {
   const copy = locale === "zh" ? COPY.zh : COPY.en;
-
-  const heroAsideTitle = locale === "zh" ? "四项工具，一套可追溯流程" : "Four tools, one traceable workflow";
-  const heroAsideBody = locale === "zh"
-    ? "qPCR 引物、常规 PCR 引物、CRISPR gRNA 与 BLAST 比对均显示计算依据和结论边界。"
-    : "qPCR primers, endpoint PCR primers, CRISPR gRNAs, and BLAST alignment. Each tool returns its reasoning and scope boundary alongside the results.";
-  const heroMetricLabel = locale === "zh" ? "核心流程" : "Core Flow";
-  const heroMetricValue = "RefSeq → Design → Screen → Rank";
-  const heroMetricBody = locale === "zh"
-    ? "检索模板、按约束生成候选、执行初筛并展示排序依据。"
-    : "Auto-fetch a template, design under constraints, run a first-pass screen, return the rationale.";
-
+  const zh = locale === "zh";
   return (
-    <div className="story-page methods-page-v6">
-      <section
-        className="story-hero"
-        style={{
-          padding: "34px clamp(22px, 4vw, 40px)",
-          borderRadius: 34,
-          background:
-            "radial-gradient(circle at top right, rgba(83,245,166,0.08), transparent 28%), linear-gradient(135deg, #0a1628 0%, #0d2238 58%, #0f3460 100%)",
-          color: "#fff",
-          boxShadow: "var(--shadow-xl)",
-        }}
-      >
-        <div className="story-hero-grid">
-          <div className="story-hero-panel">
-            <div className="story-kicker">{copy.badge}</div>
-            <h1 className="story-display" style={{ margin: "16px 0 14px", maxWidth: 920 }}>
-              {copy.title}
-            </h1>
-            <p className="story-copy" style={{ color: "rgba(255,255,255,0.84)", maxWidth: 920 }}>{copy.intro}</p>
-          </div>
-
-          <aside className="story-hero-aside">
-            <div className="story-mini-label">{heroAsideTitle}</div>
-            <div className="story-mini-body" style={{ marginTop: 10 }}>{heroAsideBody}</div>
-            <div className="story-mini-metric">
-              <div className="story-mini-label">{heroMetricLabel}</div>
-              <div className="story-mini-value" style={{ fontSize: 13, letterSpacing: "0.01em" }}>{heroMetricValue}</div>
-              <div className="story-mini-body">{heroMetricBody}</div>
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.04em", color: "var(--text-1)" }}>{copy.whyTitle}</div>
-        <div className="story-card-grid">
-          {copy.whyCards.map((card) => (
-            <div key={card.title} className="tool-card story-card">
-              <div className="story-card-title">{card.title}</div>
-              <p className="story-card-copy">{card.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Background Knowledge ─────────────────────────────────────── */}
-      <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.04em", color: "var(--text-1)" }}>{copy.bgTitle}</div>
-        <div className="story-card-grid bg-concepts-grid">
-          {copy.bgConcepts.map((concept) => (
-            <div key={concept.title} className="tool-card story-card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{
-                  fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
-                  color: concept.color, background: `${concept.color}18`,
-                  padding: "2px 8px", borderRadius: 20, border: `1px solid ${concept.color}40`,
-                }}>
-                  {concept.tag}
-                </span>
-              </div>
-              <div className="story-card-title">{concept.title}</div>
-              <p className="story-card-copy">{concept.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── qPCR Primer Design ────────────────────────────────────────── */}
-      <section
-        className="story-surface story-split"
-        style={{ padding: "24px clamp(20px, 4vw, 30px)" }}
-      >
-        <div className="story-column">
-          <div style={{ maxWidth: 920, marginBottom: 6 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 10 }}>
-              qPCR
-            </div>
-            <h2 style={{ fontSize: 30, letterSpacing: "-0.04em", color: "var(--text-1)", marginBottom: 10 }}>{copy.qpcrTitle}</h2>
-            <p style={{ fontSize: 14, lineHeight: 1.85, color: "var(--text-2)" }}>{copy.qpcrIntro}</p>
-          </div>
-          <div className="story-column">
-            {copy.qpcrSteps.map((step) => (
-              <div key={step.title} className="tool-card story-card">
-                <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)", marginBottom: 6 }}>{step.title}</div>
-                <p className="story-card-copy">{step.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="story-column">
-          <div className="tool-card story-card">
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 10 }}>
-              {copy.qpcrReadTitle}
-            </div>
-            <div className="story-bullet-list">
-              {copy.qpcrReadItems.map((item) => (
-                <div key={item} className="story-bullet">{item}</div>
-              ))}
-            </div>
-          </div>
-
-          <div className="tool-card story-note-card">
-            <div className="story-note-title">{copy.qpcrBoundaryTitle}</div>
-            <p style={{ fontSize: 13, lineHeight: 1.8, color: "var(--text-2)", margin: 0 }}>{copy.qpcrBoundaryBody}</p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── CRISPR gRNA Design ────────────────────────────────────────── */}
-      <section
-        className="story-surface story-split"
-        style={{ padding: "24px clamp(20px, 4vw, 30px)" }}
-      >
-        <div className="story-column">
-          <div style={{ maxWidth: 920, marginBottom: 6 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--grna-color, #7c3aed)", marginBottom: 10 }}>
-              CRISPR
-            </div>
-            <h2 style={{ fontSize: 30, letterSpacing: "-0.04em", color: "var(--text-1)", marginBottom: 10 }}>{copy.grnaTitle}</h2>
-            <p style={{ fontSize: 14, lineHeight: 1.85, color: "var(--text-2)" }}>{copy.grnaIntro}</p>
-          </div>
-          <div className="story-column">
-            {copy.grnaSteps.map((step) => (
-              <div key={step.title} className="tool-card story-card">
-                <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)", marginBottom: 6 }}>{step.title}</div>
-                <p className="story-card-copy">{step.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="story-column">
-          <div className="tool-card story-card">
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--grna-color, #7c3aed)", marginBottom: 10 }}>
-              {copy.grnaReadTitle}
-            </div>
-            <div className="story-bullet-list">
-              {copy.grnaReadItems.map((item) => (
-                <div key={item} className="story-bullet">{item}</div>
-              ))}
-            </div>
-          </div>
-
-          <div className="tool-card story-note-card">
-            <div className="story-note-title">{copy.grnaBoundaryTitle}</div>
-            <p style={{ fontSize: 13, lineHeight: 1.8, color: "var(--text-2)", margin: 0 }}>{copy.grnaBoundaryBody}</p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Data Sources ─────────────────────────────────────────────── */}
-      <section
-        className="story-surface"
-        style={{ padding: "20px clamp(20px, 4vw, 30px)" }}
-      >
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: 12 }}>
-          {copy.sourceTitle}
-        </div>
-        <div className="story-card-grid">
-          {copy.sources.map((item) => (
-            <div key={item} className="story-card">
-              <div className="story-card-copy">{item}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── CTA ──────────────────────────────────────────────────────── */}
-      <section
-        className="story-cta-panel"
-        style={{
-          padding: "26px clamp(20px, 4vw, 30px)",
-          background: "linear-gradient(135deg, #0b1e3e, #15324b)",
-          color: "#fff",
-        }}
-      >
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", marginBottom: 10 }}>
-          {locale === "zh" ? "设计原则" : "Design Principle"}
-        </div>
-        <div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1.15, letterSpacing: "-0.03em", marginBottom: 12 }}>{copy.ctaTitle}</div>
-        <p style={{ fontSize: 14, lineHeight: 1.85, color: "rgba(255,255,255,0.78)", maxWidth: 760 }}>{copy.ctaBody}</p>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
-          <Link href="/primer">
-            <button className="hero-btn-primary">{copy.ctaPrimer}</button>
-          </Link>
-          <Link href="/grna">
-            <button className="hero-btn-secondary">{copy.ctaGrna}</button>
-          </Link>
-          <Link href="/validation">
-            <button className="hero-btn-secondary">{copy.ctaValidation}</button>
-          </Link>
-        </div>
-      </section>
+    <div className="academic-page methods-academic-page">
+      <AcademicHeader eyebrow={copy.eyebrow} title={copy.title} abstractLabel={copy.abstractLabel} abstract={copy.abstract} meta={[...copy.meta]} asideTitle={copy.asideTitle} aside={copy.aside} />
+      <div className="academic-document-grid">
+        <nav className="academic-toc" aria-label={copy.tocTitle}><span>{copy.tocTitle}</span>{copy.toc.map(([number, label, href]) => <a key={href} href={`#${href}`}><b>{number}</b>{label}</a>)}</nav>
+        <article className="academic-article">
+          <AcademicSection number="01" id="inputs" title={copy.scopeTitle} lead={copy.scopeLead}>
+            <div className="academic-two-column"><div><h3>{copy.templateTitle}</h3><p>{copy.templateBody}<Cite ids={[1, 2]} /></p><p className="academic-caveat">{copy.templateLimit}</p></div><div><h3>{copy.customTitle}</h3><p>{copy.customBody}</p></div></div>
+          </AcademicSection>
+          <AcademicSection number="02" id="qpcr" title={copy.qpcrTitle} lead={<>{copy.qpcrLead}<Cite ids={[3, 4]} /></>}>
+            <p className="academic-subheading">{copy.workflowLabel}</p>
+            <div className="academic-process">{copy.qpcrSteps.map(([number, title, body]) => <div key={number}><span>{number}</span><h3>{title}</h3><p>{body}</p></div>)}</div>
+            <h3>{copy.paramsTitle}</h3><Table head={copy.paramHead} rows={copy.qpcrParams} />
+            <div className="academic-note-grid"><aside><span>{copy.scoreTitle}</span><p>{copy.scoreBody}</p></aside><aside><span>{zh ? "实验要求" : "Experimental requirement"}</span><p>{zh ? "MIQE 2.0 强调完整报告样本处理、反应体系、效率、动态范围、对照与原始数据。计算设计只能覆盖其中的引物候选环节。" : "MIQE 2.0 requires transparent reporting of sample handling, reaction chemistry, efficiency, dynamic range, controls, and raw data. Computational design covers only the candidate-primer stage."}<Cite ids={[11]} /></p></aside></div>
+            <h3>{copy.specificityTitle}</h3><Table head={zh ? ["后端", "搜索范围", "当前判定", "不能推出"] : ["Backend", "Search scope", "Current evaluation", "Does not establish"]} rows={copy.specificityRows} />
+          </AcademicSection>
+          <AcademicSection number="03" id="pcr" title={copy.pcrTitle} lead={<>{copy.pcrLead}<Cite ids={[3]} /></>}>
+            <div className="academic-method-list">{copy.pcrSteps.map(([title, body]) => <div key={title}><h3>{title}</h3><p>{body}</p></div>)}</div>
+            <div className="academic-evidence-block"><h3>{copy.pcrCriteriaTitle}</h3><ul>{copy.pcrCriteria.map((item) => <li key={item}>{item}</li>)}</ul><p>{copy.pcrLimit}<Cite ids={[4, 6]} /></p></div>
+          </AcademicSection>
+          <AcademicSection number="04" id="crispr" title={copy.crisprTitle} lead={<>{copy.crisprLead}<Cite ids={[7, 8]} /></>}>
+            <Table head={copy.pamHead} rows={copy.pamRows} />
+            <div className="academic-two-column"><div><h3>{copy.activityTitle}</h3><p>{copy.activityBody}<Cite ids={[7]} /></p></div><div><h3>{zh ? "PAM 依据" : "PAM basis"}</h3><p>{zh ? "SpCas9-NG 的 NG 识别与 Cas12a 的 T-rich PAM 来自相应核酸酶研究；不同变体、细胞与靶点的实测活性仍可能显著不同。" : "NG recognition by SpCas9-NG and the T-rich Cas12a PAM are grounded in the corresponding nuclease studies; measured activity can still vary markedly across variants, cells, and targets."}<Cite ids={[9, 10]} /></p></div></div>
+            <h3>{copy.offTargetTitle}</h3><Table head={zh ? ["后端", "范围", "当前实现"] : ["Backend", "Scope", "Current implementation"]} rows={copy.offTargetRows} />
+            <p className="academic-caveat">{copy.crisprLimit}<Cite ids={[8]} /></p>
+          </AcademicSection>
+          <AcademicSection number="05" id="blast" title={copy.blastTitle} lead={<>{copy.blastLead}<Cite ids={[6]} /></>}><div className="academic-reading-block"><p>{copy.blastBody}</p></div></AcademicSection>
+          <AcademicSection number="06" id="reference-data" title={copy.referenceTitle} lead={copy.referenceLead}>
+            <Table head={zh ? ["模块", "页面提供", "使用边界"] : ["Module", "What the page provides", "Use boundary"]} rows={copy.refRows} />
+            <p className="academic-caveat">{zh ? "PubChem 汇集多来源化学信息；页面采用代表性记录，不把聚合数据误写成单一、永久有效的法规结论。" : "PubChem aggregates chemical information from many contributors. PrimerCat uses representative records rather than presenting aggregated data as one permanent regulatory conclusion."}<Cite ids={[12]} /></p>
+          </AcademicSection>
+          <ReferenceList title={copy.referencesTitle} intro={copy.referencesIntro} references={REFERENCES} />
+          <section className="academic-cta"><div><span>{zh ? "复现清单" : "Reproducibility checklist"}</span><h2>{copy.ctaTitle}</h2><p>{copy.ctaBody}</p></div><div><Link href="/validation">{copy.validation}</Link><Link href="/primer">{copy.primer}</Link></div></section>
+        </article>
+      </div>
     </div>
   );
 }

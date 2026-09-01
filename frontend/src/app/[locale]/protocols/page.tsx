@@ -109,41 +109,6 @@ function normalized(value: string) {
   return value.toLocaleLowerCase().replace(/[\s_\-/]+/g, "");
 }
 
-function ProtocolMark({ category }: { category: ProtocolCategory }) {
-  if (category === "nucleic-acid") {
-    return (
-      <svg viewBox="0 0 36 36" fill="none" aria-hidden="true">
-        <path d="M10 6c10 4 6 20 16 24M26 6C16 10 20 26 10 30M12.5 11h11M11 17h14M11 23h14M12.5 29h11" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-      </svg>
-    );
-  }
-  if (category === "cloning") {
-    return (
-      <svg viewBox="0 0 36 36" fill="none" aria-hidden="true">
-        <circle cx="13" cy="18" r="8" stroke="currentColor" strokeWidth="2.2" />
-        <circle cx="23" cy="18" r="8" stroke="currentColor" strokeWidth="2.2" strokeDasharray="3 3" />
-        <path d="m15.5 14.5 5 7M20.5 14.5l-5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    );
-  }
-  if (category === "microbiology") {
-    return (
-      <svg viewBox="0 0 36 36" fill="none" aria-hidden="true">
-        <path d="M9 25c0-6 4-10 9-10s9 4 9 10" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-        <path d="M7 27h22M13 15v-4h10v4M16 8h4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="15" cy="21" r="1.2" fill="currentColor" /><circle cx="21" cy="24" r="1.2" fill="currentColor" />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 36 36" fill="none" aria-hidden="true">
-      <path d="M8 20c4-9 7 9 11 0s7 9 10 0" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M8 14c4-9 7 9 11 0s7 9 10 0" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" opacity=".55" />
-      <path d="M10 27h16" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 function text(protocol: ProtocolRecord, zh: boolean) {
   return {
     title: zh ? protocol.title.zh : protocol.title.en,
@@ -212,11 +177,6 @@ export default function ProtocolsPage({ params: { locale } }: { params: { locale
           <h1>{copy.title}</h1>
           <p>{copy.intro}</p>
         </div>
-        <div className="protocol-hero-facts" aria-label={zh ? "流程库概览" : "Library overview"}>
-          <span><strong>08</strong>{copy.libraryCount}</span>
-          <span><strong>04</strong>{copy.categoryCount}</span>
-          <span><strong>↗</strong>{copy.sourced}</span>
-        </div>
       </section>
 
       <section className="protocol-controls" aria-label={zh ? "搜索与筛选" : "Search and filters"}>
@@ -255,7 +215,6 @@ export default function ProtocolsPage({ params: { locale } }: { params: { locale
                     onClick={() => chooseProtocol(protocol.id)}
                     aria-pressed={selected?.id === protocol.id}
                   >
-                    <span className="protocol-list-mark"><ProtocolMark category={protocol.category} /></span>
                     <span className="protocol-list-copy">
                       <strong>{localized.title}</strong>
                       <small>{copy.categories[protocol.category]} · {localized.duration}</small>
@@ -271,7 +230,6 @@ export default function ProtocolsPage({ params: { locale } }: { params: { locale
         {selected ? (
           <article className="protocol-detail" id="protocol-detail">
             <header className="protocol-detail-head">
-              <div className="protocol-detail-icon"><span>{documentId}</span><ProtocolMark category={selected.category} /></div>
               <div>
                 <div className="protocol-detail-meta">
                   <span>{copy.categories[selected.category]}</span>
