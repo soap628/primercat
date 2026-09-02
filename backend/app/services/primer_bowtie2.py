@@ -419,6 +419,7 @@ def _run_bowtie2_batch(
         command = [
             executable,
             "-x", index_prefix,
+            "--mm",
             "-f", "-U", tmp_fasta,
             "--end-to-end",
             "--sensitive",
@@ -513,6 +514,7 @@ def _run_bowtie2_pair_batch(
             [
                 executable,
                 "-x", index_prefix,
+                "--mm",
                 "-f", "-U", tmp_fasta,
                 "--end-to-end",
                 "--sensitive",

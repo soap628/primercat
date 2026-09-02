@@ -261,6 +261,7 @@ def _run_pair_batch(
             [
                 executable,
                 "-x", index_prefix,
+                "--mm",
                 "-f", "-U", temporary_fasta,
                 "--end-to-end", "--sensitive", "--no-unal", "--quiet", "--no-hd", "--no-sq",
                 "-N", "1", "-L", "10", "-k", str(hit_limit + 1),

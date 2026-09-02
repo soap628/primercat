@@ -666,6 +666,7 @@ def _run_bowtie2_screen(
                 config.executable,
                 "-x",
                 config.index_prefix,
+                "--mm",
                 "-f",
                 "-U",
                 fasta_path,
