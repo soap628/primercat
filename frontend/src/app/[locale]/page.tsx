@@ -265,16 +265,16 @@ const HOME_SCIENCE_COPY = {
   zh: {
     methodLabel: "方法概览",
     methodTitle: "候选结果从哪里来",
-    methodIntro: "每个结果保留参考序列、设计约束、筛查范围和排序依据；实验表现仍需在真实体系中确认。",
+    methodIntro: "PrimerCat 为每个结果保留参考序列、设计约束、筛查范围和排序依据；研究者仍需在真实实验体系中确认其表现。",
     methodSteps: [
-      { number: "01", title: "确定参考序列", body: "从 NCBI RefSeq 获取记录；人类基因优先采用 MANE Select，并保留 accession 与选择规则。", note: "记录物种、版本与转录本规则", refs: [1, 2] },
+      { number: "01", title: "确定参考序列", body: "PrimerCat 从 NCBI RefSeq 获取记录；人类基因优先采用 MANE Select，并保留 accession 与选择规则。", note: "记录物种、版本与转录本规则", refs: [1, 2] },
       { number: "02", title: "生成候选", body: "Primer3 按长度、Tm、GC%、产物区间和热力学阈值生成引物。", note: "输出序列、坐标与扩增子", refs: [3] },
-      { number: "03", title: "固定参考筛查", body: "在可用的固定基因组和配套 RefSeq RNA 中模拟成对扩增，并显示数据库范围与命中上限。", note: "当前人和小鼠采用版本固定的本地参考", refs: [4, 5] },
-      { number: "04", title: "排序与验证", body: "分数只用于候选比较，不是成功率；关键应用仍应按 MIQE 或相应框架完成实验验证。", note: "计算排序 ≠ 实验结论", refs: [6, 7] },
+      { number: "03", title: "固定参考筛查", body: "PrimerCat 在可用的固定基因组和配套 RefSeq RNA 中模拟成对扩增，并显示数据库范围与命中上限。", note: "当前人和小鼠采用版本固定的本地参考", refs: [4, 5] },
+      { number: "04", title: "排序与验证", body: "PrimerCat 用分数比较候选，但不把分数解释为成功率；研究者仍应按 MIQE 或相应框架完成实验验证。", note: "计算排序 ≠ 实验结论", refs: [6, 7] },
     ],
     toolsLabel: "科学工作流",
     toolsTitle: "四个入口，对应四类问题",
-    toolsIntro: "每个工具都说明计算方法、当前证据范围与不能据此推出的结论。",
+    toolsIntro: "PrimerCat 为每个工具说明计算方法、当前证据范围与不能据此推出的结论。",
     toolMethods: [
       { method: "Primer3 约束生成；RefSeq RNA BLAST 或本地基因组初筛", boundary: "用于 qPCR 候选优先级；不预测扩增效率或表达定量质量", refs: [2, 3, 4, 7] },
       { method: "Primer3 生成；可选 RefSeq genomic 配对命中筛查", boundary: "不等同于全基因组穷尽的 in-silico PCR", refs: [3, 4, 5] },
@@ -287,33 +287,33 @@ const HOME_SCIENCE_COPY = {
     evidenceTitle: "计算完成，不等于实验有效",
     evidenceIntro: "PrimerCat 明确区分可复算数值、数据库筛查、启发式排序与实验确认。",
     evidenceItems: [
-      { code: "COMPUTE", title: "确定性计算", body: "序列长度、GC%、坐标与配方换算可由输入直接复算。" },
-      { code: "SCREEN", title: "数据库筛查", body: "结论只覆盖已声明的数据库、版本、阈值与命中上限。" },
-      { code: "RANK", title: "启发式排序", body: "分数帮助比较候选，但尚未在独立数据集上校准为成功概率。" },
-      { code: "VALIDATE", title: "实验验证", body: "熔解曲线、凝胶、测序、效率曲线或细胞实验才回答真实表现。" },
+      { code: "COMPUTE", title: "确定性计算", body: "研究者可依据输入复算序列长度、GC%、坐标与配方换算。" },
+      { code: "SCREEN", title: "数据库筛查", body: "PrimerCat 的筛查结论只覆盖已声明的数据库、版本、阈值与命中上限。" },
+      { code: "RANK", title: "启发式排序", body: "PrimerCat 用分数帮助比较候选，但尚未在独立数据集上将其校准为成功概率。" },
+      { code: "VALIDATE", title: "实验验证", body: "研究者需要通过熔解曲线、凝胶、测序、效率曲线或细胞实验确认真实表现。" },
     ],
     disclosureTitle: "诚实的结论边界",
-    disclosure: "“未发现明显非目标命中”不等于绝对特异，高分也不是成功率。样本变异、反应体系和细胞背景仍会改变真实结果。",
+    disclosure: "PrimerCat 报告“未发现明显非目标命中”时，并不声称绝对特异；研究者也不应把高分解释为成功率。样本变异、反应体系和细胞背景仍会改变真实结果。",
     methodsLink: "阅读完整方法",
     validationLink: "查看可信度与验证建议",
     referencesLabel: "主要文献",
     referencesTitle: "方法与文献",
-    referencesIntro: "核心算法、数据库与验证框架均链接到原始论文；完整方法、限制和基准数据在专页公开。",
+    referencesIntro: "我们为核心算法、数据库与验证框架链接原始论文，并在专页公开完整方法、限制和基准数据。",
     referencesSummary: "查看 7 篇核心参考文献",
   },
   en: {
     methodLabel: "METHODS AT A GLANCE",
     methodTitle: "Where each candidate comes from",
-    methodIntro: "Every result retains its reference sequence, constraints, screening scope, and ranking basis. Performance still requires confirmation in the real experiment.",
+    methodIntro: "PrimerCat retains the reference sequence, constraints, screening scope, and ranking basis for every result. Researchers must still confirm performance in the actual experimental system.",
     methodSteps: [
-      { number: "01", title: "Resolve the reference", body: "Retrieve NCBI RefSeq records. Human genes preferentially use MANE Select; the accession and applied selection rule remain visible.", note: "Record species, version, and transcript rule", refs: [1, 2] },
+      { number: "01", title: "Resolve the reference", body: "PrimerCat retrieves NCBI RefSeq records. Human genes preferentially use MANE Select; the accession and applied selection rule remain visible.", note: "Record species, version, and transcript rule", refs: [1, 2] },
       { number: "02", title: "Generate candidates", body: "Primer3 applies length, Tm, GC%, product-size, and thermodynamic constraints.", note: "Output sequence, coordinates, and amplicon", refs: [3] },
-      { number: "03", title: "Screen fixed references", body: "Simulate paired amplification against available fixed genomes and matched RefSeq RNA, with the database scope and hit cap shown.", note: "Human and mouse now use version-pinned local references", refs: [4, 5] },
-      { number: "04", title: "Rank and validate", body: "Scores compare candidates; they are not success probabilities. Critical use still requires MIQE or an application-appropriate experiment.", note: "Computational rank ≠ experimental conclusion", refs: [6, 7] },
+      { number: "03", title: "Screen fixed references", body: "PrimerCat simulates paired amplification against available fixed genomes and matched RefSeq RNA, with the database scope and hit cap shown.", note: "Human and mouse now use version-pinned local references", refs: [4, 5] },
+      { number: "04", title: "Rank and validate", body: "PrimerCat uses scores to compare candidates, not as success probabilities. Researchers must still follow MIQE or an application-appropriate validation framework.", note: "Computational rank ≠ experimental conclusion", refs: [6, 7] },
     ],
     toolsLabel: "SCIENTIFIC WORKFLOWS",
     toolsTitle: "Four entry points for four distinct questions",
-    toolsIntro: "Each tool states what is computed, the evidence currently searched, and what the result cannot establish.",
+    toolsIntro: "For each tool, PrimerCat states what it computes, which evidence it searches, and what the result cannot establish.",
     toolMethods: [
       { method: "Primer3 constraint generation; RefSeq RNA BLAST or local-genome screening", boundary: "Prioritises qPCR candidates; does not predict efficiency or expression-quantification quality", refs: [2, 3, 4, 7] },
       { method: "Primer3 generation with optional paired RefSeq-genomic hit screening", boundary: "Not an exhaustive whole-genome in-silico PCR", refs: [3, 4, 5] },
@@ -326,18 +326,18 @@ const HOME_SCIENCE_COPY = {
     evidenceTitle: "Computed does not mean experimentally valid",
     evidenceIntro: "PrimerCat separates reproducible values, database screens, heuristic ranks, and experimental confirmation.",
     evidenceItems: [
-      { code: "COMPUTE", title: "Deterministic calculation", body: "Sequence length, GC%, coordinates, and recipe arithmetic can be recalculated from the input." },
-      { code: "SCREEN", title: "Database screen", body: "A statement covers only the declared database, version, thresholds, and hit cap." },
-      { code: "RANK", title: "Heuristic rank", body: "Scores help compare candidates but are not calibrated success probabilities." },
-      { code: "VALIDATE", title: "Experimental validation", body: "Melt curves, gels, sequencing, efficiency curves, or cellular assays establish real performance." },
+      { code: "COMPUTE", title: "Deterministic calculation", body: "Researchers can recalculate sequence length, GC%, coordinates, and recipe arithmetic from the input." },
+      { code: "SCREEN", title: "Database screen", body: "PrimerCat's screening statement covers only the declared database, version, thresholds, and hit cap." },
+      { code: "RANK", title: "Heuristic rank", body: "PrimerCat uses scores to compare candidates; it does not present them as calibrated success probabilities." },
+      { code: "VALIDATE", title: "Experimental validation", body: "Researchers must use melt curves, gels, sequencing, efficiency curves, or cellular assays to establish real performance." },
     ],
     disclosureTitle: "An honest conclusion boundary",
-    disclosure: "“No evident non-target hit” is not absolute specificity, and a high score is not a success rate. Sample variation, chemistry, and cellular context can still change the outcome.",
+    disclosure: "When PrimerCat reports “no evident non-target hit,” it does not claim absolute specificity, and researchers should not read a high score as a success rate. Sample variation, chemistry, and cellular context can still change the outcome.",
     methodsLink: "Read the complete methods",
     validationLink: "Confidence and validation guidance",
     referencesLabel: "CORE REFERENCES",
     referencesTitle: "Methods and references",
-    referencesIntro: "Core algorithms, databases, and validation frameworks link to their original papers. The methods page contains the full scope, limitations, and benchmarks.",
+    referencesIntro: "We link core algorithms, databases, and validation frameworks to their original papers and publish the full scope, limitations, and benchmarks on the methods pages.",
     referencesSummary: "Show 7 core references",
   },
 } as const;
@@ -476,7 +476,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
           <header className="home-science-header">
             <div>
               <h2 id="home-production-title">{zh ? "当前运行依据" : "Current operating basis"}</h2>
-              <p>{zh ? `截至 ${productionEvidence.snapshot_date}，参考组装、数据索引、计算审计和发布检查均已留档，并可追溯至原始来源或机器可读记录。这些证据界定系统的计算范围，不替代实验验证。` : `As of ${productionEvidence.snapshot_date}, reference assemblies, data indexes, computational audits, and release checks are recorded with links to primary or machine-readable records. This evidence defines the computational scope; it does not replace experimental validation.`}</p>
+              <p>{zh ? `截至 ${productionEvidence.snapshot_date}，我们已将 PrimerCat 使用的参考组装、数据索引、计算审计和发布检查留档，并链接原始来源或机器可读记录。这些证据界定 PrimerCat 的计算范围；研究者仍需完成实验验证。` : `As of ${productionEvidence.snapshot_date}, we have recorded the reference assemblies, data indexes, computational audits, and release checks used by PrimerCat, with links to primary or machine-readable records. This evidence defines PrimerCat's computational scope; researchers must still perform experimental validation.`}</p>
             </div>
           </header>
 
@@ -493,22 +493,22 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
             <article>
               <span>INDEX</span>
               <h3>{zh ? "索引范围" : "Index scope"}</h3>
-              <p>{zh ? `当前索引含人类 ${formatCount(productionEvidence.references.human.grna_feature_rows)} 条注释特征记录、${formatCount(productionEvidence.references.human.transcript_locus_rows)} 条转录本—基因组定位记录，以及小鼠 ${formatCount(productionEvidence.references.mouse.grna_feature_rows)} 条注释特征记录。` : `Current indexes contain ${formatCount(productionEvidence.references.human.grna_feature_rows)} human annotation-feature records, ${formatCount(productionEvidence.references.human.transcript_locus_rows)} human transcript-to-genome locus records, and ${formatCount(productionEvidence.references.mouse.grna_feature_rows)} mouse annotation-feature records.`}</p>
+              <p>{zh ? `PrimerCat 当前索引含人类 ${formatCount(productionEvidence.references.human.grna_feature_rows)} 条注释特征记录、${formatCount(productionEvidence.references.human.transcript_locus_rows)} 条转录本—基因组定位记录，以及小鼠 ${formatCount(productionEvidence.references.mouse.grna_feature_rows)} 条注释特征记录。` : `PrimerCat currently indexes ${formatCount(productionEvidence.references.human.grna_feature_rows)} human annotation-feature records, ${formatCount(productionEvidence.references.human.transcript_locus_rows)} human transcript-to-genome locus records, and ${formatCount(productionEvidence.references.mouse.grna_feature_rows)} mouse annotation-feature records.`}</p>
             </article>
             <article>
               <span>AUDIT</span>
               <h3>{zh ? "计算覆盖审计" : "Computational coverage audit"}</h3>
-              <p>{zh ? <>公开固定队列纳入 {productionEvidence.computational_audit.genes} 个基因、{formatCount(productionEvidence.computational_audit.candidate_pairs_screened)} 对候选；其中 {formatCount(productionEvidence.computational_audit.combined_computational_pass_pairs)} 对满足预设联合规则，{productionEvidence.computational_audit.genes_with_at_least_one_pass}/{productionEvidence.computational_audit.genes} 个基因至少有一对通过。 <a href={productionEvidence.computational_audit.benchmark_url}>查看审计记录</a></> : <>The public fixed cohort contains {productionEvidence.computational_audit.genes} genes and {formatCount(productionEvidence.computational_audit.candidate_pairs_screened)} candidate pairs; {formatCount(productionEvidence.computational_audit.combined_computational_pass_pairs)} pairs met the predefined joint rule, and {productionEvidence.computational_audit.genes_with_at_least_one_pass}/{productionEvidence.computational_audit.genes} genes had at least one pass. <a href={productionEvidence.computational_audit.benchmark_url}>Inspect the audit record</a></>}</p>
+              <p>{zh ? <>我们公开的固定队列纳入 {productionEvidence.computational_audit.genes} 个基因、{formatCount(productionEvidence.computational_audit.candidate_pairs_screened)} 对候选；其中 {formatCount(productionEvidence.computational_audit.combined_computational_pass_pairs)} 对满足预设联合规则，{productionEvidence.computational_audit.genes_with_at_least_one_pass}/{productionEvidence.computational_audit.genes} 个基因至少有一对通过。 <a href={productionEvidence.computational_audit.benchmark_url}>查看审计记录</a></> : <>Our public fixed cohort contains {productionEvidence.computational_audit.genes} genes and {formatCount(productionEvidence.computational_audit.candidate_pairs_screened)} candidate pairs; {formatCount(productionEvidence.computational_audit.combined_computational_pass_pairs)} pairs met the predefined joint rule, and {productionEvidence.computational_audit.genes_with_at_least_one_pass}/{productionEvidence.computational_audit.genes} genes had at least one pass. <a href={productionEvidence.computational_audit.benchmark_url}>Inspect the audit record</a></>}</p>
             </article>
             <article>
               <span>VERIFY</span>
               <h3>{zh ? "完整性与发布检查" : "Integrity and release checks"}</h3>
-              <p>{zh ? `列入清单的人类运行文件 ${productionEvidence.references.human.runtime_artifacts_sha256.passed}/${productionEvidence.references.human.runtime_artifacts_sha256.total}、本次更新涉及的小鼠文件 ${productionEvidence.references.mouse.updated_artifacts_sha256.passed}/${productionEvidence.references.mouse.updated_artifacts_sha256.total} 均通过跨主机 SHA-256；软件基线通过 ${productionEvidence.release.backend_tests_passed} 项后端测试，并完成 qPCR、PCR、CRISPR、BLAST 线上冒烟测试。` : `All ${productionEvidence.references.human.runtime_artifacts_sha256.passed}/${productionEvidence.references.human.runtime_artifacts_sha256.total} listed human runtime files and ${productionEvidence.references.mouse.updated_artifacts_sha256.passed}/${productionEvidence.references.mouse.updated_artifacts_sha256.total} mouse files changed in this update passed cross-host SHA-256 checks. The software baseline passed ${productionEvidence.release.backend_tests_passed} backend tests and production smoke tests for qPCR, PCR, CRISPR, and BLAST.`}</p>
+              <p>{zh ? `我们核对了清单所列的 ${productionEvidence.references.human.runtime_artifacts_sha256.passed}/${productionEvidence.references.human.runtime_artifacts_sha256.total} 个人类运行文件，以及本次更新涉及的 ${productionEvidence.references.mouse.updated_artifacts_sha256.passed}/${productionEvidence.references.mouse.updated_artifacts_sha256.total} 个小鼠文件；跨主机 SHA-256 均一致。PrimerCat 软件基线通过 ${productionEvidence.release.backend_tests_passed} 项后端测试，并完成 qPCR、PCR、CRISPR、BLAST 线上冒烟测试。` : `We checked all ${productionEvidence.references.human.runtime_artifacts_sha256.passed}/${productionEvidence.references.human.runtime_artifacts_sha256.total} listed human runtime files and the ${productionEvidence.references.mouse.updated_artifacts_sha256.passed}/${productionEvidence.references.mouse.updated_artifacts_sha256.total} mouse files changed in this update; every cross-host SHA-256 value matched. The PrimerCat software baseline passed ${productionEvidence.release.backend_tests_passed} backend tests and production smoke tests for qPCR, PCR, CRISPR, and BLAST.`}</p>
             </article>
           </div>
 
           <div className="home-production-foot">
-            <p>{zh ? "记录数描述索引表规模，不代表独立基因或可用候选；“通过”仅表示在所列版本和规则下完成检查，不是湿实验成功率。" : "Record counts describe index-table scale, not unique genes or usable candidates. A pass means the stated check completed under the listed versions and rules; it is not a wet-lab success rate."}</p>
+            <p>{zh ? "研究者不应把索引记录数解释为独立基因或可用候选数量，也不应把“通过”解释为湿实验成功率。" : "Researchers should not interpret index-record counts as unique genes or usable candidates, or a pass as a wet-lab success rate."}</p>
             <div>
               <Link href="/validation#production-snapshot">{zh ? "查看完整证据说明" : "Read the full evidence note"} →</Link>
               <a href="/evidence/production-snapshot-v1.json">JSON ↗</a>
