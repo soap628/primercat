@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+const SUPPORT_EMAIL = "support@primercat.com";
+
 const COPY = {
   zh: {
     brandDesc: "分子生物学设计、计算与实验参考工具。",
@@ -135,6 +137,9 @@ export default function Footer({ locale }: { locale: string }) {
         <div className="footer-bottom-inner">
           <span>{copy.copyright}</span>
           <div className="footer-legal-links">
+            <a href={`mailto:${SUPPORT_EMAIL}`}>
+              {SUPPORT_EMAIL}
+            </a>
             <Link href={`/${locale}/privacy`}>
               {copy.privacy}
             </Link>

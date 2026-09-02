@@ -20,7 +20,7 @@ const COPY = {
     ],
     contactTitle: "联系 / 合作",
     contactBody: "欢迎提交使用问题、错误报告、功能建议或合作咨询。",
-    email: "zihaowangs@proton.me",
+    email: "support@primercat.com",
     links: [
       { label: "引用 PrimerCat", href: "/cite" },
       { label: "方法说明", href: "/methods" },
@@ -48,7 +48,7 @@ const COPY = {
     ],
     contactTitle: "Contact / Collaborate",
     contactBody: "Questions, bug reports, feature requests, and collaboration inquiries are welcome.",
-    email: "zihaowangs@proton.me",
+    email: "support@primercat.com",
     links: [
       { label: "Cite PrimerCat", href: "/cite" },
       { label: "Methods", href: "/methods" },

@@ -22,7 +22,7 @@ const COPY = {
       },
       {
         title: "联系方式",
-        body: "如对本隐私政策有疑问，请联系：zihaowangs@proton.me",
+        body: "如对本隐私政策有疑问，请联系：support@primercat.com",
       },
     ],
   },
@@ -49,7 +49,7 @@ const COPY = {
       },
       {
         title: "Contact",
-        body: "For questions about this Privacy Policy, contact: zihaowangs@proton.me",
+        body: "For questions about this Privacy Policy, contact: support@primercat.com",
       },
     ],
   },

@@ -4,7 +4,7 @@ const COPY = {
     title: "联系 PrimerCat",
     intro: "如有使用问题、错误报告、功能建议或合作咨询，请发送邮件。",
     emailLabel: "电子邮件",
-    email: "zihaowangs@proton.me",
+    email: "support@primercat.com",
     responseNote: "我们通常在 1-3 个工作日内回复邮件。",
     topicsTitle: "联系事项",
     topics: [
@@ -19,7 +19,7 @@ const COPY = {
     title: "Contact PrimerCat",
     intro: "Email us with usage questions, bug reports, feature requests, or collaboration inquiries.",
     emailLabel: "Email",
-    email: "zihaowangs@proton.me",
+    email: "support@primercat.com",
     responseNote: "We typically respond within 1–3 business days.",
     topicsTitle: "Contact topics",
     topics: [

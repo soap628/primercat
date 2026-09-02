@@ -26,7 +26,7 @@ const COPY = {
       },
       {
         title: "联系方式",
-        body: "如对本条款有疑问，请联系：zihaowangs@proton.me",
+        body: "如对本条款有疑问，请联系：support@primercat.com",
       },
     ],
   },
@@ -57,7 +57,7 @@ const COPY = {
       },
       {
         title: "Contact",
-        body: "For questions about these Terms, contact: zihaowangs@proton.me",
+        body: "For questions about these Terms, contact: support@primercat.com",
       },
     ],
   },

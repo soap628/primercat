@@ -236,157 +236,6 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
   );
 }
 
-// Step visual mockups — real UI-like screenshots
-function StepVisual({ step, locale }: { step: number; locale: string }) {
-  const isZh = locale === "zh";
-
-  if (step === 0) {
-    return (
-      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
-        {/* Mock input form */}
-        <div style={{
-          borderRadius: 12, background: "var(--bg-card)", border: "1px solid var(--border)",
-          padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10,
-        }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-            {isZh ? "基因名称" : "Gene Name"}
-          </div>
-          <div style={{
-            padding: "9px 12px", borderRadius: 8,
-            background: "var(--bg-inset)", border: "1.5px solid #ffb1ee55",
-            fontSize: 15, fontWeight: 600, color: "#ffffff", fontFamily: "var(--font-mono)",
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-          }}>
-            <span>TP53</span>
-            <span style={{ width: 10, height: 18, borderLeft: "2px solid #ffb1ee", opacity: 0.7, animation: "blink 1.1s step-end infinite" }} />
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {(isZh ? ["人类", "小鼠"] : ["Human", "Mouse"]).map((s, i) => (
-              <div key={s} style={{
-                flex: 1, padding: "7px 0", borderRadius: 7, textAlign: "center",
-                fontSize: 12, fontWeight: 600,
-                background: i === 0 ? "rgba(255,177,238,0.15)" : "var(--bg-inset)",
-                border: i === 0 ? "1px solid rgba(255,177,238,0.4)" : "1px solid var(--border)",
-                color: i === 0 ? "#ffb1ee" : "var(--text-2)",
-              }}>{s}</div>
-            ))}
-          </div>
-          <div style={{
-            padding: "10px 0", borderRadius: 999,
-            background: "#ffb1ee", color: "#000",
-            fontSize: 12, fontWeight: 800, textAlign: "center", letterSpacing: "0.06em",
-            cursor: "default",
-          }}>
-            {isZh ? "开始设计 →" : "Design Primers →"}
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          {(isZh ? ["NM_000546", "NM_001126112"] : ["NM_000546", "NM_001126112"]).map((nm) => (
-            <div key={nm} style={{
-              padding: "4px 9px", borderRadius: 6, fontSize: 11, fontWeight: 600,
-              background: "rgba(255,177,238,0.08)", border: "1px solid rgba(255,177,238,0.18)",
-              color: "#ffb1ee", fontFamily: "var(--font-mono)",
-            }}>{nm}</div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 1) {
-    const pipelineSteps = isZh
-      ? [
-          { label: "RefSeq 转录本", done: true, color: "#ffb1ee" },
-          { label: "Primer3 设计", done: true, color: "#ffb1ee" },
-          { label: "BLAST 初筛", done: true, color: "#539df5" },
-          { label: "打分排序", done: false, color: "#ffa42b", active: true },
-        ]
-      : [
-          { label: "RefSeq fetch", done: true, color: "#ffb1ee" },
-          { label: "Primer3 design", done: true, color: "#ffb1ee" },
-          { label: "BLAST screen", done: true, color: "#539df5" },
-          { label: "Scoring", done: false, color: "#ffa42b", active: true },
-        ];
-    return (
-      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
-        {pipelineSteps.map((ps, i) => (
-          <div key={i} style={{
-            display: "flex", alignItems: "center", gap: 10,
-            padding: "9px 14px", borderRadius: 10,
-            background: ps.active ? `rgba(255,164,43,0.08)` : "var(--bg-card)",
-            border: ps.active ? "1px solid rgba(255,164,43,0.3)" : "1px solid var(--border)",
-          }}>
-            <div style={{
-              width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
-              background: ps.done ? ps.color : "transparent",
-              border: ps.done ? "none" : `2px solid ${ps.color}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              {ps.done && <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-              {ps.active && <div style={{ width: 8, height: 8, borderRadius: "50%", background: ps.color, animation: "blink 1s ease-in-out infinite" }} />}
-            </div>
-            <span style={{ fontSize: 12, fontWeight: ps.active ? 700 : 500, color: ps.active ? "#ffffff" : "var(--text-2)", fontFamily: "var(--font-mono)", flex: 1 }}>
-              {ps.label}
-            </span>
-            {ps.done && <span style={{ fontSize: 10, color: ps.color, fontWeight: 700 }}>✓</span>}
-            {ps.active && (
-              <div style={{ display: "flex", gap: 3 }}>
-                {[0,1,2].map(j => (
-                  <div key={j} style={{
-                    width: 4, height: 4, borderRadius: "50%", background: ps.color,
-                    opacity: 0.7, animationDelay: `${j * 0.2}s`,
-                  }} />
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  // step 2 — results
-  const pairs = [
-    { rank: 1, score: 94, tm: "61.2°C", gc: "52%", exon: true, color: "#ffb1ee" },
-    { rank: 2, score: 88, tm: "59.8°C", gc: "48%", exon: true, color: "#539df5" },
-    { rank: 3, score: 81, tm: "60.4°C", gc: "55%", exon: false, color: "#ffa42b" },
-  ];
-  return (
-    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
-      {pairs.map((p) => (
-        <div key={p.rank} style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "10px 14px", borderRadius: 10,
-          background: p.rank === 1 ? `rgba(255,177,238,0.06)` : "var(--bg-card)",
-          border: p.rank === 1 ? "1px solid rgba(255,177,238,0.25)" : "1px solid var(--border)",
-        }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-            background: `linear-gradient(135deg, ${p.color}33, ${p.color}11)`,
-            border: `1px solid ${p.color}44`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 11, fontWeight: 800, color: p.color,
-          }}>#{p.rank}</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 2 }}>
-              {isZh ? `引物对 ${p.rank}` : `Pair ${p.rank}`}
-              {p.rank === 1 && <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 700, color: "#ffb1ee", background: "rgba(255,177,238,0.1)", border: "1px solid rgba(255,177,238,0.3)", borderRadius: 4, padding: "1px 5px", letterSpacing: "0.05em" }}>{isZh ? "排序首位" : "RANK 1"}</span>}
-            </div>
-            <div style={{ fontSize: 11, color: "var(--text-2)", fontFamily: "var(--font-mono)" }}>
-              Tm {p.tm} · GC {p.gc}
-              {p.exon && <span style={{ marginLeft: 6, color: "#ffb1ee" }}>{isZh ? "跨外显子" : "exon-span"}</span>}
-            </div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{p.score}</div>
-            <div style={{ fontSize: 9, color: "var(--text-2)", letterSpacing: "0.04em" }}>/100</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /* ── Easter egg: Konami Code → Cat Party ── */
 const KONAMI = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
 function useKonami(onTrigger: () => void) {
@@ -401,8 +250,106 @@ function useKonami(onTrigger: () => void) {
   }, [onTrigger]);
 }
 
+const HOME_REFERENCES = [
+  { id: 1, citation: "Morales J, et al. A joint NCBI and EMBL-EBI transcript set for clinical genomics and research. Nature. 2022;604:310–315.", pmid: "35388217", doi: "10.1038/s41586-022-04558-8", href: "https://pubmed.ncbi.nlm.nih.gov/35388217/" },
+  { id: 2, citation: "O’Leary NA, et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. 2016;44:D733–D745.", pmid: "26553804", doi: "10.1093/nar/gkv1189", href: "https://pubmed.ncbi.nlm.nih.gov/26553804/" },
+  { id: 3, citation: "Untergasser A, et al. Primer3—new capabilities and interfaces. Nucleic Acids Res. 2012;40:e115.", pmid: "22730293", doi: "10.1093/nar/gks596", href: "https://pubmed.ncbi.nlm.nih.gov/22730293/" },
+  { id: 4, citation: "Ye J, et al. Primer-BLAST: a tool to design target-specific primers for polymerase chain reaction. BMC Bioinformatics. 2012;13:134.", pmid: "22708584", doi: "10.1186/1471-2105-13-134", href: "https://pubmed.ncbi.nlm.nih.gov/22708584/" },
+  { id: 5, citation: "Camacho C, et al. BLAST+: architecture and applications. BMC Bioinformatics. 2009;10:421.", pmid: "20003500", doi: "10.1186/1471-2105-10-421", href: "https://pubmed.ncbi.nlm.nih.gov/20003500/" },
+  { id: 6, citation: "Doench JG, et al. Optimized sgRNA design to maximize activity and minimize off-target effects of CRISPR-Cas9. Nat Biotechnol. 2016;34:184–191.", pmid: "26780180", doi: "10.1038/nbt.3437", href: "https://pubmed.ncbi.nlm.nih.gov/26780180/" },
+  { id: 7, citation: "Bustin SA, et al. MIQE 2.0: Revision of the Minimum Information for Publication of Quantitative Real-Time PCR Experiments Guidelines. Clin Chem. 2025;71:634–651.", pmid: "40272429", doi: "10.1093/clinchem/hvaf043", href: "https://pubmed.ncbi.nlm.nih.gov/40272429/" },
+] as const;
+
+const HOME_SCIENCE_COPY = {
+  zh: {
+    methodLabel: "方法概览",
+    methodTitle: "从输入到候选，保留可复核的证据链",
+    methodIntro: "PrimerCat 把参考序列、设计约束、数据库筛查与排序依据一并呈现。页面提供的是可比较的候选，不替代扩增效率、产物特异性或编辑效果的实验验证。",
+    methodSteps: [
+      { number: "01", title: "确定参考序列", body: "基因名称模式从 NCBI RefSeq 获取记录；人类基因优先采用 MANE Select，结果保留 accession 与实际选择规则。", note: "记录：物种、accession、转录本规则", refs: [1, 2] },
+      { number: "02", title: "按约束生成候选", body: "qPCR 与常规 PCR 由 Primer3 在长度、Tm、GC%、产物区间和热力学结构阈值下生成候选。", note: "输出：序列、坐标、Tm、GC%、扩增子", refs: [3] },
+      { number: "03", title: "执行数据库初筛", body: "根据可用后端，对引物或 gRNA 进行 RefSeq RNA、RefSeq genomic、nt BLAST 或本地参考基因组比对。每项结论均受数据库版本、搜索范围与命中上限约束。", note: "声明：后端、数据库范围与判定阈值", refs: [4, 5] },
+      { number: "04", title: "排序、解释与验证", body: "候选依据当前启发式规则排序，并显示组成项。分数用于同一次运行内比较，不是实验成功率；关键应用仍需按 MIQE 或相应实验框架验证。", note: "边界：计算排序 ≠ 实验结论", refs: [6, 7] },
+    ],
+    toolsLabel: "科学工作流",
+    toolsTitle: "四个入口，对应四类问题",
+    toolsIntro: "每个工具都说明计算方法、当前证据范围与不能据此推出的结论。",
+    toolMethods: [
+      { method: "Primer3 约束生成；RefSeq RNA BLAST 或本地基因组初筛", boundary: "用于 qPCR 候选优先级；不预测扩增效率或表达定量质量", refs: [2, 3, 4, 7] },
+      { method: "Primer3 生成；可选 RefSeq genomic 配对命中筛查", boundary: "不等同于全基因组穷尽的 in-silico PCR", refs: [3, 4, 5] },
+      { method: "PAM 扫描、简化活性启发分与序列相似性脱靶筛查", boundary: "风险标签不预测细胞内真实切割或编辑效率", refs: [6] },
+      { method: "NCBI BLAST+ 局部相似性检索与 HSP 指标整理", boundary: "相似性本身不证明同源关系、功能或系统发育结论", refs: [5] },
+    ],
+    methodTerm: "方法",
+    boundaryTerm: "使用边界",
+    evidenceLabel: "证据解释",
+    evidenceTitle: "把“已计算”与“已验证”分开",
+    evidenceIntro: "首页中的每一种结果都应当知道自己属于哪一层证据。",
+    evidenceItems: [
+      { code: "COMPUTE", title: "确定性计算", body: "序列长度、GC%、坐标与配方换算可由输入直接复算。" },
+      { code: "SCREEN", title: "数据库筛查", body: "结论只覆盖已声明的数据库、版本、阈值与命中上限。" },
+      { code: "RANK", title: "启发式排序", body: "分数帮助比较候选，但尚未在独立数据集上校准为成功概率。" },
+      { code: "VALIDATE", title: "实验验证", body: "熔解曲线、凝胶、测序、效率曲线或细胞实验才回答真实表现。" },
+    ],
+    disclosureTitle: "诚实的结论边界",
+    disclosure: "PrimerCat 不把“未发现明显非目标命中”写成“绝对特异”，也不把高分写成成功率。数据库会更新，样本可能含有变异，反应体系和细胞背景也会改变真实结果。",
+    methodsLink: "阅读完整方法",
+    validationLink: "查看可信度与验证建议",
+    referencesLabel: "主要文献",
+    referencesTitle: "方法依据与延伸阅读",
+    referencesIntro: "以下文献支持数据库、算法与验证框架。引用不表示 PrimerCat 完整复现论文中的全部模型，也不构成对本站整体性能的背书。",
+  },
+  en: {
+    methodLabel: "METHODS AT A GLANCE",
+    methodTitle: "A reviewable evidence chain from input to candidate",
+    methodIntro: "PrimerCat presents the reference sequence, design constraints, database screen, and ranking rationale together. It produces comparable candidates; it does not replace experimental measurements of efficiency, product specificity, or editing outcome.",
+    methodSteps: [
+      { number: "01", title: "Resolve the reference", body: "Gene-name mode retrieves NCBI RefSeq records. Human genes preferentially use MANE Select, and the result retains the accession and applied selection rule.", note: "Record: species, accession, transcript rule", refs: [1, 2] },
+      { number: "02", title: "Generate under constraints", body: "Primer3 generates qPCR and endpoint-PCR candidates under length, Tm, GC%, product-size, and thermodynamic structure constraints.", note: "Output: sequence, coordinates, Tm, GC%, amplicon", refs: [3] },
+      { number: "03", title: "Run a database screen", body: "Depending on the available backend, primers or gRNAs are searched against RefSeq RNA, RefSeq genomic, NCBI nt, or a local reference genome. Every statement remains limited by database version, scope, and hit cap.", note: "Declare: backend, database scope, criteria", refs: [4, 5] },
+      { number: "04", title: "Rank, interpret, validate", body: "Candidates are ordered by the current heuristic and its components are shown. Scores compare candidates within a run; they are not success probabilities. Critical use still requires MIQE or an application-appropriate validation framework.", note: "Boundary: computational rank ≠ experimental conclusion", refs: [6, 7] },
+    ],
+    toolsLabel: "SCIENTIFIC WORKFLOWS",
+    toolsTitle: "Four entry points for four distinct questions",
+    toolsIntro: "Each tool states what is computed, the evidence currently searched, and what the result cannot establish.",
+    toolMethods: [
+      { method: "Primer3 constraint generation; RefSeq RNA BLAST or local-genome screening", boundary: "Prioritises qPCR candidates; does not predict efficiency or expression-quantification quality", refs: [2, 3, 4, 7] },
+      { method: "Primer3 generation with optional paired RefSeq-genomic hit screening", boundary: "Not an exhaustive whole-genome in-silico PCR", refs: [3, 4, 5] },
+      { method: "PAM scan, simplified activity heuristic, and sequence-similarity off-target screen", boundary: "Risk labels do not predict cellular cleavage or editing efficiency", refs: [6] },
+      { method: "NCBI BLAST+ local-similarity search with structured HSP metrics", boundary: "Similarity alone does not establish homology, function, or phylogeny", refs: [5] },
+    ],
+    methodTerm: "Method",
+    boundaryTerm: "Boundary",
+    evidenceLabel: "EVIDENCE INTERPRETATION",
+    evidenceTitle: "Keep “computed” separate from “validated”",
+    evidenceIntro: "Every result on the homepage belongs to a distinct level of evidence.",
+    evidenceItems: [
+      { code: "COMPUTE", title: "Deterministic calculation", body: "Sequence length, GC%, coordinates, and recipe arithmetic can be recalculated from the input." },
+      { code: "SCREEN", title: "Database screen", body: "A statement covers only the declared database, version, thresholds, and hit cap." },
+      { code: "RANK", title: "Heuristic rank", body: "Scores help compare candidates but are not calibrated success probabilities." },
+      { code: "VALIDATE", title: "Experimental validation", body: "Melt curves, gels, sequencing, efficiency curves, or cellular assays establish real performance." },
+    ],
+    disclosureTitle: "An honest conclusion boundary",
+    disclosure: "PrimerCat does not turn “no evident non-target hit” into “absolutely specific”, or a high score into a success probability. Databases change, samples carry variants, and chemistry or cellular context can alter real outcomes.",
+    methodsLink: "Read the complete methods",
+    validationLink: "Confidence and validation guidance",
+    referencesLabel: "CORE REFERENCES",
+    referencesTitle: "Methods basis and further reading",
+    referencesIntro: "These papers support the databases, algorithms, and validation frameworks. Citation does not mean that PrimerCat reproduces every published model or that the paper endorses PrimerCat as a whole.",
+  },
+} as const;
+
+function HomeCitations({ ids }: { ids: readonly number[] }) {
+  return (
+    <sup className="home-inline-citations" aria-label={`References ${ids.join(", ")}`}>
+      {ids.map((id) => <a key={id} href={`#home-reference-${id}`}>[{id}]</a>)}
+    </sup>
+  );
+}
+
 export default function HomePage({ params: { locale } }: { params: { locale: string } }) {
   const t = useTranslations("home");
+  const science = locale === "zh" ? HOME_SCIENCE_COPY.zh : HOME_SCIENCE_COPY.en;
   const [party, setParty] = useState(false);
   const partyTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -412,67 +359,24 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
     partyTimeout.current = setTimeout(() => setParty(false), 5000);
   });
 
-  const steps = [
-    {
-      num: "01", title: t("how_step1_title"), desc: t("how_step1_desc"),
-      ca: "#ffb1ee", cb: "#e87fd8",
-    },
-    {
-      num: "02", title: t("how_step2_title"), desc: t("how_step2_desc"),
-      ca: "#539df5", cb: "#ffb1ee",
-    },
-    {
-      num: "03", title: t("how_step3_title"), desc: t("how_step3_desc"),
-      ca: "#ffb1ee", cb: "#539df5",
-    },
-  ];
-
   const toolCards = [
     {
       tag: t("primer_card_tag"), title: t("primer_card_title"), desc: t("primer_card_desc"),
-      href: "/primer",
-      tagColor: "#c454a9", icon: "QP",
-      glowColor: "rgba(255,177,238,0.06)",
-      borderHover: "rgba(255,177,238,0.28)",
-      shadowColor: "rgba(255,177,238,0.14)",
+      href: "/primer", icon: "QP",
     },
     {
       tag: t("pcr_card_tag"), title: t("pcr_card_title"), desc: t("pcr_card_desc"),
-      href: "/pcr",
-      tagColor: "var(--home-pcr-tone)", icon: "PCR",
-      glowColor: "rgba(25,185,154,0.06)",
-      borderHover: "rgba(25,185,154,0.28)",
-      shadowColor: "rgba(25,185,154,0.14)",
+      href: "/pcr", icon: "PCR",
     },
     {
       tag: t("grna_card_tag"), title: t("grna_card_title"), desc: t("grna_card_desc"),
-      href: "/grna",
-      tagColor: "var(--home-grna-tone)", icon: "CR",
-      glowColor: "rgba(83,157,245,0.06)",
-      borderHover: "rgba(83,157,245,0.28)",
-      shadowColor: "rgba(83,157,245,0.14)",
+      href: "/grna", icon: "CR",
     },
     {
       tag: t("blast_card_tag"), title: t("blast_card_title"), desc: t("blast_card_desc"),
-      href: "/blast",
-      tagColor: "#b7670c", icon: "BL",
-      glowColor: "rgba(255,164,43,0.06)",
-      borderHover: "rgba(255,164,43,0.28)",
-      shadowColor: "rgba(255,164,43,0.14)",
+      href: "/blast", icon: "BL",
     },
   ];
-
-  const featMarkers = ["TX", "EX", "SP", "QC"];
-  const features = [
-    { title: t("feat_transcript_title"), desc: t("feat_transcript_desc") },
-    { title: t("feat_exon_title"),       desc: t("feat_exon_desc") },
-    { title: t("feat_blast_title"),      desc: t("feat_blast_desc") },
-    { title: t("feat_score_title"),      desc: t("feat_score_desc") },
-  ];
-
-  const openLabel = t("tools_open");
-  const howLabel  = t("how_label");
-  const whyLabel  = t("why_label");
 
   return (
     <div className="home-page-v4">
@@ -577,97 +481,122 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
         </div>
       </section>
 
-      {/* ══ HOW IT WORKS ══ */}
-      <section className="home-how-wrap home-breakout">
-        <div className="home-how-inner">
-          <div className="home-section-label">{howLabel}</div>
-          <h2 className="home-section-title">{t("how_title")}</h2>
-          <p className="home-section-sub">{t("how_sub")}</p>
-
-          {steps.map((step, i) => (
-            <div
-              key={step.num}
-              className={`home-how-step${i % 2 === 1 ? " reverse" : ""}`}
-            >
-              {/* text side */}
-              <div>
-                <div className="home-how-step-number" style={{
-                  fontSize: 64, fontWeight: 900, letterSpacing: "-0.04em",
-                  lineHeight: 1, marginBottom: 8,
-                  background: `linear-gradient(135deg, ${step.ca}, ${step.cb})`,
-                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                  backgroundClip: "text", opacity: 0.2,
-                }}>
-                  {step.num}
-                </div>
-                <h3 className="home-how-step-title">{step.title}</h3>
-                <p className="home-how-step-desc">{step.desc}</p>
-              </div>
-
-              {/* visual side */}
-              <div
-                className="home-how-step-visual"
-                style={{ "--step-color-a": step.ca, "--step-color-b": step.cb } as React.CSSProperties}
-              >
-                <StepVisual step={i} locale={locale} />
-              </div>
+      {/* ══ SCIENTIFIC METHOD ══ */}
+      <section className="home-science-methods home-breakout" aria-labelledby="home-method-title">
+        <div className="home-science-shell">
+          <header className="home-science-header">
+            <div>
+              <h2 id="home-method-title">{science.methodTitle}</h2>
+              <p>{science.methodIntro}</p>
             </div>
-          ))}
-        </div>
-      </section>
+          </header>
 
-      {/* ══ TOOLS ══ */}
-      <section className="home-tools-wrap home-breakout">
-        <div className="home-tools-inner">
-          <div className="home-section-label" style={{ color: "#ffb1ee" }}>
-            {t("tools_label")}
-          </div>
-          <h2 className="home-section-title" style={{ color: "#ffffff" }}>
-            {t("tools_title")}
-          </h2>
-          <div className="home-tools-grid">
-            {toolCards.map((card) => (
-              <Link
-                key={card.href}
-                href={card.href}
-                className="home-tool-card"
-                style={{
-                  "--card-glow": card.glowColor,
-                  "--card-border-hover": card.borderHover,
-                  "--card-shadow-color": card.shadowColor,
-                } as React.CSSProperties}
-              >
-                <div className="home-tool-icon" style={{ "--tool-tone": card.tagColor } as React.CSSProperties}>
-                  <span>{card.icon}</span>
+          <ol className="home-method-sequence">
+            {science.methodSteps.map((step) => (
+              <li key={step.number}>
+                <span className="home-method-number">{step.number}</span>
+                <h3>{step.title}</h3>
+                <div className="home-method-copy">
+                  <p>{step.body}<HomeCitations ids={step.refs} /></p>
+                  <span>{step.note}</span>
                 </div>
-                <span className="home-tool-tag" style={{ color: card.tagColor }}>{card.tag}</span>
-                <p className="home-tool-title">{card.title}</p>
-                <p className="home-tool-desc">{card.desc}</p>
-                <span className="home-tool-cta" style={{ color: card.tagColor }}>
-                  {openLabel} →
-                </span>
-              </Link>
+              </li>
             ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ══ SCIENTIFIC WORKFLOWS ══ */}
+      <section className="home-science-tools home-breakout" aria-labelledby="home-tools-title">
+        <div className="home-science-shell">
+          <header className="home-science-header">
+            <div>
+              <h2 id="home-tools-title">{science.toolsTitle}</h2>
+              <p>{science.toolsIntro}</p>
+            </div>
+          </header>
+
+          <div className="home-workflow-list">
+            {toolCards.map((card, index) => {
+              const detail = science.toolMethods[index];
+              return (
+                <article key={card.href} className="home-workflow-row">
+                  <span className="home-workflow-code">{card.icon}</span>
+                  <Link href={card.href} className="home-workflow-identity">
+                    <span>{card.tag}</span>
+                    <h3>{card.title}</h3>
+                    <p>{card.desc}</p>
+                  </Link>
+                  <dl className="home-workflow-method">
+                    <div><dt>{science.methodTerm}</dt><dd>{detail.method}<HomeCitations ids={detail.refs} /></dd></div>
+                    <div><dt>{science.boundaryTerm}</dt><dd>{detail.boundary}</dd></div>
+                  </dl>
+                  <Link href={card.href} className="home-workflow-arrow" aria-label={card.title}>↗</Link>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ══ FEATURES ══ */}
-      <section className="home-feats-wrap home-breakout">
-        <div className="home-feats-inner">
-          <div className="home-section-label">{whyLabel}</div>
-          <h2 className="home-section-title">{t("features_title")}</h2>
-          <p className="home-section-sub">{t("features_subtitle")}</p>
+      {/* ══ EVIDENCE BOUNDARIES ══ */}
+      <section className="home-science-evidence home-breakout" aria-labelledby="home-evidence-title">
+        <div className="home-science-shell">
+          <header className="home-science-header">
+            <div>
+              <h2 id="home-evidence-title">{science.evidenceTitle}</h2>
+              <p>{science.evidenceIntro}</p>
+            </div>
+          </header>
 
-          <div className="home-features-grid">
-            {features.map((f, i) => (
-              <div key={f.title} className="home-feat-card">
-                <div className="home-feat-icon">{featMarkers[i]}</div>
-                <p className="home-feat-title">{f.title}</p>
-                <p className="home-feat-desc">{f.desc}</p>
-              </div>
+          <div className="home-evidence-levels">
+            {science.evidenceItems.map((item) => (
+              <article key={item.code}>
+                <span>{item.code}</span>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </article>
             ))}
           </div>
+
+          <aside className="home-science-disclosure">
+            <span>{science.disclosureTitle}</span>
+            <p>{science.disclosure}</p>
+            <div>
+              <Link href="/methods">{science.methodsLink} →</Link>
+              <Link href="/validation">{science.validationLink} →</Link>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      {/* ══ REFERENCES ══ */}
+      <section className="home-science-references home-breakout" aria-labelledby="home-references-title">
+        <div className="home-science-shell">
+          <header className="home-science-header">
+            <div>
+              <h2 id="home-references-title">{science.referencesTitle}</h2>
+              <p>{science.referencesIntro}</p>
+            </div>
+          </header>
+
+          <ol className="home-reference-list">
+            {HOME_REFERENCES.map((reference) => (
+              <li key={reference.id} id={`home-reference-${reference.id}`}>
+                <span>{String(reference.id).padStart(2, "0")}</span>
+                <div className="home-reference-record">
+                  <a className="home-reference-title-link" href={reference.href} target="_blank" rel="noopener noreferrer">
+                    {reference.citation}<span aria-hidden="true"> ↗</span>
+                  </a>
+                  <span>
+                    <a href={reference.href} target="_blank" rel="noopener noreferrer">PMID {reference.pmid}</a>
+                    <i aria-hidden="true">·</i>
+                    <a href={`https://doi.org/${reference.doi}`} target="_blank" rel="noopener noreferrer">DOI {reference.doi}</a>
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
