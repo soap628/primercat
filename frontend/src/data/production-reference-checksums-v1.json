@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "snapshot_date": "2026-09-03",
+  "algorithm": "SHA-256",
+  "verification": "Each listed runtime artifact was hashed independently on the build host and production server; all values matched before release activation.",
+  "references": {
+    "human": {
+      "assembly": "GCF_000001405.40",
+      "annotation_release": "GCF_000001405.40-RS_2025_08",
+      "files": [
+        { "path": "GCF_000001405.40_GRCh38.p14_genomic.fna", "size_bytes": 3339739109, "sha256": "df6e4918316e05a9cc1fd29c352841d3678b607d7a436819cd43371b52c814c0" },
+        { "path": "GCF_000001405.40_GRCh38.p14_rna.fna", "size_bytes": 746936671, "sha256": "624395703c396969d12374c3211cd9cf73fcda04106e819032740f15cc9b3fe5" },
+        { "path": "GCF_000001405.40_GRCh38.p14_genomic.fna.idx.db", "size_bytes": 61440, "sha256": "7c7131cb5a414ed019ecdc3b3fb71f19452e6c94f53cde7495472e7a575b79de" },
+        { "path": "grna-annotations.sqlite3", "size_bytes": 616824832, "sha256": "df0921c53c9ef6bc167f3b446df6813b0c2ff3d6464aff5ff71d762a62de8b89" },
+        { "path": "qpcr-transcript-loci.sqlite3", "size_bytes": 32096256, "sha256": "b0816c8ddc977f23168821dd34ed5ed06b9833a38854de79c0ea4b7424d1da31" },
+        { "path": "bowtie2/GCF_000001405.40_GRCh38.p14.1.bt2", "size_bytes": 1049903823, "sha256": "eef36e5fe499da74a03047fd4d2d8d20bd594300f5462296271b0c39ebd727a2" },
+        { "path": "bowtie2/GCF_000001405.40_GRCh38.p14.2.bt2", "size_bytes": 784204796, "sha256": "388fdb211d98eb6ed5600741cdbce1e7368daae505598b973a37a9ede5c29e8a" },
+        { "path": "bowtie2/GCF_000001405.40_GRCh38.p14.3.bt2", "size_bytes": 17567, "sha256": "c093ef3311c12a021954304596767be233d0d4fdfe7ebd2297d5b6891c2572d2" },
+        { "path": "bowtie2/GCF_000001405.40_GRCh38.p14.4.bt2", "size_bytes": 784204789, "sha256": "03cdd4a5991f76cab2b4dc1e7b7cd9b00091339a217a11f1b6c3dfca4bbe63e2" },
+        { "path": "bowtie2/GCF_000001405.40_GRCh38.p14.rev.1.bt2", "size_bytes": 1049903823, "sha256": "e3bd9dea5daec12ebaf105911aabfbd82b1f187cd413651e14a35eed036289cb" },
+        { "path": "bowtie2/GCF_000001405.40_GRCh38.p14.rev.2.bt2", "size_bytes": 784204796, "sha256": "a96cdfaab74159e0f10d3b57792259fb030691aeeb12783dff9e56f95f9dff64" },
+        { "path": "bowtie2-transcriptome/GCF_000001405.40_GRCh38.p14_rna.1.bt2", "size_bytes": 265802402, "sha256": "8d0190b7cbf701e3ca859ec1beb42ef9b69a7cccd6dde1a664177ac3315d5a65" },
+        { "path": "bowtie2-transcriptome/GCF_000001405.40_GRCh38.p14_rna.2.bt2", "size_bytes": 179642788, "sha256": "06304770b351399318a1ed4227694479be5dd5c581f63c5d309d1cf22e7c907d" },
+        { "path": "bowtie2-transcriptome/GCF_000001405.40_GRCh38.p14_rna.3.bt2", "size_bytes": 1675781, "sha256": "1da644a68e94c4266993461e64a9d0a25b267f84502639957f25cdf7a84f416d" },
+        { "path": "bowtie2-transcriptome/GCF_000001405.40_GRCh38.p14_rna.4.bt2", "size_bytes": 179642781, "sha256": "da2bd2422de536551a91df250ed354a3042f673d07dd36ca1deab2d863cd783f" },
+        { "path": "bowtie2-transcriptome/GCF_000001405.40_GRCh38.p14_rna.rev.1.bt2", "size_bytes": 265802402, "sha256": "2d70ff686113ec4d349cca782dbfabda166eefe592ababb528eaaf59ed2e7949" },
+        { "path": "bowtie2-transcriptome/GCF_000001405.40_GRCh38.p14_rna.rev.2.bt2", "size_bytes": 179642788, "sha256": "d8e2692045512ba258f8ef0700db33d412a9e31101f1e2d430ae686fc6a52697" }
+      ]
+    },
+    "mouse_updated_artifacts": {
+      "assembly": "GCF_000001635.27",
+      "annotation_release": "GCF_000001635.27-RS_2024_02",
+      "files": [
+        { "path": "grna-annotations.sqlite3", "size_bytes": 403898368, "sha256": "6f03119f11c4be68a69a5d802baa09d10201d8c9cc8f96f33fd5625adeaf4c0d" },
+        { "path": "GCF_000001635.27_GRCm39_genomic.fna.idx.db", "size_bytes": 20480, "sha256": "22f5ab07e9e9781ee9c4f3b89a62afe18bd271c42678bb8081920caaa6508dbd" },
+        { "path": "primercat-reference-manifest.json", "size_bytes": 8546, "sha256": "22d8235d059c64d86fe80d08d014de01e86c5bf0346b51c5d0cdfcdfaac99904" }
+      ]
+    }
+  },
+  "source_archive_md5": {
+    "human_genome_fasta_gz": "c30471567037b2b2389d43c908c653e1",
+    "human_transcriptome_fasta_gz": "b4a2ce202c90c0f24f22850c6bc7d774",
+    "note": "Values originate from the NCBI assembly directory and matched the downloaded source archives used for this build."
+  }
+}

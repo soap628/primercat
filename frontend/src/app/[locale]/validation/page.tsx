@@ -1,6 +1,7 @@
 import { AcademicHeader, AcademicSection, Cite, ReferenceList, type AcademicReference } from "@/components/AcademicDocument";
 import cohortBenchmark from "@/data/qpcr-reference-cohort-mouse-v0.6.json";
 import primerBankBenchmark from "@/data/qpcr-transcriptome-benchmark-v0.5.json";
+import { productionEvidence } from "@/data/production-evidence";
 import { Link } from "@/navigation";
 
 const REFERENCES: AcademicReference[] = [
@@ -29,7 +30,7 @@ const COPY = {
     abstract: "PrimerCat 的“可信度”不等同于一个统一准确率，而是由输入质量、算法输出、数据库覆盖、启发式假设和实验验证共同决定。本页给出证据分级、可支持的结论、已知限制与建议验证路径。",
     meta: ["证据框架 1.6", "更新：2026-09-03", "研究用途"], asideTitle: "核心结论",
     aside: "数值可精确计算，不代表生物学结论同样确定；数据库未见命中，不代表真实样本中不存在风险；排名第一，不代表实验必然成功。",
-    tocTitle: "本文目录", toc: [["01", "证据分级", "evidence"], ["02", "各工具可支持的结论", "claims"], ["03", "状态标签解释", "status"], ["04", "实验验证建议", "experimental"], ["05", "复现与变更因素", "reproducibility"], ["06", "计算覆盖与公开对照", "benchmark"], ["07", "当前验证状态", "current-status"], ["REF", "参考文献", "references"]],
+    tocTitle: "本文目录", toc: [["01", "证据分级", "evidence"], ["02", "各工具可支持的结论", "claims"], ["03", "状态标签解释", "status"], ["04", "实验验证建议", "experimental"], ["05", "复现与变更因素", "reproducibility"], ["06", "当前生产证据", "production-snapshot"], ["07", "计算覆盖与公开对照", "benchmark"], ["08", "当前验证状态", "current-status"], ["REF", "参考文献", "references"]],
     evidenceTitle: "证据分级", evidenceLead: "不同类型的输出不能放在同一把尺子上评价。下列分级描述证据来源，而不是给结果打“可信度百分比”。",
     evidenceHead: ["等级", "证据类型", "典型输出", "正确解释"],
     evidenceRows: [
@@ -68,6 +69,11 @@ const COPY = {
     ],
     reproTitle: "复现与变更因素", reproLead: "要让另一位研究者能够重建本次结果，输出必须携带计算上下文，而不只是复制一条候选序列。",
     reproHead: ["必须记录", "原因"], reproRows: [["原始输入或 accession + version", "数据库 accession 更新后序列可能改变。"], ["物种与参考组装", "同一序列在不同组装中的命中和坐标不同。"], ["全部设计参数", "预设只是初值，实际提交值决定候选。"], ["筛查后端、数据库和日期", "本地 Bowtie2 与 NCBI BLAST 的覆盖范围不同，远程数据库持续更新。"], ["返回上限与异常状态", "hit 截断、超时或回退会改变可见证据。"], ["PrimerCat/依赖版本", "Primer3、Biopython、索引和评分规则变更可能改变输出。"]],
+    productionTitle: "当前生产证据快照", productionLead: "本节记录当前线上版本实际使用的参考、索引规模和发布核验结果。它回答“系统运行的是什么”，而不是“实验一定会不会成功”。",
+    productionFacts: ["人类注释特征", "人类转录本定位", "小鼠注释特征"],
+    productionHead: ["记录", "当前值", "核验方式", "正确解释"],
+    productionNote: "数据库行数用于描述实现规模，不等于独立基因、可用 gRNA 或实验验证位点数量。自动化测试、构建、校验和线上流程检查属于软件及数据完整性证据，不构成生物学或临床验证。",
+    productionSnapshotLink: "下载机器可读证据快照", productionChecksumsLink: "查看逐文件校验值", productionSourceLink: "查看对应源代码提交",
     benchmarkTitle: "固定参考计算覆盖审计 v0.6", benchmarkLead: "从固定版小鼠 RefSeq RNA 以公开、确定性的散列规则选取 200 个不同基因，每个基因保留一个 NM_ 转录本，重新生成并筛查候选。这一批次扩大了流程覆盖面；它不是随机抽样、外部准确率测试或湿实验验证。",
     benchmarkFacts: ["候选对已筛查", "联合计算通过", "基因至少一对通过"],
     benchmarkMethodTitle: "本轮如何运行",
@@ -93,7 +99,7 @@ const COPY = {
     eyebrow: "PRIMERCAT · EVIDENCE & VALIDATION NOTE", title: "How to assess confidence in a result", abstractLabel: "Abstract",
     abstract: "PrimerCat does not assign one universal accuracy value. Confidence depends on input quality, algorithmic output, database coverage, heuristic assumptions, and experimental confirmation. This page defines evidence classes, supported claims, known limitations, and validation paths.",
     meta: ["Evidence framework 1.6", "Updated 2026-09-03", "Research use only"], asideTitle: "Central conclusion", aside: "A value can be computed precisely while the biological conclusion remains uncertain. No database hit does not prove absence of risk, and a first-ranked candidate is not guaranteed to work.",
-    tocTitle: "Contents", toc: [["01", "Evidence classes", "evidence"], ["02", "Supported claims", "claims"], ["03", "Status labels", "status"], ["04", "Experimental validation", "experimental"], ["05", "Reproducibility", "reproducibility"], ["06", "Computational coverage & public comparator", "benchmark"], ["07", "Current validation status", "current-status"], ["REF", "References", "references"]],
+    tocTitle: "Contents", toc: [["01", "Evidence classes", "evidence"], ["02", "Supported claims", "claims"], ["03", "Status labels", "status"], ["04", "Experimental validation", "experimental"], ["05", "Reproducibility", "reproducibility"], ["06", "Current production evidence", "production-snapshot"], ["07", "Computational coverage & public comparator", "benchmark"], ["08", "Current validation status", "current-status"], ["REF", "References", "references"]],
     evidenceTitle: "Evidence classes", evidenceLead: "Outputs with different origins should not be judged on one scale. These classes describe where evidence comes from; they are not confidence percentages.",
     evidenceHead: ["Class", "Evidence type", "Typical output", "Correct interpretation"],
     evidenceRows: [["C1", "Deterministic computation", "Sequence length, GC%, coordinates, solution arithmetic, Primer3 fields", "Reproducible under the same input, parameters, and software version; still vulnerable to input error and model assumptions."], ["D1", "Database-dependent screen", "RefSeq template, BLAST/Bowtie2 hits, accessions", "Valid only for the stated database/assembly, query date, thresholds, and hit cap."], ["H1", "Heuristic rank", "qPCR composite score, gRNA activity score, Low/Medium/High labels", "Candidate prioritisation only; not calibrated as probability and not comparable across tools or experiments."], ["R1", "Curated reference", "Protocols, recipe notes, chemical-hazard summaries", "A preparation and review aid; not a substitute for primary literature, product instructions, SDS, SOP, or risk assessment."], ["X0", "Experimental confirmation", "Efficiency, single product, measured editing, measured off-targets, sample suitability", "Not produced by PrimerCat; it must be established in the user's experimental system."]],
@@ -107,6 +113,11 @@ const COPY = {
     validationGroups: [["RT-qPCR / qPCR", ["Confirm the accession, target isoform, and amplicon; inspect common variants when relevant.", "Include NTC and no-RT controls and confirm a single product by melt curve and/or gel.", "Use a standard curve to assess efficiency, linear range, and detection limit; report sequences, concentrations, chemistry, and raw data.", "Use validated reference genes and appropriate normalisation; follow MIQE 2.0."]], ["Endpoint PCR", ["Run an annealing-temperature gradient with positive, negative, and no-template controls.", "Confirm product count and size by gel; confirm sequence by Sanger or another method for critical applications.", "Check the relevant assembly and sample variation for the real specimen source."]], ["CRISPR", ["Cross-check candidates in an independent genome-aware design tool and provide an explicit target locus where possible.", "Measure on-target editing and indel spectrum in the target cells by amplicon sequencing or an equivalent assay.", "Choose targeted-site sequencing or an unbiased method such as GUIDE-seq according to application risk; computational screening cannot replace cellular off-target measurement."]], ["BLAST & references", ["Verify critical claims against the accession and primary record; add MSA, domain, and phylogenetic analysis when required.", "Return from protocols and recipes to the primary source and institutional SOP; for chemicals, check the current label, supplier SDS, and EHS requirements."]]],
     reproTitle: "Reproducibility and change factors", reproLead: "To reconstruct a run, the output must carry its computational context, not only a copied candidate sequence.",
     reproHead: ["Record", "Why"], reproRows: [["Original input or accession + version", "The sequence can change when an accession is revised."], ["Species and reference assembly", "Hits and coordinates differ between assemblies."], ["All submitted parameters", "Presets initialise controls; submitted values determine candidates."], ["Backend, database, and date", "Local Bowtie2 and NCBI BLAST have different scope, and remote databases evolve."], ["Hit caps and exception states", "Truncation, timeout, and fallback alter the visible evidence."], ["PrimerCat and dependency versions", "Primer3, Biopython, index, and score-rule changes may alter output."]],
+    productionTitle: "Current production evidence snapshot", productionLead: "This section records the references, index scale, and release checks used by the running service. It answers what the system is running, not whether an experiment is guaranteed to succeed.",
+    productionFacts: ["Human annotation features", "Human transcript loci", "Mouse annotation features"],
+    productionHead: ["Record", "Current value", "Verification", "Correct interpretation"],
+    productionNote: "Database row counts describe implementation scale; they are not counts of unique genes, usable gRNAs, or experimentally validated sites. Automated tests, builds, checksums, and production-flow checks provide software and data-integrity evidence, not biological or clinical validation.",
+    productionSnapshotLink: "Download machine-readable evidence snapshot", productionChecksumsLink: "Inspect per-file checksums", productionSourceLink: "View the corresponding source commit",
     benchmarkTitle: "Fixed-reference computational coverage audit v0.6", benchmarkLead: "A public deterministic hash rule selects 200 distinct genes from the pinned mouse RefSeq RNA collection, retaining one NM_ transcript per gene. Candidates are regenerated and screened for every record. This expands pipeline coverage; it is not random sampling, an external accuracy test, or wet-lab validation.",
     benchmarkFacts: ["Candidate pairs screened", "Joint computational passes", "Genes with ≥1 pass"],
     benchmarkMethodTitle: "How this run was performed",
@@ -127,6 +138,50 @@ const COPY = {
 
 function Table({ head, rows }: { head: readonly string[]; rows: readonly (readonly string[])[] }) {
   return <div className="academic-table-wrap"><table className="academic-table"><thead><tr>{head.map((cell) => <th key={cell}>{cell}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row[0]}>{row.map((cell, index) => index === 0 ? <th key={cell}>{cell}</th> : <td key={cell}>{cell}</td>)}</tr>)}</tbody></table></div>;
+}
+
+function ProductionSnapshot({ copy, zh }: { copy: typeof COPY.zh | typeof COPY.en; zh: boolean }) {
+  const human = productionEvidence.references.human;
+  const mouse = productionEvidence.references.mouse;
+  const release = productionEvidence.release;
+  const verification = productionEvidence.deployment_verification;
+  const formatCount = new Intl.NumberFormat(zh ? "zh-CN" : "en-US").format;
+  const rows = zh ? [
+    ["人类固定参考", `${human.assembly_name} / ${human.assembly_accession}; ${human.annotation_release}`, `运行文件 ${human.runtime_artifacts_sha256.passed}/${human.runtime_artifacts_sha256.total} 通过跨主机 SHA-256`, "限定当前人类基因组和 accessioned RefSeq RNA 的计算范围。"],
+    ["小鼠固定参考", `${mouse.assembly_name} / ${mouse.assembly_accession}; ${mouse.annotation_release}`, `本次更新文件 ${mouse.updated_artifacts_sha256.passed}/${mouse.updated_artifacts_sha256.total} 通过跨主机 SHA-256`, "限定当前小鼠基因组和 accessioned RefSeq RNA 的计算范围。"],
+    ["软件发布", release.commit.slice(0, 7), `${release.backend_tests_passed} 项后端测试通过；Next.js 生产构建通过`, "证明该版本满足已编码的测试约束，不证明生物学表现。"],
+    ["线上流程检查", `${verification.public_routes_http_200} 个公开路由；${verification.workflows_passed.join(" / ")}`, `${productionEvidence.snapshot_date} 生产环境测试请求均成功`, "证明检查时服务可访问且主流程可完成，不是可用性承诺或实验验证。"],
+  ] : [
+    ["Pinned human reference", `${human.assembly_name} / ${human.assembly_accession}; ${human.annotation_release}`, `${human.runtime_artifacts_sha256.passed}/${human.runtime_artifacts_sha256.total} runtime files passed cross-host SHA-256`, "Defines the current computational scope for the human genome and accessioned RefSeq RNA."],
+    ["Pinned mouse reference", `${mouse.assembly_name} / ${mouse.assembly_accession}; ${mouse.annotation_release}`, `${mouse.updated_artifacts_sha256.passed}/${mouse.updated_artifacts_sha256.total} updated artifacts passed cross-host SHA-256`, "Defines the current computational scope for the mouse genome and accessioned RefSeq RNA."],
+    ["Software release", release.commit.slice(0, 7), `${release.backend_tests_passed} backend tests passed; Next.js production build passed`, "Shows that this release meets encoded test contracts; it does not establish biological performance."],
+    ["Production-flow check", `${verification.public_routes_http_200} public routes; ${verification.workflows_passed.join(" / ")}`, `Production test requests succeeded on ${productionEvidence.snapshot_date}`, "Shows that the service and main workflows completed at check time; it is not an uptime promise or experimental validation."],
+  ];
+
+  return (
+    <>
+      <div className="academic-definition-row academic-production-facts">
+        <div><span>{copy.productionFacts[0]}</span><p><strong>{formatCount(human.grna_feature_rows)}</strong></p></div>
+        <div><span>{copy.productionFacts[1]}</span><p><strong>{formatCount(human.transcript_locus_rows)}</strong></p></div>
+        <div><span>{copy.productionFacts[2]}</span><p><strong>{formatCount(mouse.grna_feature_rows)}</strong></p></div>
+      </div>
+      <Table head={copy.productionHead} rows={rows} />
+      <p className="academic-benchmark-download academic-production-links">
+        <a href={human.assembly_url} target="_blank" rel="noopener noreferrer">NCBI {human.assembly_name}</a>
+        <span aria-hidden="true"> · </span>
+        <a href={human.annotation_url} target="_blank" rel="noopener noreferrer">{human.annotation_release}</a>
+        <span aria-hidden="true"> · </span>
+        <a href={mouse.assembly_url} target="_blank" rel="noopener noreferrer">NCBI {mouse.assembly_name}</a>
+        <span aria-hidden="true"> · </span>
+        <a href={release.source_url} target="_blank" rel="noopener noreferrer">{copy.productionSourceLink}</a>
+        <span aria-hidden="true"> · </span>
+        <a href={human.checksums_url}>{copy.productionChecksumsLink}</a>
+        <span aria-hidden="true"> · </span>
+        <a href="/evidence/production-snapshot-v1.json">{copy.productionSnapshotLink} ↓</a>
+      </p>
+      <p className="academic-caveat">{copy.productionNote}<Cite ids={[13, 14, 16, 17]} /></p>
+    </>
+  );
 }
 
 function ReferenceBenchmark({ copy, zh }: { copy: typeof COPY.zh | typeof COPY.en; zh: boolean }) {
@@ -205,10 +260,13 @@ export default function ValidationPage({ params: { locale } }: { params: { local
             <div className="academic-note-grid"><aside><span>{zh ? "qPCR 报告框架" : "qPCR reporting framework"}</span><p>{zh ? "MIQE 2.0 要求透明报告样本、反应、效率、动态范围、质控与数据分析；它比“选出一对引物”覆盖更完整的证据链。" : "MIQE 2.0 calls for transparent reporting of samples, reactions, efficiency, dynamic range, quality controls, and analysis—a much broader evidence chain than selecting a primer pair."}<Cite ids={[1]} /></p></aside><aside><span>{zh ? "CRISPR 脱靶" : "CRISPR off-targets"}</span><p>{zh ? "错配数量与位置会改变 Cas9 容忍度；GUIDE-seq 等细胞实验能发现计算方法遗漏的切割位点，因此高风险应用不能只依赖序列筛查。" : "Cas9 tolerance depends on mismatch number and position. Cell-based methods such as GUIDE-seq can detect cleavage sites missed computationally, so high-risk work cannot rely on sequence screening alone."}<Cite ids={[6, 7]} /></p></aside></div>
           </AcademicSection>
           <AcademicSection number="05" id="reproducibility" title={copy.reproTitle} lead={copy.reproLead}><Table head={copy.reproHead} rows={copy.reproRows} /></AcademicSection>
-          <AcademicSection number="06" id="benchmark" title={copy.benchmarkTitle} lead={<>{copy.benchmarkLead}<Cite ids={[2, 4, 9, 11, 12, 13, 14, 15]} /></>}>
+          <AcademicSection number="06" id="production-snapshot" title={copy.productionTitle} lead={copy.productionLead}>
+            <ProductionSnapshot copy={copy} zh={zh} />
+          </AcademicSection>
+          <AcademicSection number="07" id="benchmark" title={copy.benchmarkTitle} lead={<>{copy.benchmarkLead}<Cite ids={[2, 4, 9, 11, 12, 13, 14, 15]} /></>}>
             <ReferenceBenchmark copy={copy} zh={zh} />
           </AcademicSection>
-          <AcademicSection number="07" id="current-status" title={copy.currentTitle} lead={copy.currentLead}>
+          <AcademicSection number="08" id="current-status" title={copy.currentTitle} lead={copy.currentLead}>
             <div className="academic-audit-list">{copy.currentItems.map(([title, body], index) => <div key={title}><span>{String(index + 1).padStart(2, "0")}</span><div><h3>{title}</h3><p>{body}</p></div></div>)}</div>
             <p className="academic-caveat">{zh ? "化学安全条目采用 PubChem 等代表性来源，但真实操作必须回到当前产品 SDS；聚合数据库的存在不构成针对具体产品的安全保证。" : "Chemical-safety records use representative sources such as PubChem, but actual work must return to the current product SDS; an aggregated database is not a safety guarantee for a specific product."}<Cite ids={[10]} /></p>
           </AcademicSection>

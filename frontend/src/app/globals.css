@@ -13724,12 +13724,18 @@ html[data-theme="light"] { color-scheme: light; }
 /* Below the hero, the homepage reads as a compact methods note rather than
    a stack of product cards. Colour indicates navigation or evidence level;
    it is not used as decoration. */
+.home-production-snapshot,
 .home-science-methods,
 .home-science-evidence,
 .home-science-references {
   position: relative;
   width: 100%;
   color: var(--text-1);
+}
+
+.home-production-snapshot {
+  background: color-mix(in srgb, var(--bg-inset) 30%, var(--bg));
+  border-bottom: 1px solid var(--border);
 }
 
 .home-science-methods {
@@ -13797,6 +13803,73 @@ html[data-theme="light"] { color-scheme: light; }
   font-size: 15px;
   line-height: 1.86;
 }
+
+.home-production-ledger {
+  margin-top: clamp(34px, 4.5vw, 50px);
+  border-top: 1px solid var(--border-mid);
+}
+
+.home-production-ledger article {
+  display: grid;
+  grid-template-columns: 92px minmax(170px, 230px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: baseline;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.home-production-ledger article > span {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 720;
+  letter-spacing: 0.12em;
+}
+
+.home-production-ledger h3 {
+  margin: 0;
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.home-production-ledger p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.78;
+}
+
+.home-production-ledger p a {
+  color: var(--text-1);
+  text-decoration: underline;
+  text-decoration-color: var(--border-mid);
+  text-underline-offset: 3px;
+}
+
+.home-production-ledger p a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+.home-production-ledger p i { color: var(--text-3); font-style: normal; }
+
+.home-production-foot {
+  display: grid;
+  margin-top: 20px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px 36px;
+  align-items: baseline;
+}
+
+.home-production-foot p {
+  max-width: 720px;
+  margin: 0;
+  color: var(--text-3);
+  font-size: 10px;
+  line-height: 1.75;
+}
+
+.home-production-foot > div { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.home-production-foot a { color: var(--accent); font-size: 10px; font-weight: 680; text-decoration: none; }
+.home-production-foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 .home-method-sequence {
   max-width: 100%;
@@ -14016,6 +14089,13 @@ html[data-theme="light"] { color-scheme: light; }
   .home-science-header h2 { font-size: clamp(30px, 9vw, 38px); }
   .home-page-v4:lang(zh) .home-science-header h2 { font-size: clamp(28px, 8vw, 34px); }
   .home-science-header p { font-size: 13px; }
+  .home-production-ledger article {
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 7px 12px;
+    align-items: start;
+  }
+  .home-production-ledger p { grid-column: 2; }
+  .home-production-foot { grid-template-columns: 1fr; gap: 12px; }
   .home-method-sequence li {
     grid-template-columns: 36px minmax(0, 1fr);
     gap: 8px 12px;
@@ -14036,9 +14116,12 @@ html[data-theme="light"] { color-scheme: light; }
 }
 
 /* ── Round 24 · public validation baseline ───────────────────── */
-.academic-benchmark-facts { margin-bottom: 28px; }
-.academic-benchmark-facts p { margin: 5px 0 0; font-family: var(--font-mono); }
-.academic-benchmark-facts strong { color: var(--text-1); font-size: 16px; font-weight: 650; }
+.academic-benchmark-facts,
+.academic-production-facts { margin-bottom: 28px; }
+.academic-benchmark-facts p,
+.academic-production-facts p { margin: 5px 0 0; font-family: var(--font-mono); }
+.academic-benchmark-facts strong,
+.academic-production-facts strong { color: var(--text-1); font-size: 16px; font-weight: 650; }
 .academic-benchmark-method { margin-bottom: 28px; }
 .academic-benchmark-method h3 { margin: 0 0 8px; }
 .academic-benchmark-table th small {
@@ -14056,6 +14139,7 @@ html[data-theme="light"] { color-scheme: light; }
 .academic-benchmark-table a:hover,
 .academic-benchmark-download a:hover { text-decoration: underline; }
 .academic-benchmark-download { margin: 12px 0 0; font-size: 10px !important; }
+.academic-production-links { line-height: 1.9 !important; }
 .academic-benchmark-next { margin-top: 28px; }
 
 @media (max-width: 720px) {
