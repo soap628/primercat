@@ -151,7 +151,7 @@
     "basis_specificity_scope": "Screening scope",
     "basis_scope_refseq_rna": "NCBI RefSeq RNA transcript collection",
     "basis_scope_genome_pair": "Versioned reference genome · paired-amplicon simulation",
-    "basis_scope_joint_pair": "Versioned GRCm39 + RefSeq RNA · paired-amplicon simulation",
+    "basis_scope_joint_pair": "Versioned reference genome + RefSeq RNA · paired-amplicon simulation",
     "basis_reference_assembly": "Reference assembly",
     "basis_genome_scope": "Genome-wide simulation",
     "basis_genome_scope_yes": "Performed",

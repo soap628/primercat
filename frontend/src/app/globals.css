@@ -13725,7 +13725,6 @@ html[data-theme="light"] { color-scheme: light; }
    a stack of product cards. Colour indicates navigation or evidence level;
    it is not used as decoration. */
 .home-science-methods,
-.home-science-tools,
 .home-science-evidence,
 .home-science-references {
   position: relative;
@@ -13739,14 +13738,13 @@ html[data-theme="light"] { color-scheme: light; }
     var(--bg);
 }
 
-.home-science-tools { background: color-mix(in srgb, var(--bg-card) 58%, var(--bg)); }
 .home-science-evidence { background: var(--bg); }
 .home-science-references { background: color-mix(in srgb, var(--bg-inset) 38%, var(--bg)); }
 
 .home-science-shell {
   width: min(1120px, calc(100vw - 48px));
   margin: 0 auto;
-  padding: clamp(84px, 9vw, 126px) 0;
+  padding: clamp(64px, 7vw, 92px) 0;
 }
 
 .home-science-header {
@@ -13802,7 +13800,7 @@ html[data-theme="light"] { color-scheme: light; }
 
 .home-method-sequence {
   max-width: 100%;
-  margin: clamp(54px, 7vw, 82px) 0 0;
+  margin: clamp(38px, 5vw, 58px) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -13816,7 +13814,6 @@ html[data-theme="light"] { color-scheme: light; }
 }
 
 .home-method-number,
-.home-workflow-code,
 .home-evidence-levels article > span,
 .home-reference-list li > span {
   color: var(--text-3);
@@ -13869,108 +13866,10 @@ html[data-theme="light"] { color-scheme: light; }
 
 .home-inline-citations a:hover { text-decoration: underline; text-underline-offset: 2px; }
 
-.home-workflow-list {
-  max-width: 100%;
-  margin: clamp(54px, 7vw, 78px) 0 0;
-}
-
-.home-workflow-row {
-  display: grid;
-  grid-template-columns: 54px minmax(210px, 270px) minmax(0, 1fr) 32px;
-  gap: 18px;
-  align-items: start;
-  padding: 25px 12px 25px 0;
-  border-top: 1px solid var(--border);
-  transition: background-color 160ms ease, padding-left 160ms ease;
-}
-
-.home-workflow-row:last-child { border-bottom: 1px solid var(--border); }
-.home-workflow-row:has(a:hover) { padding-left: 10px; background: var(--accent-soft); }
-.home-workflow-code { padding-top: 5px; color: var(--accent); }
-
-.home-workflow-identity {
-  color: inherit;
-  text-decoration: none;
-}
-
-.home-workflow-identity > span {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--text-3);
-  font-family: var(--font-mono);
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.home-workflow-identity h3 {
-  margin: 0;
-  color: var(--text-1);
-  font-size: 18px;
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  line-height: 1.3;
-}
-
-.home-workflow-identity p {
-  max-width: 250px;
-  margin: 7px 0 0;
-  color: var(--text-3);
-  font-size: 11px;
-  line-height: 1.65;
-}
-
-.home-workflow-method {
-  display: grid;
-  margin: 0;
-  gap: 12px;
-}
-
-.home-workflow-method > div {
-  display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
-  gap: 10px;
-}
-
-.home-workflow-method dt {
-  color: var(--text-3);
-  font-family: var(--font-mono);
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.home-workflow-method dd {
-  margin: 0;
-  color: var(--text-2);
-  font-size: 11px;
-  line-height: 1.67;
-}
-
-.home-workflow-arrow {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  color: var(--text-2);
-  font-size: 13px;
-  text-decoration: none;
-  transition: color 160ms ease, background-color 160ms ease, transform 160ms ease;
-}
-
-.home-workflow-arrow:hover {
-  color: var(--on-accent);
-  background: var(--accent);
-  transform: translate(2px, -2px);
-}
-
 .home-evidence-levels {
   display: grid;
   max-width: 100%;
-  margin: clamp(54px, 7vw, 80px) 0 0;
+  margin: clamp(38px, 5vw, 58px) 0 0;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 42px clamp(40px, 7vw, 86px);
 }
@@ -13996,7 +13895,7 @@ html[data-theme="light"] { color-scheme: light; }
 .home-science-disclosure {
   display: grid;
   max-width: 100%;
-  margin: clamp(56px, 8vw, 90px) 0 0;
+  margin: clamp(40px, 5vw, 62px) 0 0;
   padding: 5px 0 5px 20px;
   border-left: 2px solid var(--accent);
   grid-template-columns: minmax(150px, 210px) minmax(0, 1fr);
@@ -14034,9 +13933,28 @@ html[data-theme="light"] { color-scheme: light; }
 
 .home-reference-list {
   max-width: 100%;
-  margin: clamp(54px, 7vw, 78px) 0 0;
+  margin: 22px 0 0;
   padding: 0;
   list-style: none;
+}
+
+.home-reference-details {
+  max-width: 900px;
+  margin-top: clamp(30px, 4vw, 42px);
+}
+
+.home-reference-details summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 680;
+  list-style-position: outside;
+}
+
+.home-reference-details summary:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .home-reference-list li {
@@ -14087,16 +14005,14 @@ html[data-theme="light"] { color-scheme: light; }
   .home-science-header { grid-template-columns: 1fr; gap: 18px; }
   .home-science-label { padding-top: 0; }
   .home-method-sequence,
-  .home-workflow-list,
   .home-evidence-levels,
   .home-science-disclosure,
   .home-reference-list { margin-left: 0; }
-  .home-workflow-row { grid-template-columns: 42px minmax(180px, 230px) minmax(0, 1fr) 32px; }
   .home-reference-list li { grid-template-columns: 32px minmax(0, 1fr); }
 }
 
 @media (max-width: 680px) {
-  .home-science-shell { width: min(100% - 32px, 1120px); padding: 72px 0; }
+  .home-science-shell { width: min(100% - 32px, 1120px); padding: 58px 0; }
   .home-science-header h2 { font-size: clamp(30px, 9vw, 38px); }
   .home-page-v4:lang(zh) .home-science-header h2 { font-size: clamp(28px, 8vw, 34px); }
   .home-science-header p { font-size: 13px; }
@@ -14107,24 +14023,10 @@ html[data-theme="light"] { color-scheme: light; }
   }
   .home-method-sequence h3 { grid-column: 2; }
   .home-method-copy { grid-column: 2; }
-  .home-workflow-row {
-    grid-template-columns: 34px minmax(0, 1fr) 30px;
-    gap: 12px;
-    padding: 22px 0;
-  }
-  .home-workflow-identity { grid-column: 2; }
-  .home-workflow-method { grid-column: 2 / 4; }
-  .home-workflow-method > div { grid-template-columns: 68px minmax(0, 1fr); }
-  .home-workflow-arrow { grid-column: 3; grid-row: 1; }
   .home-evidence-levels { grid-template-columns: 1fr; gap: 32px; }
   .home-science-disclosure { grid-template-columns: 1fr; gap: 9px; }
   .home-science-disclosure > div { grid-column: 1; margin-top: 4px; }
   .home-reference-list li { padding: 12px 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .home-workflow-row,
-  .home-workflow-arrow { transition: none; }
 }
 
 /* ── Round 23 · qPCR result disclosure hierarchy ─────────────── */

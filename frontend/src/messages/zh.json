@@ -151,7 +151,7 @@
     "basis_specificity_scope": "筛查范围",
     "basis_scope_refseq_rna": "NCBI RefSeq RNA 转录本库",
     "basis_scope_genome_pair": "固定版本参考基因组 · 成对扩增模拟",
-    "basis_scope_joint_pair": "固定版 GRCm39 + RefSeq RNA · 成对扩增模拟",
+    "basis_scope_joint_pair": "固定版参考基因组 + RefSeq RNA · 成对扩增模拟",
     "basis_reference_assembly": "参考基因组版本",
     "basis_genome_scope": "全基因组模拟",
     "basis_genome_scope_yes": "已执行",

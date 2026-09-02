@@ -4,6 +4,7 @@ from bisect import bisect_left
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
+import sqlite3
 
 from app.core.config import settings
 from app.schemas.grna import (
@@ -17,7 +18,8 @@ BIN_SIZE = 200_000
 
 @dataclass(frozen=True)
 class AnnotationBackendConfig:
-    gtf_path: str
+    gtf_path: str = ""
+    database_path: str = ""
 
 
 @dataclass(frozen=True)
@@ -61,27 +63,45 @@ def _annotation_env_var_for_species(species: str) -> str:
     }.get(species, "GRNA_ANNOTATION_GTF_<SPECIES>")
 
 
+def _annotation_db_env_var_for_species(species: str) -> str:
+    return {
+        "human": "GRNA_ANNOTATION_DB_HUMAN",
+        "mouse": "GRNA_ANNOTATION_DB_MOUSE",
+    }.get(species, "GRNA_ANNOTATION_DB_<SPECIES>")
+
+
 def resolve_grna_hit_annotation_backend(species: str) -> tuple[AnnotationBackendConfig | None, str]:
+    database_path = settings.grna_annotation_db_by_species.get(species, "").strip()
+    if database_path:
+        if Path(database_path).exists():
+            return AnnotationBackendConfig(database_path=database_path), ""
+        database_reason = f"Configured gRNA annotation database '{database_path}' was not found."
+    else:
+        database_reason = ""
+
     gtf_path = settings.grna_annotation_gtf_by_species.get(species, "").strip()
     if not gtf_path:
-        return None, f"No gene annotation GTF is configured for species '{species}'."
+        return None, database_reason or f"No gene annotation database or GTF is configured for species '{species}'."
     if not Path(gtf_path).exists():
-        return None, f"Gene annotation GTF '{gtf_path}' was not found."
+        return None, database_reason or f"Gene annotation GTF '{gtf_path}' was not found."
     return AnnotationBackendConfig(gtf_path=gtf_path), ""
 
 
 def get_grna_hit_annotation_meta(species: str) -> tuple[bool, str, str]:
     backend, reason = resolve_grna_hit_annotation_backend(species)
     if backend is None:
-        env_var = _annotation_env_var_for_species(species)
+        database_env_var = _annotation_db_env_var_for_species(species)
+        gtf_env_var = _annotation_env_var_for_species(species)
         return (
             False,
             "none",
-            f"Top genome hits are not annotated yet. Configure {env_var} with a species-matched GTF file to enable gene-context labels.",
+            "Top genome hits are not annotated yet. Configure "
+            f"{database_env_var} (preferred) or {gtf_env_var} with a species-matched "
+            "reference to enable gene-context labels.",
         )
     return (
         True,
-        "gtf_gene_model",
+        "sqlite_gene_model" if backend.database_path else "gtf_gene_model",
         f"Top genome hits are annotated against the configured {species} gene model.",
     )
 
@@ -90,6 +110,14 @@ def annotate_genome_hit(species: str, accession: str, start: int, end: int) -> G
     backend, _ = resolve_grna_hit_annotation_backend(species)
     if backend is None:
         return None
+    if backend.database_path:
+        return _annotate_with_database(
+            str(Path(backend.database_path).resolve()),
+            accession,
+            start,
+            end,
+            settings.GRNA_PROMOTER_WINDOW_BP,
+        )
     index = _load_annotation_index(backend.gtf_path, settings.GRNA_PROMOTER_WINDOW_BP)
     return _annotate_with_index(index, accession, start, end)
 
@@ -430,6 +458,165 @@ def _annotation_from_gene(region: GrnaHitRegion, record: GeneRecord, start: int,
         gene_id=record.gene_id or None,
         gene_biotype=record.gene_biotype or None,
         distance_to_tss=_distance_to_tss(start, end, record.tss),
+    )
+
+
+def _database_feature_overlaps(
+    connection: sqlite3.Connection,
+    accession: str,
+    feature_type: str,
+    start: int,
+    end: int,
+) -> list[FeatureRecord]:
+    start_bin = (start - 1) // BIN_SIZE
+    end_bin = (end - 1) // BIN_SIZE
+    for candidate_accession in _accession_candidates(accession):
+        rows = connection.execute(
+            """
+            SELECT DISTINCT accession, start, end, strand, gene_id, gene_name,
+                   transcript_id, gene_biotype
+            FROM grna_features
+            WHERE accession = ? AND feature_type = ? AND bin BETWEEN ? AND ?
+              AND start <= ? AND end >= ?
+            """,
+            (candidate_accession, feature_type, start_bin, end_bin, end, start),
+        ).fetchall()
+        if rows:
+            return [FeatureRecord(*row) for row in rows]
+    return []
+
+
+def _database_promoter_overlaps(
+    connection: sqlite3.Connection,
+    accession: str,
+    start: int,
+    end: int,
+    promoter_window_bp: int,
+) -> list[GeneRecord]:
+    for candidate_accession in _accession_candidates(accession):
+        rows = connection.execute(
+            """
+            SELECT accession, start, end, strand, tss, gene_id, gene_name, gene_biotype
+            FROM grna_features
+            WHERE accession = ? AND feature_type = 'gene' AND tss BETWEEN ? AND ?
+            """,
+            (candidate_accession, max(1, start - promoter_window_bp), end + promoter_window_bp),
+        ).fetchall()
+        if not rows:
+            continue
+        overlaps: list[GeneRecord] = []
+        for row in rows:
+            gene = GeneRecord(*row)
+            promoter_start, promoter_end = _promoter_interval(gene, promoter_window_bp)
+            if promoter_end < start or promoter_start > end:
+                continue
+            overlaps.append(GeneRecord(
+                accession=gene.accession,
+                start=promoter_start,
+                end=promoter_end,
+                strand=gene.strand,
+                tss=gene.tss,
+                gene_id=gene.gene_id,
+                gene_name=gene.gene_name,
+                gene_biotype=gene.gene_biotype,
+            ))
+        if overlaps:
+            return overlaps
+    return []
+
+
+def _database_nearest_gene(
+    connection: sqlite3.Connection,
+    accession: str,
+    start: int,
+    end: int,
+) -> GeneRecord | None:
+    midpoint = (start + end) // 2
+    for candidate_accession in _accession_candidates(accession):
+        row = connection.execute(
+            """
+            SELECT accession, start, end, strand, tss, gene_id, gene_name, gene_biotype
+            FROM grna_features
+            WHERE accession = ? AND feature_type = 'gene'
+            ORDER BY ABS(tss - ?) ASC
+            LIMIT 1
+            """,
+            (candidate_accession, midpoint),
+        ).fetchone()
+        if row:
+            return GeneRecord(*row)
+    return None
+
+
+@lru_cache(maxsize=8192)
+def _annotate_with_database(
+    database_path: str,
+    accession: str,
+    start: int,
+    end: int,
+    promoter_window_bp: int,
+) -> GrnaHitAnnotation:
+    with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as connection:
+        cds_hits = _database_feature_overlaps(connection, accession, "cds", start, end)
+        if cds_hits:
+            return _annotation_from_feature(
+                GrnaHitRegion.cds,
+                _pick_best_feature(cds_hits, start, end),
+                start,
+                end,
+            )
+
+        exon_hits = _database_feature_overlaps(connection, accession, "exon", start, end)
+        if exon_hits:
+            return _annotation_from_feature(
+                GrnaHitRegion.exon,
+                _pick_best_feature(exon_hits, start, end),
+                start,
+                end,
+            )
+
+        transcript_hits = _database_feature_overlaps(
+            connection,
+            accession,
+            "transcript",
+            start,
+            end,
+        )
+        if transcript_hits:
+            return _annotation_from_feature(
+                GrnaHitRegion.intron,
+                _pick_best_feature(transcript_hits, start, end),
+                start,
+                end,
+            )
+
+        promoter_hits = _database_promoter_overlaps(
+            connection,
+            accession,
+            start,
+            end,
+            promoter_window_bp,
+        )
+        if promoter_hits:
+            return _annotation_from_gene(
+                GrnaHitRegion.promoter,
+                _pick_best_gene(promoter_hits, start, end),
+                start,
+                end,
+            )
+
+        nearest_gene = _database_nearest_gene(connection, accession, start, end)
+        if nearest_gene is not None:
+            return _annotation_from_gene(
+                GrnaHitRegion.intergenic,
+                nearest_gene,
+                start,
+                end,
+            )
+
+    return GrnaHitAnnotation(
+        status=GrnaHitAnnotationStatus.annotated,
+        region=GrnaHitRegion.intergenic,
     )
 
 

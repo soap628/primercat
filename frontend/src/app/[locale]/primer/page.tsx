@@ -1066,9 +1066,10 @@ export default function PrimerPage() {
       return t("result_summary_incomplete", { count: pairs.length, exon: exonCount });
     }
     const specificCount = pairs.filter((pair) => pair.is_specific).length;
+    const assembly = data.design_basis?.reference_assembly ?? "versioned reference";
     const screening = data.design_basis?.paired_transcriptome_screen
-      ? "GRCm39 genome + RefSeq RNA paired screen"
-      : data.design_basis?.paired_amplicon_screen ? "GRCm39 / Bowtie2 pair screen" : "RefSeq RNA BLAST";
+      ? `${assembly} genome + matched RefSeq RNA paired screen`
+      : data.design_basis?.paired_amplicon_screen ? `${assembly} / Bowtie2 pair screen` : "RefSeq RNA BLAST";
     return t("result_summary", {
       count: pairs.length,
       specific: specificCount,
@@ -1260,7 +1261,7 @@ export default function PrimerPage() {
         </div>
         <aside className="design-hero-meta">
           <span>{locale === "zh" ? "设计引擎" : "DESIGN ENGINE"}</span>
-          <strong>Primer3 + RefSeq / GRCm39</strong>
+          <strong>Primer3 + RefSeq / {species === "human" ? "GRCh38.p14" : "GRCm39"}</strong>
           <p>{locale === "zh" ? "候选序列、质量参数与筛查依据" : "Sequences, quality metrics, and screening evidence"}</p>
         </aside>
       </section>

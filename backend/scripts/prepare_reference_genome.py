@@ -31,6 +31,36 @@ from pathlib import Path
 
 
 ASSEMBLIES = {
+    "human": {
+        "assembly_accession": "GCF_000001405.40",
+        "assembly_name": "GRCh38.p14",
+        "annotation_release": "GCF_000001405.40-RS_2025_08",
+        "base_url": (
+            "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/"
+            "GCF_000001405.40_GRCh38.p14"
+        ),
+        "files": {
+            "genome_fasta_gz": {
+                "name": "GCF_000001405.40_GRCh38.p14_genomic.fna.gz",
+                "md5": "c30471567037b2b2389d43c908c653e1",
+                "expand_to": "GCF_000001405.40_GRCh38.p14_genomic.fna",
+            },
+            "annotation_gtf_gz": {
+                "name": "GCF_000001405.40_GRCh38.p14_genomic.gtf.gz",
+                "md5": "a561524a1ac438a2a95aed54d00e490e",
+                "expand_to": "GCF_000001405.40_GRCh38.p14_genomic.gtf",
+            },
+            "transcriptome_fasta_gz": {
+                "name": "GCF_000001405.40_GRCh38.p14_rna.fna.gz",
+                "md5": "b4a2ce202c90c0f24f22850c6bc7d774",
+                "expand_to": "GCF_000001405.40_GRCh38.p14_rna.fna",
+            },
+            "assembly_report": {
+                "name": "GCF_000001405.40_GRCh38.p14_assembly_report.txt",
+                "md5": "21f3ac4aa8245a99eb874082051b9dde",
+            },
+        },
+    },
     "mouse": {
         "assembly_accession": "GCF_000001635.27",
         "assembly_name": "GRCm39",
@@ -64,6 +94,7 @@ ASSEMBLIES = {
 }
 
 CHUNK_SIZE = 8 * 1024 * 1024
+ANNOTATION_BIN_SIZE = 200_000
 
 
 def _gtf_attributes(raw: str) -> dict[str, str]:
@@ -273,6 +304,144 @@ def _build_transcript_locus_db(gtf_path: Path, destination: Path) -> Path:
     return destination
 
 
+def _build_grna_annotation_db(gtf_path: Path, destination: Path) -> Path:
+    """Build a disk-backed interval store for low-memory hit annotation."""
+    if destination.exists() and destination.stat().st_mtime >= gtf_path.stat().st_mtime:
+        try:
+            with sqlite3.connect(destination) as connection:
+                count = connection.execute("SELECT COUNT(*) FROM grna_features").fetchone()[0]
+            if count:
+                print(f"using existing gRNA annotation database ({count:,} rows)", flush=True)
+                return destination
+        except (sqlite3.DatabaseError, OSError):
+            pass
+
+    partial = destination.with_suffix(destination.suffix + ".part")
+    if partial.exists():
+        partial.unlink()
+    print(f"building gRNA annotation database {destination.name}", flush=True)
+    with sqlite3.connect(partial) as connection:
+        connection.executescript(
+            """
+            PRAGMA journal_mode=OFF;
+            PRAGMA synchronous=OFF;
+            PRAGMA temp_store=MEMORY;
+            CREATE TABLE grna_features (
+                feature_type TEXT NOT NULL,
+                accession TEXT NOT NULL,
+                bin INTEGER NOT NULL,
+                start INTEGER NOT NULL,
+                end INTEGER NOT NULL,
+                strand TEXT NOT NULL,
+                tss INTEGER NOT NULL DEFAULT 0,
+                gene_id TEXT NOT NULL DEFAULT '',
+                gene_name TEXT NOT NULL DEFAULT '',
+                transcript_id TEXT NOT NULL DEFAULT '',
+                gene_biotype TEXT NOT NULL DEFAULT ''
+            );
+            """
+        )
+        sql = """
+            INSERT INTO grna_features (
+                feature_type, accession, bin, start, end, strand, tss,
+                gene_id, gene_name, transcript_id, gene_biotype
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        batch: list[tuple[str, str, int, int, int, str, int, str, str, str, str]] = []
+        with gtf_path.open("r", encoding="utf-8") as handle:
+            for raw_line in handle:
+                if not raw_line or raw_line.startswith("#"):
+                    continue
+                fields = raw_line.rstrip("\n").split("\t")
+                if len(fields) < 9:
+                    continue
+                feature_type = fields[2].lower()
+                if feature_type not in {"gene", "transcript", "exon", "cds"}:
+                    continue
+                try:
+                    start = int(fields[3])
+                    end = int(fields[4])
+                except ValueError:
+                    continue
+                if end < start:
+                    continue
+                attributes = _gtf_attributes(fields[8])
+                strand = fields[6]
+                tss = end if feature_type == "gene" and strand == "-" else start
+                if feature_type != "gene":
+                    tss = 0
+                start_bin = (start - 1) // ANNOTATION_BIN_SIZE
+                end_bin = (end - 1) // ANNOTATION_BIN_SIZE
+                bins = range(start_bin, end_bin + 1) if feature_type != "gene" else (start_bin,)
+                for bin_id in bins:
+                    batch.append((
+                        feature_type,
+                        fields[0],
+                        bin_id,
+                        start,
+                        end,
+                        strand,
+                        tss,
+                        attributes.get("gene_id", ""),
+                        attributes.get("gene_name", "") or attributes.get("gene", ""),
+                        attributes.get("transcript_id", ""),
+                        attributes.get("gene_biotype", "")
+                        or attributes.get("gene_type", "")
+                        or attributes.get("biotype", ""),
+                    ))
+                if len(batch) >= 20_000:
+                    connection.executemany(sql, batch)
+                    batch.clear()
+        if batch:
+            connection.executemany(sql, batch)
+        connection.execute(
+            "CREATE INDEX grna_features_lookup_idx "
+            "ON grna_features(accession, feature_type, bin, start, end)"
+        )
+        connection.execute(
+            "CREATE INDEX grna_genes_tss_idx "
+            "ON grna_features(accession, feature_type, tss)"
+        )
+        count = connection.execute("SELECT COUNT(*) FROM grna_features").fetchone()[0]
+        connection.commit()
+    os.replace(partial, destination)
+    print(f"indexed {count:,} gRNA annotation features", flush=True)
+    return destination
+
+
+def _build_fasta_index_db(fasta_path: Path) -> Path:
+    """Prebuild Biopython's relocatable FASTA index for read-only production mounts."""
+    try:
+        from Bio import SeqIO
+    except ImportError as exc:
+        raise RuntimeError(
+            "Biopython is required to build the genome FASTA index; install backend requirements."
+        ) from exc
+
+    destination = Path(f"{fasta_path}.idx.db")
+    if destination.exists() and destination.stat().st_mtime >= fasta_path.stat().st_mtime:
+        try:
+            index = SeqIO.index_db(str(destination), str(fasta_path), "fasta")
+            count = len(index)
+            index.close()
+            if count:
+                print(f"using existing genome FASTA index ({count:,} records)", flush=True)
+                return destination
+        except (OSError, ValueError, sqlite3.DatabaseError):
+            pass
+
+    partial = Path(f"{destination}.part")
+    if partial.exists():
+        partial.unlink()
+    print(f"building genome FASTA index {destination.name}", flush=True)
+    index = SeqIO.index_db(str(partial), str(fasta_path), "fasta")
+    count = len(index)
+    index.close()
+    os.replace(partial, destination)
+    print(f"indexed {count:,} genome FASTA records", flush=True)
+    return destination
+
+
 def _tool_version(executable: str) -> str:
     result = subprocess.run(
         [executable, "--version"],
@@ -311,7 +480,9 @@ def prepare(species: str, data_root: Path, bowtie2_build: str) -> Path:
         downloaded["transcriptome_fasta_gz"],
         output_dir / assembly["files"]["transcriptome_fasta_gz"]["expand_to"],
     )
+    fasta_index_db = _build_fasta_index_db(fasta)
     locus_db = _build_transcript_locus_db(gtf, output_dir / "qpcr-transcript-loci.sqlite3")
+    annotation_db = _build_grna_annotation_db(gtf, output_dir / "grna-annotations.sqlite3")
     index_prefix = output_dir / "bowtie2" / label
     index_files = _build_index(fasta, index_prefix, executable)
     transcriptome_index_prefix = output_dir / "bowtie2-transcriptome" / f"{label}_rna"
@@ -322,7 +493,7 @@ def prepare(species: str, data_root: Path, bowtie2_build: str) -> Path:
     )
 
     manifest = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "species": species,
         "assembly_accession": assembly["assembly_accession"],
         "assembly_name": assembly["assembly_name"],
@@ -357,6 +528,11 @@ def prepare(species: str, data_root: Path, bowtie2_build: str) -> Path:
                 "size_bytes": transcriptome_fasta.stat().st_size,
             },
         },
+        "genome_fasta_index_database": {
+            "path": str(fasta_index_db),
+            "sha256": _digest(fasta_index_db, "sha256"),
+            "size_bytes": fasta_index_db.stat().st_size,
+        },
         "bowtie2_index": {
             "prefix": str(index_prefix),
             "files": [
@@ -384,13 +560,20 @@ def prepare(species: str, data_root: Path, bowtie2_build: str) -> Path:
             "sha256": _digest(locus_db, "sha256"),
             "size_bytes": locus_db.stat().st_size,
         },
+        "grna_annotation_database": {
+            "path": str(annotation_db),
+            "sha256": _digest(annotation_db, "sha256"),
+            "size_bytes": annotation_db.stat().st_size,
+        },
         "environment": {
-            "GRNA_BOWTIE2_INDEX_MOUSE": str(index_prefix),
-            "GRNA_GENOME_FASTA_MOUSE": str(fasta),
-            "GRNA_ANNOTATION_GTF_MOUSE": str(gtf),
-            "QPCR_TRANSCRIPT_LOCUS_DB_MOUSE": str(locus_db),
-            "QPCR_TRANSCRIPTOME_BOWTIE2_INDEX_MOUSE": str(transcriptome_index_prefix),
-            "QPCR_TRANSCRIPTOME_FASTA_MOUSE": str(transcriptome_fasta),
+            f"GRNA_BOWTIE2_INDEX_{species.upper()}": str(index_prefix),
+            f"GRNA_GENOME_FASTA_{species.upper()}": str(fasta),
+            f"GRNA_ANNOTATION_GTF_{species.upper()}": str(gtf),
+            f"GRNA_ANNOTATION_DB_{species.upper()}": str(annotation_db),
+            f"QPCR_TRANSCRIPT_LOCUS_DB_{species.upper()}": str(locus_db),
+            f"QPCR_TRANSCRIPTOME_BOWTIE2_INDEX_{species.upper()}": str(transcriptome_index_prefix),
+            f"QPCR_TRANSCRIPTOME_FASTA_{species.upper()}": str(transcriptome_fasta),
+            f"GENOME_REFERENCE_ASSEMBLY_{species.upper()}": assembly["assembly_accession"],
         },
     }
     manifest_path = output_dir / "primercat-reference-manifest.json"

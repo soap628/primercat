@@ -263,13 +263,13 @@ const HOME_REFERENCES = [
 const HOME_SCIENCE_COPY = {
   zh: {
     methodLabel: "方法概览",
-    methodTitle: "从输入到候选，保留可复核的证据链",
-    methodIntro: "PrimerCat 把参考序列、设计约束、数据库筛查与排序依据一并呈现。页面提供的是可比较的候选，不替代扩增效率、产物特异性或编辑效果的实验验证。",
+    methodTitle: "候选结果从哪里来",
+    methodIntro: "每个结果保留参考序列、设计约束、筛查范围和排序依据；实验表现仍需在真实体系中确认。",
     methodSteps: [
-      { number: "01", title: "确定参考序列", body: "基因名称模式从 NCBI RefSeq 获取记录；人类基因优先采用 MANE Select，结果保留 accession 与实际选择规则。", note: "记录：物种、accession、转录本规则", refs: [1, 2] },
-      { number: "02", title: "按约束生成候选", body: "qPCR 与常规 PCR 由 Primer3 在长度、Tm、GC%、产物区间和热力学结构阈值下生成候选。", note: "输出：序列、坐标、Tm、GC%、扩增子", refs: [3] },
-      { number: "03", title: "执行数据库初筛", body: "根据可用后端，对引物或 gRNA 进行 RefSeq RNA、RefSeq genomic、nt BLAST 或本地参考基因组比对。每项结论均受数据库版本、搜索范围与命中上限约束。", note: "声明：后端、数据库范围与判定阈值", refs: [4, 5] },
-      { number: "04", title: "排序、解释与验证", body: "候选依据当前启发式规则排序，并显示组成项。分数用于同一次运行内比较，不是实验成功率；关键应用仍需按 MIQE 或相应实验框架验证。", note: "边界：计算排序 ≠ 实验结论", refs: [6, 7] },
+      { number: "01", title: "确定参考序列", body: "从 NCBI RefSeq 获取记录；人类基因优先采用 MANE Select，并保留 accession 与选择规则。", note: "记录物种、版本与转录本规则", refs: [1, 2] },
+      { number: "02", title: "生成候选", body: "Primer3 按长度、Tm、GC%、产物区间和热力学阈值生成引物。", note: "输出序列、坐标与扩增子", refs: [3] },
+      { number: "03", title: "固定参考筛查", body: "在可用的固定基因组和配套 RefSeq RNA 中模拟成对扩增，并显示数据库范围与命中上限。", note: "当前人和小鼠采用版本固定的本地参考", refs: [4, 5] },
+      { number: "04", title: "排序与验证", body: "分数只用于候选比较，不是成功率；关键应用仍应按 MIQE 或相应框架完成实验验证。", note: "计算排序 ≠ 实验结论", refs: [6, 7] },
     ],
     toolsLabel: "科学工作流",
     toolsTitle: "四个入口，对应四类问题",
@@ -283,8 +283,8 @@ const HOME_SCIENCE_COPY = {
     methodTerm: "方法",
     boundaryTerm: "使用边界",
     evidenceLabel: "证据解释",
-    evidenceTitle: "把“已计算”与“已验证”分开",
-    evidenceIntro: "首页中的每一种结果都应当知道自己属于哪一层证据。",
+    evidenceTitle: "计算完成，不等于实验有效",
+    evidenceIntro: "PrimerCat 明确区分可复算数值、数据库筛查、启发式排序与实验确认。",
     evidenceItems: [
       { code: "COMPUTE", title: "确定性计算", body: "序列长度、GC%、坐标与配方换算可由输入直接复算。" },
       { code: "SCREEN", title: "数据库筛查", body: "结论只覆盖已声明的数据库、版本、阈值与命中上限。" },
@@ -292,22 +292,23 @@ const HOME_SCIENCE_COPY = {
       { code: "VALIDATE", title: "实验验证", body: "熔解曲线、凝胶、测序、效率曲线或细胞实验才回答真实表现。" },
     ],
     disclosureTitle: "诚实的结论边界",
-    disclosure: "PrimerCat 不把“未发现明显非目标命中”写成“绝对特异”，也不把高分写成成功率。数据库会更新，样本可能含有变异，反应体系和细胞背景也会改变真实结果。",
+    disclosure: "“未发现明显非目标命中”不等于绝对特异，高分也不是成功率。样本变异、反应体系和细胞背景仍会改变真实结果。",
     methodsLink: "阅读完整方法",
     validationLink: "查看可信度与验证建议",
     referencesLabel: "主要文献",
-    referencesTitle: "方法依据与延伸阅读",
-    referencesIntro: "以下文献支持数据库、算法与验证框架。引用不表示 PrimerCat 完整复现论文中的全部模型，也不构成对本站整体性能的背书。",
+    referencesTitle: "方法与文献",
+    referencesIntro: "核心算法、数据库与验证框架均链接到原始论文；完整方法、限制和基准数据在专页公开。",
+    referencesSummary: "查看 7 篇核心参考文献",
   },
   en: {
     methodLabel: "METHODS AT A GLANCE",
-    methodTitle: "A reviewable evidence chain from input to candidate",
-    methodIntro: "PrimerCat presents the reference sequence, design constraints, database screen, and ranking rationale together. It produces comparable candidates; it does not replace experimental measurements of efficiency, product specificity, or editing outcome.",
+    methodTitle: "Where each candidate comes from",
+    methodIntro: "Every result retains its reference sequence, constraints, screening scope, and ranking basis. Performance still requires confirmation in the real experiment.",
     methodSteps: [
-      { number: "01", title: "Resolve the reference", body: "Gene-name mode retrieves NCBI RefSeq records. Human genes preferentially use MANE Select, and the result retains the accession and applied selection rule.", note: "Record: species, accession, transcript rule", refs: [1, 2] },
-      { number: "02", title: "Generate under constraints", body: "Primer3 generates qPCR and endpoint-PCR candidates under length, Tm, GC%, product-size, and thermodynamic structure constraints.", note: "Output: sequence, coordinates, Tm, GC%, amplicon", refs: [3] },
-      { number: "03", title: "Run a database screen", body: "Depending on the available backend, primers or gRNAs are searched against RefSeq RNA, RefSeq genomic, NCBI nt, or a local reference genome. Every statement remains limited by database version, scope, and hit cap.", note: "Declare: backend, database scope, criteria", refs: [4, 5] },
-      { number: "04", title: "Rank, interpret, validate", body: "Candidates are ordered by the current heuristic and its components are shown. Scores compare candidates within a run; they are not success probabilities. Critical use still requires MIQE or an application-appropriate validation framework.", note: "Boundary: computational rank ≠ experimental conclusion", refs: [6, 7] },
+      { number: "01", title: "Resolve the reference", body: "Retrieve NCBI RefSeq records. Human genes preferentially use MANE Select; the accession and applied selection rule remain visible.", note: "Record species, version, and transcript rule", refs: [1, 2] },
+      { number: "02", title: "Generate candidates", body: "Primer3 applies length, Tm, GC%, product-size, and thermodynamic constraints.", note: "Output sequence, coordinates, and amplicon", refs: [3] },
+      { number: "03", title: "Screen fixed references", body: "Simulate paired amplification against available fixed genomes and matched RefSeq RNA, with the database scope and hit cap shown.", note: "Human and mouse now use version-pinned local references", refs: [4, 5] },
+      { number: "04", title: "Rank and validate", body: "Scores compare candidates; they are not success probabilities. Critical use still requires MIQE or an application-appropriate experiment.", note: "Computational rank ≠ experimental conclusion", refs: [6, 7] },
     ],
     toolsLabel: "SCIENTIFIC WORKFLOWS",
     toolsTitle: "Four entry points for four distinct questions",
@@ -321,8 +322,8 @@ const HOME_SCIENCE_COPY = {
     methodTerm: "Method",
     boundaryTerm: "Boundary",
     evidenceLabel: "EVIDENCE INTERPRETATION",
-    evidenceTitle: "Keep “computed” separate from “validated”",
-    evidenceIntro: "Every result on the homepage belongs to a distinct level of evidence.",
+    evidenceTitle: "Computed does not mean experimentally valid",
+    evidenceIntro: "PrimerCat separates reproducible values, database screens, heuristic ranks, and experimental confirmation.",
     evidenceItems: [
       { code: "COMPUTE", title: "Deterministic calculation", body: "Sequence length, GC%, coordinates, and recipe arithmetic can be recalculated from the input." },
       { code: "SCREEN", title: "Database screen", body: "A statement covers only the declared database, version, thresholds, and hit cap." },
@@ -330,19 +331,23 @@ const HOME_SCIENCE_COPY = {
       { code: "VALIDATE", title: "Experimental validation", body: "Melt curves, gels, sequencing, efficiency curves, or cellular assays establish real performance." },
     ],
     disclosureTitle: "An honest conclusion boundary",
-    disclosure: "PrimerCat does not turn “no evident non-target hit” into “absolutely specific”, or a high score into a success probability. Databases change, samples carry variants, and chemistry or cellular context can alter real outcomes.",
+    disclosure: "“No evident non-target hit” is not absolute specificity, and a high score is not a success rate. Sample variation, chemistry, and cellular context can still change the outcome.",
     methodsLink: "Read the complete methods",
     validationLink: "Confidence and validation guidance",
     referencesLabel: "CORE REFERENCES",
-    referencesTitle: "Methods basis and further reading",
-    referencesIntro: "These papers support the databases, algorithms, and validation frameworks. Citation does not mean that PrimerCat reproduces every published model or that the paper endorses PrimerCat as a whole.",
+    referencesTitle: "Methods and references",
+    referencesIntro: "Core algorithms, databases, and validation frameworks link to their original papers. The methods page contains the full scope, limitations, and benchmarks.",
+    referencesSummary: "Show 7 core references",
   },
 } as const;
 
 function HomeCitations({ ids }: { ids: readonly number[] }) {
   return (
     <sup className="home-inline-citations" aria-label={`References ${ids.join(", ")}`}>
-      {ids.map((id) => <a key={id} href={`#home-reference-${id}`}>[{id}]</a>)}
+      {ids.map((id) => {
+        const reference = HOME_REFERENCES.find((item) => item.id === id);
+        return <a key={id} href={reference?.href} target="_blank" rel="noopener noreferrer">[{id}]</a>;
+      })}
     </sup>
   );
 }
@@ -358,25 +363,6 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
     if (partyTimeout.current) clearTimeout(partyTimeout.current);
     partyTimeout.current = setTimeout(() => setParty(false), 5000);
   });
-
-  const toolCards = [
-    {
-      tag: t("primer_card_tag"), title: t("primer_card_title"), desc: t("primer_card_desc"),
-      href: "/primer", icon: "QP",
-    },
-    {
-      tag: t("pcr_card_tag"), title: t("pcr_card_title"), desc: t("pcr_card_desc"),
-      href: "/pcr", icon: "PCR",
-    },
-    {
-      tag: t("grna_card_tag"), title: t("grna_card_title"), desc: t("grna_card_desc"),
-      href: "/grna", icon: "CR",
-    },
-    {
-      tag: t("blast_card_tag"), title: t("blast_card_title"), desc: t("blast_card_desc"),
-      href: "/blast", icon: "BL",
-    },
-  ];
 
   return (
     <div className="home-page-v4">
@@ -506,39 +492,6 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
         </div>
       </section>
 
-      {/* ══ SCIENTIFIC WORKFLOWS ══ */}
-      <section className="home-science-tools home-breakout" aria-labelledby="home-tools-title">
-        <div className="home-science-shell">
-          <header className="home-science-header">
-            <div>
-              <h2 id="home-tools-title">{science.toolsTitle}</h2>
-              <p>{science.toolsIntro}</p>
-            </div>
-          </header>
-
-          <div className="home-workflow-list">
-            {toolCards.map((card, index) => {
-              const detail = science.toolMethods[index];
-              return (
-                <article key={card.href} className="home-workflow-row">
-                  <span className="home-workflow-code">{card.icon}</span>
-                  <Link href={card.href} className="home-workflow-identity">
-                    <span>{card.tag}</span>
-                    <h3>{card.title}</h3>
-                    <p>{card.desc}</p>
-                  </Link>
-                  <dl className="home-workflow-method">
-                    <div><dt>{science.methodTerm}</dt><dd>{detail.method}<HomeCitations ids={detail.refs} /></dd></div>
-                    <div><dt>{science.boundaryTerm}</dt><dd>{detail.boundary}</dd></div>
-                  </dl>
-                  <Link href={card.href} className="home-workflow-arrow" aria-label={card.title}>↗</Link>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* ══ EVIDENCE BOUNDARIES ══ */}
       <section className="home-science-evidence home-breakout" aria-labelledby="home-evidence-title">
         <div className="home-science-shell">
@@ -580,23 +533,26 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
             </div>
           </header>
 
-          <ol className="home-reference-list">
-            {HOME_REFERENCES.map((reference) => (
-              <li key={reference.id} id={`home-reference-${reference.id}`}>
-                <span>{String(reference.id).padStart(2, "0")}</span>
-                <div className="home-reference-record">
-                  <a className="home-reference-title-link" href={reference.href} target="_blank" rel="noopener noreferrer">
-                    {reference.citation}<span aria-hidden="true"> ↗</span>
-                  </a>
-                  <span>
-                    <a href={reference.href} target="_blank" rel="noopener noreferrer">PMID {reference.pmid}</a>
-                    <i aria-hidden="true">·</i>
-                    <a href={`https://doi.org/${reference.doi}`} target="_blank" rel="noopener noreferrer">DOI {reference.doi}</a>
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <details className="home-reference-details">
+            <summary>{science.referencesSummary}</summary>
+            <ol className="home-reference-list">
+              {HOME_REFERENCES.map((reference) => (
+                <li key={reference.id} id={`home-reference-${reference.id}`}>
+                  <span>{String(reference.id).padStart(2, "0")}</span>
+                  <div className="home-reference-record">
+                    <a className="home-reference-title-link" href={reference.href} target="_blank" rel="noopener noreferrer">
+                      {reference.citation}<span aria-hidden="true"> ↗</span>
+                    </a>
+                    <span>
+                      <a href={reference.href} target="_blank" rel="noopener noreferrer">PMID {reference.pmid}</a>
+                      <i aria-hidden="true">·</i>
+                      <a href={`https://doi.org/${reference.doi}`} target="_blank" rel="noopener noreferrer">DOI {reference.doi}</a>
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </details>
         </div>
       </section>
 

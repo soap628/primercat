@@ -26,9 +26,18 @@ services:
       NCBI_CACHE_DIR: /var/cache/primercat/ncbi
       BACKEND_CORS_ORIGINS: https://primercat.tech,https://www.primercat.tech
       COOKIE_SECURE: "true"
+      GRNA_BOWTIE2_INDEX_HUMAN: /var/lib/primercat/reference/GCF_000001405.40_GRCh38.p14/bowtie2/GCF_000001405.40_GRCh38.p14
+      GRNA_GENOME_FASTA_HUMAN: /var/lib/primercat/reference/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna
+      GRNA_ANNOTATION_GTF_HUMAN: /var/lib/primercat/reference/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gtf
+      GRNA_ANNOTATION_DB_HUMAN: /var/lib/primercat/reference/GCF_000001405.40_GRCh38.p14/grna-annotations.sqlite3
+      QPCR_TRANSCRIPT_LOCUS_DB_HUMAN: /var/lib/primercat/reference/GCF_000001405.40_GRCh38.p14/qpcr-transcript-loci.sqlite3
+      QPCR_TRANSCRIPTOME_BOWTIE2_INDEX_HUMAN: /var/lib/primercat/reference/GCF_000001405.40_GRCh38.p14/bowtie2-transcriptome/GCF_000001405.40_GRCh38.p14_rna
+      QPCR_TRANSCRIPTOME_FASTA_HUMAN: /var/lib/primercat/reference/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_rna.fna
+      GENOME_REFERENCE_ASSEMBLY_HUMAN: GCF_000001405.40
       GRNA_BOWTIE2_INDEX_MOUSE: /var/lib/primercat/reference/GCF_000001635.27_GRCm39/bowtie2/GCF_000001635.27_GRCm39
       GRNA_GENOME_FASTA_MOUSE: /var/lib/primercat/reference/GCF_000001635.27_GRCm39/GCF_000001635.27_GRCm39_genomic.fna
       GRNA_ANNOTATION_GTF_MOUSE: /var/lib/primercat/reference/GCF_000001635.27_GRCm39/GCF_000001635.27_GRCm39_genomic.gtf
+      GRNA_ANNOTATION_DB_MOUSE: /var/lib/primercat/reference/GCF_000001635.27_GRCm39/grna-annotations.sqlite3
       QPCR_TRANSCRIPT_LOCUS_DB_MOUSE: /var/lib/primercat/reference/GCF_000001635.27_GRCm39/qpcr-transcript-loci.sqlite3
       QPCR_TRANSCRIPTOME_BOWTIE2_INDEX_MOUSE: /var/lib/primercat/reference/GCF_000001635.27_GRCm39/bowtie2-transcriptome/GCF_000001635.27_GRCm39_rna
       QPCR_TRANSCRIPTOME_FASTA_MOUSE: /var/lib/primercat/reference/GCF_000001635.27_GRCm39/GCF_000001635.27_GRCm39_rna.fna

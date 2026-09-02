@@ -25,11 +25,13 @@ class Settings(BaseSettings):
     GRNA_GENOME_FASTA_MOUSE: str = ""
     GRNA_ANNOTATION_GTF_HUMAN: str = ""
     GRNA_ANNOTATION_GTF_MOUSE: str = ""
+    GRNA_ANNOTATION_DB_HUMAN: str = ""
+    GRNA_ANNOTATION_DB_MOUSE: str = ""
     GRNA_PROMOTER_WINDOW_BP: int = 2000
     QPCR_GENOME_MAX_ALIGNMENTS_PER_PRIMER: int = 64
     QPCR_GENOME_MIN_AMPLICON_BP: int = 50
     QPCR_GENOME_MAX_AMPLICON_BP: int = 5000
-    GENOME_REFERENCE_ASSEMBLY_HUMAN: str = ""
+    GENOME_REFERENCE_ASSEMBLY_HUMAN: str = "GCF_000001405.40"
     GENOME_REFERENCE_ASSEMBLY_MOUSE: str = "GCF_000001635.27"
     QPCR_TRANSCRIPT_LOCUS_DB_HUMAN: str = ""
     QPCR_TRANSCRIPT_LOCUS_DB_MOUSE: str = ""
@@ -74,6 +76,13 @@ class Settings(BaseSettings):
         return {
             "human": self.GRNA_ANNOTATION_GTF_HUMAN,
             "mouse": self.GRNA_ANNOTATION_GTF_MOUSE,
+        }
+
+    @property
+    def grna_annotation_db_by_species(self) -> dict[str, str]:
+        return {
+            "human": self.GRNA_ANNOTATION_DB_HUMAN,
+            "mouse": self.GRNA_ANNOTATION_DB_MOUSE,
         }
 
     @property
