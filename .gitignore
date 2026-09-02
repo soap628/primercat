@@ -32,6 +32,7 @@ node_modules/
 offshore-hub/
 liquun/
 frontend/spotify/
+/reference-data/
 
 # Stray duplicate assets at repo root
 /alipay.jpg

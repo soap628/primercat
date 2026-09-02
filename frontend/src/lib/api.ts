@@ -494,7 +494,7 @@ export interface BlastResponse {
 
 // ── Gene Primer Types ────────────────────────────────────────────────────────
 
-export interface BlastTopHit { rank: number; title: string; identity: number; is_off_target: boolean; }
+export interface BlastTopHit { rank: number; title: string; identity: number; is_off_target: boolean; is_target?: boolean; }
 export interface BlastValidation {
   specific: boolean;
   top_hit_identity: number;
@@ -502,6 +502,79 @@ export interface BlastValidation {
   top_hits: BlastTopHit[];
   status?: "validated" | "no_hits" | "error";
   message?: string;
+  target_accession?: string | null;
+  target_found?: boolean;
+  qualified_hit_count?: number;
+  hit_limit_reached?: boolean;
+}
+export interface GenomeAmpliconHit {
+  accession: string;
+  start: number;
+  end: number;
+  product_size: number;
+  orientation: string;
+  left_mismatches: number;
+  right_mismatches: number;
+  is_target: boolean;
+}
+export interface GenomePairValidation {
+  checked: boolean;
+  specific: boolean;
+  status: "validated" | "no_paired_amplicons" | "target_not_anchored" | "truncated" | "error";
+  engine: string;
+  reference_assembly?: string | null;
+  target_transcript?: string | null;
+  target_locus_accession?: string | null;
+  target_locus_start?: number | null;
+  target_locus_end?: number | null;
+  target_locus_strand?: string | null;
+  left_hit_count: number;
+  right_hit_count: number;
+  paired_amplicon_count: number;
+  target_amplicon_count: number;
+  off_target_amplicon_count: number;
+  unclassified_amplicon_count: number;
+  hit_limit_reached: boolean;
+  min_amplicon_size: number;
+  max_amplicon_size: number;
+  top_amplicons: GenomeAmpliconHit[];
+  message: string;
+}
+export type TranscriptAmpliconClass = "target_transcript" | "same_gene_isoform" | "other_gene" | "unclassified";
+export interface TranscriptAmpliconHit {
+  transcript_accession: string;
+  start: number;
+  end: number;
+  product_size: number;
+  orientation: string;
+  left_mismatches: number;
+  right_mismatches: number;
+  classification: TranscriptAmpliconClass;
+  gene_id?: string | null;
+  gene_name?: string | null;
+}
+export interface TranscriptomePairValidation {
+  checked: boolean;
+  gene_specific: boolean;
+  isoform_specific: boolean;
+  status: "validated" | "no_paired_amplicons" | "target_not_found" | "ambiguous_target" | "truncated" | "error";
+  engine: string;
+  reference_assembly?: string | null;
+  target_transcript?: string | null;
+  target_gene_id?: string | null;
+  target_gene_name?: string | null;
+  left_hit_count: number;
+  right_hit_count: number;
+  paired_amplicon_count: number;
+  target_transcript_amplicon_count: number;
+  same_gene_isoform_amplicon_count: number;
+  other_gene_amplicon_count: number;
+  unclassified_amplicon_count: number;
+  hit_limit_reached: boolean;
+  min_amplicon_size: number;
+  max_amplicon_size: number;
+  top_amplicons: TranscriptAmpliconHit[];
+  message: string;
 }
 export interface ExonSpan { spans_junction: boolean; left_exon: number | null; right_exon: number | null; junction_count: number; }
 export interface PrimerScore { total: number; tm_score: number; gc_score: number; specificity_score: number; exon_score: number; dimer_score: number; }
@@ -535,6 +608,10 @@ export interface PrimerDesignBasis {
   specificity_scope: string;
   genome_wide_specificity_checked: boolean;
   off_target_identity_threshold: number;
+  paired_amplicon_screen?: boolean;
+  reference_assembly?: string | null;
+  paired_transcriptome_screen?: boolean;
+  transcriptome_reference?: string | null;
 }
 export interface GeneInfo {
   gene_symbol: string; full_name: string; summary: string;
@@ -551,6 +628,8 @@ export interface ValidatedPrimerPair {
   is_specific: boolean; exon_span: ExonSpan; score: PrimerScore;
   left_props: PrimerProperties | null; right_props: PrimerProperties | null;
   amplicon_sequence: string;
+  genome_pair_validation?: GenomePairValidation | null;
+  transcriptome_pair_validation?: TranscriptomePairValidation | null;
 }
 export interface ExonViz { index: number; start: number; end: number; }
 export interface GenePrimerResult {

@@ -20,21 +20,35 @@ import re
 import shutil
 import subprocess
 import tempfile
+from dataclasses import dataclass
 from hashlib import sha1
 from pathlib import Path
 from typing import Any
 
 from app.core.config import settings
-from app.schemas.gene_primer import BlastValidation, BlastTopHit, BlastValidationStatus
+from app.schemas.gene_primer import (
+    BlastTopHit,
+    BlastValidation,
+    BlastValidationStatus,
+    GenomeAmpliconHit,
+    GenomePairScreenStatus,
+    GenomePairValidation,
+)
 from app.services.grna_genome_offtarget import (
     _bowtie_index_exists,
-    _load_genome_index,
 )
 from app.services.ncbi_client import cached_call
+from app.services.qpcr_target_locus import TranscriptGenomeLocus, resolve_qpcr_target_locus
 
 PRIMER_MAX_MISMATCHES = 2
 PRIMER_MIN_COVERAGE = 0.85
-PRIMER_OFFTARGET_IDENTITY_THRESHOLD = 80.0
+
+
+@dataclass(frozen=True)
+class PrimerPairGenomeResult:
+    left: BlastValidation
+    right: BlastValidation
+    pair: GenomePairValidation
 
 
 def _resolve_primer_bowtie2_backend(species: str) -> tuple[str, str, str, str]:
@@ -123,6 +137,7 @@ def _parse_bowtie2_primer_hits(
         hits[query_name].append({
             "accession": accession,
             "position": position,
+            "end": position + aligned_len - 1,
             "strand": strand,
             "mismatches": nm_val,
             "identity": identity,
@@ -132,7 +147,13 @@ def _parse_bowtie2_primer_hits(
     return hits
 
 
-def _hits_to_blast_validation(hit_list: list[dict]) -> BlastValidation:
+def _hits_to_blast_validation(
+    hit_list: list[dict],
+    *,
+    hit_limit: int = 10,
+    raw_alignment_count: int | None = None,
+    target_locus: TranscriptGenomeLocus | None = None,
+) -> BlastValidation:
     """Convert Bowtie2 hit list into a BlastValidation (same schema as before)."""
     if not hit_list:
         return BlastValidation(
@@ -142,17 +163,45 @@ def _hits_to_blast_validation(hit_list: list[dict]) -> BlastValidation:
             top_hits=[],
             status=BlastValidationStatus.no_hits,
             message="No genomic hits found for this primer.",
+            target_accession=target_locus.transcript_id if target_locus else None,
+            target_found=False,
         )
 
-    hit_list_sorted = sorted(hit_list, key=lambda h: (-h["identity"], h["accession"]))
+    def _is_target(hit: dict) -> bool:
+        if target_locus is None:
+            return False
+        if not (_accession_tokens(hit["accession"]) & _accession_tokens(target_locus.accession)):
+            return False
+        return hit["position"] >= target_locus.start and hit.get("end", hit["position"]) <= target_locus.end
+
+    hit_list_sorted = sorted(
+        hit_list,
+        key=lambda hit: (
+            not _is_target(hit) if target_locus else False,
+            -hit["identity"],
+            hit["accession"],
+            hit["position"],
+        ),
+    )
     top_identity = hit_list_sorted[0]["identity"] if hit_list_sorted else 0.0
-    off_target_count = sum(
-        1 for h in hit_list_sorted
-        if PRIMER_OFFTARGET_IDENTITY_THRESHOLD < h["identity"] < 100.0
+    # The candidate was derived from the target template, but this primer-level
+    # genome screen does not carry a target locus. Conservatively treat the
+    # highest-identity locus as the presumed target and every other qualified
+    # genomic alignment—including another 100% match—as a potential non-target.
+    target_found = any(_is_target(hit) for hit in hit_list_sorted) if target_locus else False
+    off_target_count = (
+        sum(not _is_target(hit) for hit in hit_list_sorted)
+        if target_locus
+        else max(0, len(hit_list_sorted) - 1)
+    )
+    hit_limit_reached = (
+        len(hit_list_sorted) >= hit_limit
+        if raw_alignment_count is None
+        else raw_alignment_count > hit_limit
     )
 
     top_hits: list[BlastTopHit] = []
-    for h in hit_list_sorted[:3]:
+    for index, h in enumerate(hit_list_sorted[:3]):
         title = h["title"]
         if len(title) > 80:
             title = title[:77] + "..."
@@ -160,10 +209,16 @@ def _hits_to_blast_validation(hit_list: list[dict]) -> BlastValidation:
             rank=len(top_hits) + 1,
             title=title,
             identity=round(h["identity"], 1),
-            is_off_target=PRIMER_OFFTARGET_IDENTITY_THRESHOLD < h["identity"] < 100.0,
+            is_off_target=(not _is_target(h)) if target_locus else index > 0,
+            is_target=_is_target(h),
         ))
 
-    specific = top_identity >= 99.0 and off_target_count <= 2
+    specific = (
+        top_identity >= 99.0
+        and (target_found if target_locus else True)
+        and off_target_count == 0
+        and not hit_limit_reached
+    )
 
     return BlastValidation(
         specific=specific,
@@ -171,7 +226,170 @@ def _hits_to_blast_validation(hit_list: list[dict]) -> BlastValidation:
         off_target_count=off_target_count,
         top_hits=top_hits,
         status=BlastValidationStatus.validated,
-        message="",
+        message=(
+            "One qualified genomic alignment was returned."
+            if specific
+            else "Additional qualified genomic alignments were returned."
+        ),
+        qualified_hit_count=len(hit_list_sorted),
+        hit_limit_reached=hit_limit_reached,
+        target_accession=target_locus.transcript_id if target_locus else None,
+        target_found=target_found,
+    )
+
+
+def _accession_tokens(value: str) -> set[str]:
+    token = value.strip().lower()
+    core = token.split(".", 1)[0]
+    candidates = {token, core}
+    for candidate in (token, core):
+        if candidate.startswith("chr"):
+            candidates.add(candidate[3:])
+        else:
+            candidates.add(f"chr{candidate}")
+    return {candidate for candidate in candidates if candidate}
+
+
+def _amplicon_is_target(hit: GenomeAmpliconHit, locus: TranscriptGenomeLocus | None) -> bool:
+    if locus is None:
+        return False
+    if not (_accession_tokens(hit.accession) & _accession_tokens(locus.accession)):
+        return False
+    return hit.start >= locus.start and hit.end <= locus.end
+
+
+def _pair_primer_hits(
+    left_hits: list[dict],
+    right_hits: list[dict],
+    locus: TranscriptGenomeLocus | None,
+    min_amplicon_size: int,
+    max_amplicon_size: int,
+) -> list[GenomeAmpliconHit]:
+    right_by_accession: dict[str, list[dict]] = {}
+    for hit in right_hits:
+        right_by_accession.setdefault(hit["accession"], []).append(hit)
+
+    amplicons: list[GenomeAmpliconHit] = []
+    seen: set[tuple[str, int, int, str]] = set()
+    for left in left_hits:
+        for right in right_by_accession.get(left["accession"], []):
+            if left["strand"] == "+" and right["strand"] == "-" and left["end"] < right["position"]:
+                start = left["position"]
+                end = right["end"]
+                orientation = "left_plus_right_minus"
+            elif left["strand"] == "-" and right["strand"] == "+" and right["end"] < left["position"]:
+                start = right["position"]
+                end = left["end"]
+                orientation = "right_plus_left_minus"
+            else:
+                continue
+
+            product_size = end - start + 1
+            if not min_amplicon_size <= product_size <= max_amplicon_size:
+                continue
+            key = (left["accession"], start, end, orientation)
+            if key in seen:
+                continue
+            seen.add(key)
+            candidate = GenomeAmpliconHit(
+                accession=left["accession"],
+                start=start,
+                end=end,
+                product_size=product_size,
+                orientation=orientation,
+                left_mismatches=left["mismatches"],
+                right_mismatches=right["mismatches"],
+            )
+            candidate.is_target = _amplicon_is_target(candidate, locus)
+            amplicons.append(candidate)
+
+    return sorted(
+        amplicons,
+        key=lambda hit: (
+            not hit.is_target,
+            hit.left_mismatches + hit.right_mismatches,
+            hit.product_size,
+            hit.accession,
+            hit.start,
+        ),
+    )
+
+
+def _build_pair_validation(
+    left_hits: list[dict],
+    right_hits: list[dict],
+    *,
+    locus: TranscriptGenomeLocus | None,
+    target_transcript: str | None,
+    locus_error: str,
+    left_raw_count: int,
+    right_raw_count: int,
+    hit_limit: int,
+    min_amplicon_size: int,
+    max_amplicon_size: int,
+    species: str,
+) -> GenomePairValidation:
+    amplicons = _pair_primer_hits(
+        left_hits,
+        right_hits,
+        locus,
+        min_amplicon_size,
+        max_amplicon_size,
+    )
+    target_count = sum(hit.is_target for hit in amplicons)
+    off_target_count = len(amplicons) - target_count if locus else 0
+    unclassified_count = len(amplicons) if locus is None else 0
+    hit_limit_reached = left_raw_count > hit_limit or right_raw_count > hit_limit
+
+    if hit_limit_reached:
+        status = GenomePairScreenStatus.truncated
+        message = "The alignment return limit was reached; no specificity pass can be assigned."
+    elif locus is None:
+        status = GenomePairScreenStatus.target_not_anchored
+        message = locus_error or "The intended transcript could not be anchored to the genome annotation."
+    elif not amplicons:
+        status = GenomePairScreenStatus.no_paired_amplicons
+        message = (
+            f"No opposing primer hits formed a {min_amplicon_size}–{max_amplicon_size} bp "
+            "genomic product."
+        )
+    elif target_count == 0:
+        status = GenomePairScreenStatus.target_not_anchored
+        message = "Paired genomic products were found, but none fell within the annotated target locus."
+    else:
+        status = GenomePairScreenStatus.validated
+        message = (
+            "Exactly one target-locus product and no additional genomic product were found."
+            if target_count == 1 and off_target_count == 0
+            else "The paired-genome screen found additional or ambiguous amplifiable products."
+        )
+
+    return GenomePairValidation(
+        checked=True,
+        specific=(
+            status == GenomePairScreenStatus.validated
+            and target_count == 1
+            and off_target_count == 0
+            and not hit_limit_reached
+        ),
+        status=status,
+        reference_assembly=settings.genome_reference_assembly_by_species.get(species) or None,
+        target_transcript=target_transcript,
+        target_locus_accession=locus.accession if locus else None,
+        target_locus_start=locus.start if locus else None,
+        target_locus_end=locus.end if locus else None,
+        target_locus_strand=locus.strand if locus else None,
+        left_hit_count=len(left_hits),
+        right_hit_count=len(right_hits),
+        paired_amplicon_count=len(amplicons),
+        target_amplicon_count=target_count,
+        off_target_amplicon_count=off_target_count,
+        unclassified_amplicon_count=unclassified_count,
+        hit_limit_reached=hit_limit_reached,
+        min_amplicon_size=min_amplicon_size,
+        max_amplicon_size=max_amplicon_size,
+        top_amplicons=amplicons[:10],
+        message=message,
     )
 
 
@@ -186,6 +404,7 @@ def _run_bowtie2_batch(
     Run all primers in a single Bowtie2 subprocess and return one
     BlastValidation per primer in the same order.
     """
+    del fasta_path  # Index validation happens in _resolve_primer_bowtie2_backend.
     primer_names = [f"primer_{i}" for i in range(len(primers))]
     primer_lengths = {name: len(seq) for name, seq in zip(primer_names, primers)}
     fasta_payload = "\n".join(
@@ -233,11 +452,214 @@ def _run_bowtie2_batch(
     finally:
         Path(tmp_fasta).unlink(missing_ok=True)
 
-    fasta_index = _load_genome_index(fasta_path)
     hits_map = _parse_bowtie2_primer_hits(
-        completed.stdout, primer_names, primer_lengths, fasta_index
+        completed.stdout, primer_names, primer_lengths, None
     )
     return [_hits_to_blast_validation(hits_map[name]) for name in primer_names]
+
+
+def _error_pair_result(message: str, species: str, target_transcript: str | None) -> PrimerPairGenomeResult:
+    primer_error = BlastValidation(
+        specific=False,
+        top_hit_identity=0.0,
+        off_target_count=0,
+        top_hits=[],
+        status=BlastValidationStatus.error,
+        message=message,
+    )
+    pair_error = GenomePairValidation(
+        checked=False,
+        specific=False,
+        status=GenomePairScreenStatus.error,
+        reference_assembly=settings.genome_reference_assembly_by_species.get(species) or None,
+        target_transcript=target_transcript,
+        message=message,
+    )
+    return PrimerPairGenomeResult(left=primer_error, right=primer_error.model_copy(), pair=pair_error)
+
+
+def _run_bowtie2_pair_batch(
+    primer_pairs: list[tuple[str, str]],
+    species: str,
+    target_transcripts: list[str | None],
+    executable: str,
+    index_prefix: str,
+    fasta_path: str,
+) -> list[PrimerPairGenomeResult]:
+    del fasta_path  # Index validation happens in _resolve_primer_bowtie2_backend.
+    hit_limit = max(1, min(1000, settings.QPCR_GENOME_MAX_ALIGNMENTS_PER_PRIMER))
+    min_amplicon_size = settings.QPCR_GENOME_MIN_AMPLICON_BP
+    max_amplicon_size = settings.QPCR_GENOME_MAX_AMPLICON_BP
+    primer_names: list[str] = []
+    primers: list[str] = []
+    for index, (left, right) in enumerate(primer_pairs):
+        primer_names.extend([f"pair_{index}_left", f"pair_{index}_right"])
+        primers.extend([left, right])
+    primer_lengths = {
+        name: len(sequence)
+        for name, sequence in zip(primer_names, primers)
+    }
+    fasta_payload = "\n".join(
+        f">{name}\n{sequence.upper()}"
+        for name, sequence in zip(primer_names, primers)
+    )
+
+    with tempfile.NamedTemporaryFile("w", suffix=".fa", delete=False, encoding="utf-8") as handle:
+        handle.write(fasta_payload)
+        tmp_fasta = handle.name
+
+    try:
+        completed = subprocess.run(
+            [
+                executable,
+                "-x", index_prefix,
+                "-f", "-U", tmp_fasta,
+                "--end-to-end",
+                "--sensitive",
+                "--no-unal",
+                "--quiet",
+                "--no-hd",
+                "--no-sq",
+                "-N", "1",
+                "-L", "10",
+                "-k", str(hit_limit + 1),
+            ],
+            capture_output=True,
+            check=True,
+            text=True,
+            timeout=180,
+        )
+    except subprocess.TimeoutExpired:
+        return [
+            _error_pair_result("Bowtie2 paired-primer alignment timed out.", species, target_transcripts[index])
+            for index in range(len(primer_pairs))
+        ]
+    except subprocess.CalledProcessError as exc:
+        return [
+            _error_pair_result(
+                f"Bowtie2 paired-primer alignment failed (exit {exc.returncode}).",
+                species,
+                target_transcripts[index],
+            )
+            for index in range(len(primer_pairs))
+        ]
+    finally:
+        Path(tmp_fasta).unlink(missing_ok=True)
+
+    raw_counts = {name: 0 for name in primer_names}
+    for raw_line in completed.stdout.splitlines():
+        if not raw_line or raw_line.startswith("@"):
+            continue
+        query_name = raw_line.split("\t", 1)[0]
+        if query_name in raw_counts:
+            raw_counts[query_name] += 1
+    hits_map = _parse_bowtie2_primer_hits(
+        completed.stdout,
+        primer_names,
+        primer_lengths,
+        None,
+    )
+    results: list[PrimerPairGenomeResult] = []
+    for index in range(len(primer_pairs)):
+        target_transcript = target_transcripts[index]
+        locus, locus_error = resolve_qpcr_target_locus(species, target_transcript)
+        left_name = f"pair_{index}_left"
+        right_name = f"pair_{index}_right"
+        left_hits = hits_map[left_name]
+        right_hits = hits_map[right_name]
+        results.append(PrimerPairGenomeResult(
+            left=_hits_to_blast_validation(
+                left_hits,
+                hit_limit=hit_limit,
+                raw_alignment_count=raw_counts[left_name],
+                target_locus=locus,
+            ),
+            right=_hits_to_blast_validation(
+                right_hits,
+                hit_limit=hit_limit,
+                raw_alignment_count=raw_counts[right_name],
+                target_locus=locus,
+            ),
+            pair=_build_pair_validation(
+                left_hits,
+                right_hits,
+                locus=locus,
+                target_transcript=target_transcript,
+                locus_error=locus_error,
+                left_raw_count=raw_counts[left_name],
+                right_raw_count=raw_counts[right_name],
+                hit_limit=hit_limit,
+                min_amplicon_size=min_amplicon_size,
+                max_amplicon_size=max_amplicon_size,
+                species=species,
+            ),
+        ))
+    return results
+
+
+def validate_primer_pairs_batch(
+    primer_pairs: list[tuple[str, str]],
+    species: str,
+    target_transcript: str | None = None,
+) -> list[PrimerPairGenomeResult]:
+    """Screen primer pairs as amplifiable products on a fixed local genome."""
+    return validate_primer_pairs_for_targets_batch(
+        primer_pairs,
+        species,
+        [target_transcript] * len(primer_pairs),
+    )
+
+
+def validate_primer_pairs_for_targets_batch(
+    primer_pairs: list[tuple[str, str]],
+    species: str,
+    target_transcripts: list[str | None],
+) -> list[PrimerPairGenomeResult]:
+    """Screen multiple pairs and independently anchor each intended transcript."""
+    if not primer_pairs:
+        return []
+    if len(primer_pairs) != len(target_transcripts):
+        raise ValueError("Each primer pair requires one target transcript entry.")
+    executable, index_prefix, fasta_path, error = _resolve_primer_bowtie2_backend(species)
+    if error:
+        return [
+            _error_pair_result(f"Bowtie2 unavailable: {error}", species, target_transcripts[index])
+            for index in range(len(primer_pairs))
+        ]
+
+    payload = "|".join(
+        f"{left.upper()}:{right.upper()}:{target or ''}"
+        for (left, right), target in zip(primer_pairs, target_transcripts)
+    )
+    batch_hash = sha1(
+        (
+            f"v2:{species}:{hit_limit_settings()}:{payload}"
+        ).encode("utf-8")
+    ).hexdigest()
+
+    return cached_call(
+        "primer_bowtie2_pair_batch_v2",
+        species,
+        batch_hash,
+        loader=lambda: _run_bowtie2_pair_batch(
+            primer_pairs,
+            species,
+            target_transcripts,
+            executable,
+            index_prefix,
+            fasta_path,
+        ),
+        should_cache=lambda results: all(result.pair.status != GenomePairScreenStatus.error for result in results),
+    )
+
+
+def hit_limit_settings() -> str:
+    return ":".join(str(value) for value in (
+        settings.QPCR_GENOME_MAX_ALIGNMENTS_PER_PRIMER,
+        settings.QPCR_GENOME_MIN_AMPLICON_BP,
+        settings.QPCR_GENOME_MAX_AMPLICON_BP,
+        settings.genome_reference_assembly_by_species,
+    ))
 
 
 def validate_primers_batch(

@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "benchmark_id": "qpcr-primerbank-mouse-pilot-v0.1",
+  "snapshot_date": "2026-09-02",
+  "scope": "reference-record and thermodynamic reproducibility audit",
+  "selection_method": "Manual pilot selection of five Mus musculus PrimerBank records whose public detail pages expose complete primer sequences, reported Tm values, amplicon sizes, and links to experimental validation records.",
+  "selection_limitations": "This is a small, non-random pilot set. It is suitable for regression testing and method auditing, but not for estimating PrimerCat experimental success, sensitivity, specificity, or superiority over another tool.",
+  "thermodynamic_recalculation": {
+    "engine": "primer3-py",
+    "engine_version": "2.3.0",
+    "monovalent_mM": 50.0,
+    "divalent_mM": 1.5,
+    "dntp_mM": 0.8,
+    "primer_nM": 250.0,
+    "absolute_tm_tolerance_c": 0.1
+  },
+  "primer_cat_reference_envelope": {
+    "primer_length_nt": [18, 25],
+    "gc_percent": [40.0, 60.0],
+    "maximum_pair_tm_difference_c": 3.0,
+    "amplicon_size_bp": [80, 200]
+  },
+  "results": {
+    "records": 5,
+    "oligos": 10,
+    "tm_recalculations_within_tolerance": 10,
+    "maximum_absolute_tm_delta_c": 0.06,
+    "reference_envelope_assertions_passed": 40,
+    "reference_envelope_assertions_total": 40
+  },
+  "cases": [
+    {
+      "gene": "Gapdh",
+      "species": "Mus musculus",
+      "accession": "NM_008084",
+      "primerbank_id": "6679937a1",
+      "forward": "AGGTCGGTGTGAACGGATTTG",
+      "reverse": "TGTAGACCATGTAGTTGAGGTCA",
+      "reported_forward_tm_c": 62.6,
+      "reported_reverse_tm_c": 60.2,
+      "recalculated_forward_tm_c": 62.62,
+      "recalculated_reverse_tm_c": 60.18,
+      "amplicon_size_bp": 123,
+      "source_url": "https://pga.mgh.harvard.edu/cgi-bin/primerbank/displayDetail.cgi?primerID=6679937a1"
+    },
+    {
+      "gene": "B2m",
+      "species": "Mus musculus",
+      "accession": "NM_009735",
+      "primerbank_id": "31981890a1",
+      "forward": "TTCTGGTGCTTGTCTCACTGA",
+      "reverse": "CAGTATGTTCGGCTTCCCATTC",
+      "reported_forward_tm_c": 61.0,
+      "reported_reverse_tm_c": 61.0,
+      "recalculated_forward_tm_c": 61.01,
+      "recalculated_reverse_tm_c": 61.02,
+      "amplicon_size_bp": 104,
+      "source_url": "https://pga.mgh.harvard.edu/cgi-bin/primerbank/new_displayDetail2.cgi?primerID=31981890a1"
+    },
+    {
+      "gene": "Bmf",
+      "species": "Mus musculus",
+      "accession": "NM_138313",
+      "primerbank_id": "30172542a1",
+      "forward": "GGAGCGGGCGTATTTTGGAA",
+      "reverse": "ACACTCGATTGGGAAGAAGGG",
+      "reported_forward_tm_c": 62.9,
+      "reported_reverse_tm_c": 61.5,
+      "recalculated_forward_tm_c": 62.88,
+      "recalculated_reverse_tm_c": 61.5,
+      "amplicon_size_bp": 150,
+      "source_url": "https://pga.mgh.harvard.edu/cgi-bin/primerbank/displayDetail.cgi?primerID=30172542a1"
+    },
+    {
+      "gene": "Vsig8",
+      "species": "Mus musculus",
+      "accession": "NM_177723",
+      "primerbank_id": "29244188a1",
+      "forward": "TTCGAGGAGCACTCCATCTTC",
+      "reverse": "GACAGCCTAGCCTCACATTGT",
+      "reported_forward_tm_c": 61.3,
+      "reported_reverse_tm_c": 61.8,
+      "recalculated_forward_tm_c": 61.28,
+      "recalculated_reverse_tm_c": 61.83,
+      "amplicon_size_bp": 126,
+      "source_url": "https://pga.mgh.harvard.edu/cgi-bin/primerbank/displayDetail.cgi?primerID=29244188a1"
+    },
+    {
+      "gene": "Abcb7",
+      "species": "Mus musculus",
+      "accession": "NM_009592",
+      "primerbank_id": "1167982a1",
+      "forward": "AAGCCATGCTTTCTTATGTGTGG",
+      "reverse": "TGTTTCCCGACATCTGGTTGA",
+      "reported_forward_tm_c": 61.4,
+      "reported_reverse_tm_c": 61.3,
+      "recalculated_forward_tm_c": 61.38,
+      "recalculated_reverse_tm_c": 61.36,
+      "amplicon_size_bp": 159,
+      "source_url": "https://pga.mgh.harvard.edu/cgi-bin/primerbank/displayDetail.cgi?primerID=1167982a1"
+    }
+  ]
+}

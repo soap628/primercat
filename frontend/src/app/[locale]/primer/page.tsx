@@ -7,6 +7,8 @@ import { useToast } from "@/lib/useToast";
 import type {
   BlastTopHit,
   BlastValidation,
+  GenomePairValidation,
+  TranscriptomePairValidation,
   ExonSpan,
   PrimerScore,
   PrimerProperties,
@@ -24,16 +26,50 @@ const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: Valida
   const tmDiff = Math.abs(p.left_tm - p.right_tm);
   const blastLeftStatus = p.blast_left.status ?? "validated";
   const blastRightStatus = p.blast_right.status ?? "validated";
-  const blastValidated = blastLeftStatus === "validated" && blastRightStatus === "validated";
-  const blastOk = blastValidated && p.is_specific;
-  const blastDetail =
-    blastLeftStatus === "error" || blastRightStatus === "error"
+  const genomePair = p.genome_pair_validation;
+  const transcriptPair = p.transcriptome_pair_validation;
+  const genomeCompatible = genomePair
+    ? genomePair.checked &&
+      Boolean(genomePair.target_locus_accession) &&
+      !genomePair.hit_limit_reached &&
+      genomePair.off_target_amplicon_count === 0 &&
+      genomePair.unclassified_amplicon_count === 0 &&
+      ((genomePair.target_amplicon_count === 1 && genomePair.paired_amplicon_count === 1) || genomePair.paired_amplicon_count === 0)
+    : false;
+  const blastValidated = genomePair
+    ? genomePair.checked && !genomePair.hit_limit_reached
+    : blastLeftStatus === "validated" && blastRightStatus === "validated";
+  const blastOk = genomePair ? genomeCompatible : blastValidated && p.is_specific;
+  const blastDetail = genomePair
+    ? genomePair.specific
+      ? t("check_genome_pair_specific")
+      : transcriptPair && genomeCompatible && genomePair.paired_amplicon_count === 0
+        ? t("check_genome_no_contiguous_product")
+      : genomePair.status === "truncated"
+        ? t("check_genome_pair_truncated")
+        : genomePair.status === "target_not_anchored"
+          ? t("check_genome_pair_unanchored")
+          : genomePair.status === "no_paired_amplicons"
+            ? t("check_genome_pair_no_product")
+            : t("check_genome_pair_offtarget")
+    : blastLeftStatus === "error" || blastRightStatus === "error"
       ? t("check_blast_error")
       : blastLeftStatus === "no_hits" || blastRightStatus === "no_hits"
         ? t("check_blast_unavailable")
         : p.is_specific
           ? t("check_blast_specific")
           : t("check_blast_offtarget");
+  const transcriptDetail = transcriptPair
+    ? transcriptPair.gene_specific
+      ? transcriptPair.isoform_specific
+        ? t("check_transcriptome_isoform_specific")
+        : t("check_transcriptome_same_gene_isoform")
+      : transcriptPair.status === "truncated"
+        ? t("check_transcriptome_truncated")
+        : ["target_not_found", "no_paired_amplicons", "ambiguous_target"].includes(transcriptPair.status)
+          ? t("check_transcriptome_target_missing")
+          : t("check_transcriptome_cross_gene")
+    : "";
   const gcOk = p.left_gc >= 40 && p.left_gc <= 60 && p.right_gc >= 40 && p.right_gc <= 60;
   const tmOk = p.left_tm >= 58 && p.left_tm <= 62 && p.right_tm >= 58 && p.right_tm <= 62;
   const tmMatchOk = tmDiff < 2;
@@ -48,7 +84,8 @@ const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: Valida
     { label: t("check_clamp"), pass: clampOk, detail: `F: ${p.left_props?.gc_clamp ?? "—"} / R: ${p.right_props?.gc_clamp ?? "—"}` },
     { label: t("check_hairpin"), pass: hairpinOk, detail: `F: ${p.left_props?.hairpin_th ?? "—"}°C / R: ${p.right_props?.hairpin_th ?? "—"}°C` },
     { label: t("check_dimer"), pass: dimerOk, detail: `F: ${p.left_props?.self_end_th ?? "—"}°C / R: ${p.right_props?.self_end_th ?? "—"}°C` },
-    { label: t("check_blast"), pass: blastOk, detail: blastDetail },
+    { label: genomePair ? t("check_genome_pair") : t("check_blast"), pass: blastOk, detail: blastDetail },
+    ...(transcriptPair ? [{ label: t("check_transcriptome_pair"), pass: transcriptPair.gene_specific, detail: transcriptDetail }] : []),
     { label: t("check_exon"), pass: p.exon_span.spans_junction, detail: p.exon_span.spans_junction ? t("check_exon_spans", { n: p.exon_span.junction_count }) : t("check_exon_none") },
   ];
 
@@ -79,17 +116,124 @@ const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: Valida
   );
 });
 
-const BlastHitsTable = memo(function BlastHitsTable({ left, right }: { left: BlastValidation; right: BlastValidation }) {
+const BlastHitsTable = memo(function BlastHitsTable({ left, right, genomePair, transcriptPair }: { left: BlastValidation; right: BlastValidation; genomePair?: GenomePairValidation | null; transcriptPair?: TranscriptomePairValidation | null }) {
   const t = useTranslations("primer");
   return (
     <div>
-      <p className="label-caps" style={{ marginBottom: 12 }}>{t("blast_hits_title")}</p>
+      {transcriptPair && (
+        <div style={{ marginBottom: 20 }}>
+          <p className="label-caps" style={{ marginBottom: 8 }}>{t("transcriptome_pair_title")}</p>
+          <p style={{ fontSize: 12, color: "var(--text-3)", lineHeight: 1.65, marginBottom: 12 }}>{t("transcriptome_pair_scope_note")}</p>
+          <div className="primer-basis-grid" style={{ marginBottom: 12 }}>
+            {[
+              [t("transcriptome_target"), transcriptPair.target_transcript || "—"],
+              [t("transcriptome_target_gene"), transcriptPair.target_gene_name || transcriptPair.target_gene_id || "—"],
+              [t("transcriptome_products"), String(transcriptPair.paired_amplicon_count)],
+              [t("transcriptome_target_products"), String(transcriptPair.target_transcript_amplicon_count)],
+              [t("transcriptome_same_gene_products"), String(transcriptPair.same_gene_isoform_amplicon_count)],
+              [t("transcriptome_other_gene_products"), String(transcriptPair.other_gene_amplicon_count)],
+              [t("transcriptome_unclassified_products"), String(transcriptPair.unclassified_amplicon_count)],
+              [t("transcriptome_isoform_conclusion"), t(transcriptPair.isoform_specific ? "transcriptome_isoform_yes" : "transcriptome_isoform_no")],
+            ].map(([label, value]) => (
+              <div key={label} className="primer-basis-item">
+                <span style={{ color: "var(--text-3)" }}>{label}</span>
+                <span style={{ color: "var(--text-1)", fontWeight: 500, textAlign: "right" }}>{value}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: 12, color: transcriptPair.gene_specific ? "var(--green)" : "var(--orange)", lineHeight: 1.6, marginBottom: 10 }}>
+            {transcriptPair.gene_specific
+              ? `✓ ${t("check_transcriptome_gene_specific")}`
+              : `⚠ ${transcriptPair.status === "truncated" ? t("check_transcriptome_truncated") : transcriptPair.status === "target_not_found" || transcriptPair.status === "no_paired_amplicons" || transcriptPair.status === "ambiguous_target" ? t("check_transcriptome_target_missing") : t("check_transcriptome_cross_gene")}`}
+          </p>
+          {transcriptPair.top_amplicons.length ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              {transcriptPair.top_amplicons.map((hit) => {
+                const classLabel = hit.classification === "target_transcript"
+                  ? t("transcript_class_target")
+                  : hit.classification === "same_gene_isoform"
+                    ? t("transcript_class_same_gene")
+                    : hit.classification === "other_gene"
+                      ? t("transcript_class_other_gene")
+                      : t("transcript_class_unclassified");
+                const classTone = hit.classification === "target_transcript"
+                  ? "badge-green"
+                  : hit.classification === "same_gene_isoform" ? "badge-blue" : "badge-orange";
+                return (
+                  <div key={`${hit.transcript_accession}:${hit.start}:${hit.end}:${hit.orientation}`} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 12, flexWrap: "wrap" }}>
+                    <span className={`badge ${classTone}`}>{classLabel}</span>
+                    <code style={{ color: "var(--text-2)" }}>{hit.transcript_accession}:{hit.start}-{hit.end}</code>
+                    <span style={{ color: "var(--text-3)" }}>{hit.gene_name || hit.gene_id || "—"} · {hit.product_size} bp · MM {hit.left_mismatches}/{hit.right_mismatches}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p style={{ fontSize: 12, color: "var(--text-3)", fontStyle: "italic" }}>{t("transcriptome_no_products")}</p>
+          )}
+        </div>
+      )}
+      {genomePair && (
+        <div style={{ marginBottom: 20 }}>
+          <p className="label-caps" style={{ marginBottom: 8 }}>{t("genome_pair_title")}</p>
+          <p style={{ fontSize: 12, color: "var(--text-3)", lineHeight: 1.65, marginBottom: 12 }}>{t("genome_pair_scope_note")}</p>
+          <div className="primer-basis-grid" style={{ marginBottom: 12 }}>
+            {[
+              [t("genome_pair_target_locus"), genomePair.target_locus_accession ? `${genomePair.target_locus_accession}:${genomePair.target_locus_start}-${genomePair.target_locus_end} (${genomePair.target_locus_strand})` : "—"],
+              [t("genome_pair_products"), String(genomePair.paired_amplicon_count)],
+              [t("genome_pair_target_products"), String(genomePair.target_amplicon_count)],
+              [t("genome_pair_offtarget_products"), String(genomePair.off_target_amplicon_count)],
+              [t("genome_pair_unclassified_products"), String(genomePair.unclassified_amplicon_count)],
+              [t("genome_pair_window"), `${genomePair.min_amplicon_size}–${genomePair.max_amplicon_size} bp`],
+              [t("basis_reference_assembly"), genomePair.reference_assembly || "—"],
+            ].map(([label, value]) => (
+              <div key={label} className="primer-basis-item">
+                <span style={{ color: "var(--text-3)" }}>{label}</span>
+                <span style={{ color: "var(--text-1)", fontWeight: 500, textAlign: "right" }}>{value}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: 12, color: genomePair.specific ? "var(--green)" : "var(--orange)", lineHeight: 1.6, marginBottom: 10 }}>
+            {genomePair.specific
+              ? `✓ ${t("check_genome_pair_specific")}`
+              : `⚠ ${genomePair.status === "truncated" ? t("check_genome_pair_truncated") : genomePair.status === "target_not_anchored" ? t("check_genome_pair_unanchored") : genomePair.status === "no_paired_amplicons" ? t("check_genome_pair_no_product") : t("check_genome_pair_offtarget")}`}
+          </p>
+          {genomePair.top_amplicons.length ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              {genomePair.top_amplicons.map((hit) => (
+                <div key={`${hit.accession}:${hit.start}:${hit.end}:${hit.orientation}`} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 12 }}>
+                  <span className={`badge ${hit.is_target ? "badge-green" : "badge-orange"}`}>{hit.is_target ? t("genome_pair_product_target") : t("genome_pair_product_nontarget")}</span>
+                  <code style={{ color: "var(--text-2)" }}>{hit.accession}:{hit.start}-{hit.end}</code>
+                  <span style={{ color: "var(--text-3)" }}>{hit.product_size} bp · MM {hit.left_mismatches}/{hit.right_mismatches}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: 12, color: "var(--text-3)", fontStyle: "italic" }}>{t("genome_pair_no_products")}</p>
+          )}
+        </div>
+      )}
+      <p className="label-caps" style={{ marginBottom: 12 }}>{genomePair ? t("individual_alignment_title") : t("blast_hits_title")}</p>
       <p style={{ fontSize: 12, color: "var(--text-3)", lineHeight: 1.65, marginBottom: 12 }}>
-        {t("blast_hits_scope_note")}
+        {genomePair ? t("genome_pair_scope_note") : t("blast_hits_scope_note")}
       </p>
       {[{ label: t("forward"), data: left }, { label: t("reverse"), data: right }].map(({ label, data }) => (
         <div key={label} style={{ marginBottom: 12 }}>
           <p style={{ fontSize: 12, fontWeight: 500, color: "var(--text-2)", marginBottom: 6 }}>{label}</p>
+          {data.target_accession && (
+            <p style={{ fontSize: 11, color: data.target_found ? "var(--green)" : "var(--orange)", lineHeight: 1.5, marginBottom: 6 }}>
+              {data.target_found
+                ? t("blast_target_found", { accession: data.target_accession })
+                : t("blast_target_missing", { accession: data.target_accession })}
+              {data.hit_limit_reached ? ` · ${t("blast_hit_limit_warning")}` : ""}
+            </p>
+          )}
+          {data.status === "validated" && !data.target_accession && (
+            <p style={{ fontSize: 11, color: "var(--orange)", lineHeight: 1.5, marginBottom: 6 }}>
+              {t("blast_target_unspecified")}
+              {data.hit_limit_reached ? ` · ${t("blast_hit_limit_warning")}` : ""}
+            </p>
+          )}
           {data.top_hits.length === 0 ? (
             <p style={{ fontSize: 12, color: "var(--text-3)", fontStyle: "italic" }}>
               {data.status === "error"
@@ -108,6 +252,7 @@ const BlastHitsTable = memo(function BlastHitsTable({ left, right }: { left: Bla
                     <span style={{ flexShrink: 0, padding: "1px 6px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: idBg, color: idColor }}>{hit.identity}%</span>
                     <span style={{ flex: 1, lineHeight: 1.5, color: hit.is_off_target ? "var(--orange)" : "var(--text-2)" }}>
                       {hit.title}
+                      {hit.is_target && <span style={{ marginLeft: 4, color: "var(--green)", fontWeight: 500 }}>✓ {t("target_hit")}</span>}
                       {hit.is_off_target && <span style={{ marginLeft: 4, color: "var(--orange)", fontWeight: 500 }}>⚠ {t("off_target")}</span>}
                     </span>
                   </div>
@@ -375,8 +520,15 @@ function DesignBasisCard({ result }: { result: GenePrimerResult }) {
     { label: t("basis_blast_database"), value: basis.blast_database },
     {
       label: t("basis_specificity_scope"),
-      value: basis.specificity_scope === "refseq_rna_transcripts" ? t("basis_scope_refseq_rna") : basis.specificity_scope,
+      value: basis.specificity_scope === "refseq_rna_transcripts"
+        ? t("basis_scope_refseq_rna")
+        : basis.paired_amplicon_screen && basis.paired_transcriptome_screen
+          ? t("basis_scope_joint_pair")
+        : basis.paired_amplicon_screen
+          ? t("basis_scope_genome_pair")
+          : basis.specificity_scope,
     },
+    ...(basis.reference_assembly ? [{ label: t("basis_reference_assembly"), value: basis.reference_assembly }] : []),
     {
       label: t("basis_genome_scope"),
       value: basis.genome_wide_specificity_checked ? t("basis_genome_scope_yes") : t("basis_genome_scope_no"),
@@ -396,7 +548,7 @@ function DesignBasisCard({ result }: { result: GenePrimerResult }) {
           <p style={{ fontSize: 12, color: "var(--text-3)", margin: 0 }}>{t("design_basis_intro")}</p>
         </div>
         <div className="primer-basis-services">
-          {["Primer3", "BLAST", "NCBI"].map(s => (
+          {["Primer3", basis.paired_amplicon_screen ? "Bowtie2" : "BLAST", "NCBI RefSeq"].map(s => (
             <span key={s} style={{ fontSize: 10, padding: "2px 7px", borderRadius: 3, background: "var(--bg-inset)", border: "1px solid var(--border)", color: "var(--text-3)", fontWeight: 600 }}>{s}</span>
           ))}
         </div>
@@ -424,8 +576,8 @@ function DesignBasisCard({ result }: { result: GenePrimerResult }) {
       </div>
 
       <div className="primer-basis-scope-note">
-        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", flexShrink: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("basis_scope_note_title")}</span>
-        <span style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.65 }}>{t("basis_scope_note_body")}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", flexShrink: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t(basis.paired_transcriptome_screen ? "basis_joint_note_title" : basis.paired_amplicon_screen ? "basis_genome_note_title" : "basis_scope_note_title")}</span>
+        <span style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.65 }}>{t(basis.paired_transcriptome_screen ? "basis_joint_note_body" : basis.paired_amplicon_screen ? "basis_genome_note_body" : "basis_scope_note_body")}</span>
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -446,7 +598,11 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
   const gcAvg = (p.left_gc + p.right_gc) / 2;
   const blastLeftStatus = p.blast_left.status ?? "validated";
   const blastRightStatus = p.blast_right.status ?? "validated";
-  const bothBlastValidated = blastLeftStatus === "validated" && blastRightStatus === "validated";
+  const genomePair = p.genome_pair_validation;
+  const transcriptPair = p.transcriptome_pair_validation;
+  const bothBlastValidated = genomePair
+    ? genomePair.checked && !genomePair.hit_limit_reached && (!transcriptPair || transcriptPair.checked && !transcriptPair.hit_limit_reached)
+    : blastLeftStatus === "validated" && blastRightStatus === "validated";
   const offTargetCount = p.blast_left.off_target_count + p.blast_right.off_target_count;
   const leftSelfEnd = p.left_props?.self_end_th ?? 0;
   const rightSelfEnd = p.right_props?.self_end_th ?? 0;
@@ -466,7 +622,7 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
       : gcAvg >= 40 && gcAvg <= 60
         ? "ok"
         : "watch";
-  const specificityTone = bothBlastValidated && p.is_specific ? "strong" : "watch";
+  const specificityTone = p.is_specific ? "strong" : "watch";
   const exonTone = p.exon_span.spans_junction ? "strong" : "watch";
   const dimerTone =
     worstSelfEnd < 20 && worstHairpin < 10
@@ -497,11 +653,19 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
       label: t("score_specificity"),
       score: p.score.specificity_score,
       tone: specificityTone,
-      metric: bothBlastValidated
-        ? `Top hit ${p.blast_left.top_hit_identity}% / ${p.blast_right.top_hit_identity}% · off-target ${offTargetCount}`
-        : t("reason_specificity_metric_pending"),
+      metric: genomePair
+        ? transcriptPair
+          ? `${genomePair.reference_assembly || "Genome"} · genome target/extra ${genomePair.target_amplicon_count}/${genomePair.off_target_amplicon_count} · RNA target/other-gene ${transcriptPair.target_transcript_amplicon_count}/${transcriptPair.other_gene_amplicon_count}`
+          : `${genomePair.reference_assembly || "Genome"} · target ${genomePair.target_amplicon_count} · off-target ${genomePair.off_target_amplicon_count}`
+        : bothBlastValidated
+          ? `Top hit ${p.blast_left.top_hit_identity}% / ${p.blast_right.top_hit_identity}% · off-target ${offTargetCount}`
+          : t("reason_specificity_metric_pending"),
       observation:
-        bothBlastValidated && p.is_specific
+        genomePair
+          ? p.is_specific
+            ? t("reason_genome_specificity_validated")
+            : t("reason_genome_specificity_offtarget")
+          : bothBlastValidated && p.is_specific
           ? t("reason_specificity_validated")
           : blastLeftStatus === "error" || blastRightStatus === "error"
             ? t("reason_specificity_unvalidated")
@@ -734,8 +898,8 @@ function TranscriptViz({ seqLen, cdsStart, cdsEnd, exons, pairs }: {
 }
 
 function exportCSV(pairs: ValidatedPrimerPair[], geneName?: string) {
-  const header = ["Rank","Score","Forward","Reverse","F-Tm","R-Tm","F-GC%","R-GC%","Amplicon(bp)","RefSeqRNA_BLAST_Pass","ExonSpan","Introns","F-HairpinTm","F-SelfEnd","F-GCclamp","R-HairpinTm","R-SelfEnd","R-GCclamp","F-Identity%","F-Offtarget","R-Identity%","R-Offtarget"].join(",");
-  const rows = pairs.map(p => [p.rank,p.score.total,p.left_primer,p.right_primer,p.left_tm,p.right_tm,p.left_gc,p.right_gc,p.product_size,p.is_specific?"Yes":"No",p.exon_span.spans_junction?"Yes":"No",p.exon_span.junction_count,p.left_props?.hairpin_th??"",p.left_props?.self_end_th??"",p.left_props?.gc_clamp??"",p.right_props?.hairpin_th??"",p.right_props?.self_end_th??"",p.right_props?.gc_clamp??"",p.blast_left.top_hit_identity,p.blast_left.off_target_count,p.blast_right.top_hit_identity,p.blast_right.off_target_count].join(","));
+  const header = ["Rank","Score","Forward","Reverse","F-Tm","R-Tm","F-GC%","R-GC%","Amplicon(bp)","Specificity_Pass","Specificity_Engine","Reference_Assembly","Target_Locus","Genome_Paired_Products","Genome_Target_Products","Genome_Offtarget_Products","Genome_Unclassified_Products","Genome_Hit_Limit_Reached","Target_Transcript","Transcript_Gene_Specific","Transcript_Isoform_Specific","Transcript_Paired_Products","Transcript_Target_Products","Transcript_Same_Gene_Isoforms","Transcript_Other_Gene_Products","Transcript_Unclassified_Products","Transcript_Hit_Limit_Reached","ExonSpan","Introns","F-HairpinTm","F-SelfEnd","F-GCclamp","R-HairpinTm","R-SelfEnd","R-GCclamp","F-Identity%","F-Offtarget","R-Identity%","R-Offtarget"].join(",");
+  const rows = pairs.map(p => [p.rank,p.score.total,p.left_primer,p.right_primer,p.left_tm,p.right_tm,p.left_gc,p.right_gc,p.product_size,p.is_specific?"Yes":"No",p.transcriptome_pair_validation?"bowtie2_joint_genome_transcriptome":p.genome_pair_validation?.engine??"ncbi_refseq_rna_blast",p.genome_pair_validation?.reference_assembly??"",p.genome_pair_validation?.target_locus_accession?`${p.genome_pair_validation.target_locus_accession}:${p.genome_pair_validation.target_locus_start}-${p.genome_pair_validation.target_locus_end}`:"",p.genome_pair_validation?.paired_amplicon_count??"",p.genome_pair_validation?.target_amplicon_count??"",p.genome_pair_validation?.off_target_amplicon_count??"",p.genome_pair_validation?.unclassified_amplicon_count??"",p.genome_pair_validation?.hit_limit_reached??p.blast_left.hit_limit_reached??false,p.transcriptome_pair_validation?.target_transcript??"",p.transcriptome_pair_validation?.gene_specific??"",p.transcriptome_pair_validation?.isoform_specific??"",p.transcriptome_pair_validation?.paired_amplicon_count??"",p.transcriptome_pair_validation?.target_transcript_amplicon_count??"",p.transcriptome_pair_validation?.same_gene_isoform_amplicon_count??"",p.transcriptome_pair_validation?.other_gene_amplicon_count??"",p.transcriptome_pair_validation?.unclassified_amplicon_count??"",p.transcriptome_pair_validation?.hit_limit_reached??"",p.exon_span.spans_junction?"Yes":"No",p.exon_span.junction_count,p.left_props?.hairpin_th??"",p.left_props?.self_end_th??"",p.left_props?.gc_clamp??"",p.right_props?.hairpin_th??"",p.right_props?.self_end_th??"",p.right_props?.gc_clamp??"",p.blast_left.top_hit_identity,p.blast_left.off_target_count,p.blast_right.top_hit_identity,p.blast_right.off_target_count].join(","));
   const csv = [header,...rows].join("\n");
   const blob = new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
   const url = URL.createObjectURL(blob);
@@ -746,7 +910,7 @@ function exportHTMLReport(result: GenePrimerResult) {
   const now = new Date().toLocaleString();
   const pairsHtml = result.primer_pairs.map(p => {
     const tmDiff = Math.abs(p.left_tm - p.right_tm);
-    const checks: [string,boolean][] = [["Tm 58-62C",p.left_tm>=58&&p.left_tm<=62&&p.right_tm>=58&&p.right_tm<=62],["Tm diff<2C",tmDiff<2],["GC 40-60%",p.left_gc>=40&&p.left_gc<=60&&p.right_gc>=40&&p.right_gc<=60],["GC clamp>=1",(p.left_props?.gc_clamp??0)>=1&&(p.right_props?.gc_clamp??0)>=1],["Hairpin<24C",(p.left_props?.hairpin_th??0)<24&&(p.right_props?.hairpin_th??0)<24],["RefSeq RNA BLAST pass",p.is_specific],["Exon-spanning",p.exon_span.spans_junction]];
+    const checks: [string,boolean][] = [["Tm 58-62C",p.left_tm>=58&&p.left_tm<=62&&p.right_tm>=58&&p.right_tm<=62],["Tm diff<2C",tmDiff<2],["GC 40-60%",p.left_gc>=40&&p.left_gc<=60&&p.right_gc>=40&&p.right_gc<=60],["GC clamp>=1",(p.left_props?.gc_clamp??0)>=1&&(p.right_props?.gc_clamp??0)>=1],["Hairpin<24C",(p.left_props?.hairpin_th??0)<24&&(p.right_props?.hairpin_th??0)<24],[p.transcriptome_pair_validation?"Joint genome + transcript screen pass":p.genome_pair_validation?"Paired genome screen pass":"RefSeq RNA screen pass",p.is_specific],["Exon-spanning",p.exon_span.spans_junction]];
     const passN = checks.filter(c=>c[1]).length;
     return `<div style="border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:20px"><h3>Primer Pair #${p.rank} — Score ${p.score.total} — ${passN}/${checks.length} passed — ${p.product_size} bp</h3><p>F: <code>${p.left_primer}</code> Tm ${p.left_tm}°C GC ${p.left_gc}%</p><p>R: <code>${p.right_primer}</code> Tm ${p.right_tm}°C GC ${p.right_gc}%</p><div>${checks.map(([l,ok])=>`<span style="margin:2px;padding:2px 8px;border-radius:12px;font-size:12px;background:${ok?"#d1fae5":"#fee2e2"};color:${ok?"#065f46":"#991b1b"}">${ok?"✓":"✗"} ${l}</span>`).join("")}</div></div>`;
   }).join("");
@@ -890,15 +1054,21 @@ export default function PrimerPage() {
 
     const pairs = data.primer_pairs ?? [];
     const incomplete = pairs.some((pair) =>
-      (pair.blast_left.status ?? "validated") !== "validated" ||
-      (pair.blast_right.status ?? "validated") !== "validated"
+      pair.transcriptome_pair_validation && (!pair.transcriptome_pair_validation.checked || ["error", "truncated"].includes(pair.transcriptome_pair_validation.status))
+        ? true
+        : pair.genome_pair_validation
+        ? !pair.genome_pair_validation.checked || ["error", "truncated"].includes(pair.genome_pair_validation.status)
+        : (pair.blast_left.status ?? "validated") !== "validated" ||
+          (pair.blast_right.status ?? "validated") !== "validated"
     );
     const exonCount = pairs.filter((pair) => pair.exon_span.spans_junction).length;
     if (incomplete) {
       return t("result_summary_incomplete", { count: pairs.length, exon: exonCount });
     }
     const specificCount = pairs.filter((pair) => pair.is_specific).length;
-    const screening = data.design_basis?.genome_wide_specificity_checked ? "Bowtie2" : "RefSeq RNA BLAST";
+    const screening = data.design_basis?.paired_transcriptome_screen
+      ? "GRCm39 genome + RefSeq RNA paired screen"
+      : data.design_basis?.paired_amplicon_screen ? "GRCm39 / Bowtie2 pair screen" : "RefSeq RNA BLAST";
     return t("result_summary", {
       count: pairs.length,
       specific: specificCount,
@@ -1047,6 +1217,10 @@ export default function PrimerPage() {
   const lastStep = progress[progress.length - 1];
   const blastWarningCount = result
     ? result.primer_pairs.filter((pair) => {
+        if (pair.transcriptome_pair_validation && (!pair.transcriptome_pair_validation.checked || ["error", "truncated"].includes(pair.transcriptome_pair_validation.status))) return true;
+        if (pair.genome_pair_validation) {
+          return !pair.genome_pair_validation.checked || ["error", "truncated"].includes(pair.genome_pair_validation.status);
+        }
         const leftStatus = pair.blast_left.status ?? "validated";
         const rightStatus = pair.blast_right.status ?? "validated";
         return leftStatus !== "validated" || rightStatus !== "validated";
@@ -1054,6 +1228,7 @@ export default function PrimerPage() {
     : 0;
   const validatedPrimerCount = result
     ? result.primer_pairs.filter((pair) => {
+        if (pair.genome_pair_validation) return pair.is_specific;
         const leftStatus = pair.blast_left.status ?? "validated";
         const rightStatus = pair.blast_right.status ?? "validated";
         return leftStatus === "validated" && rightStatus === "validated" && pair.is_specific;
@@ -1064,6 +1239,10 @@ export default function PrimerPage() {
   const specificityScopeLabel =
     result?.design_basis?.specificity_scope === "refseq_rna_transcripts"
       ? t("basis_scope_refseq_rna")
+      : result?.design_basis?.paired_amplicon_screen && result?.design_basis?.paired_transcriptome_screen
+        ? t("basis_scope_joint_pair")
+      : result?.design_basis?.paired_amplicon_screen
+        ? t("basis_scope_genome_pair")
       : result?.design_basis?.specificity_scope ?? t("basis_not_applicable");
   const resultHeadline = result?.gene_name ?? result?.transcript_id ?? t("result_title");
   const resultMeta = result
@@ -1081,7 +1260,7 @@ export default function PrimerPage() {
         </div>
         <aside className="design-hero-meta">
           <span>{locale === "zh" ? "设计引擎" : "DESIGN ENGINE"}</span>
-          <strong>Primer3 + RefSeq RNA</strong>
+          <strong>Primer3 + RefSeq / GRCm39</strong>
           <p>{locale === "zh" ? "候选序列、质量参数与筛查依据" : "Sequences, quality metrics, and screening evidence"}</p>
         </aside>
       </section>
@@ -1297,11 +1476,9 @@ export default function PrimerPage() {
                 <span style={{ color: "var(--primer-color)", fontWeight: 600 }}>{t("basis_specificity_scope")}:</span>
                 <span>{specificityScopeLabel}</span>
                 <span style={{ color: "var(--border-mid)" }}>·</span>
-                <span>{t("basis_scope_note_body")}</span>
+                <span>{t(result.design_basis?.paired_transcriptome_screen ? "basis_joint_note_body" : result.design_basis?.paired_amplicon_screen ? "basis_genome_note_body" : "basis_scope_note_body")}</span>
               </div>
             </div>
-
-            {result.gene_info && <GeneInfoCard info={result.gene_info} />}
 
             {blastWarningCount > 0 && (
               <div className="card primer-alert-card notice" style={{ marginBottom: 0 }}>
@@ -1309,13 +1486,15 @@ export default function PrimerPage() {
                 <p style={{ fontSize: 12, color: "#a16207", lineHeight: 1.6 }}>{t("blast_warning_body", { count: blastWarningCount })}</p>
               </div>
             )}
-            <DesignBasisCard result={result} />
-            {result.exons.length > 0 && (
-              <div className="card primer-section-card" style={{ padding: 20, marginBottom: 16, overflow: "hidden" }}>
-                <p className="label-caps" style={{ marginBottom: 12 }}>{t("transcript_structure")}</p>
-                <TranscriptViz seqLen={result.sequence_length} cdsStart={result.cds_start} cdsEnd={result.cds_end} exons={result.exons} pairs={result.primer_pairs} />
+
+            <div className="primer-result-tier-head">
+              <div>
+                <span>{t("candidate_section_label")}</span>
+                <h3>{t("candidate_section_title")}</h3>
+                <p>{t("candidate_section_intro")}</p>
               </div>
-            )}
+              <strong>{t("candidate_count", { count: result.primer_pairs.length })}</strong>
+            </div>
 
             {/* ── Primer Pair Cards ── */}
             <div className="primer-pair-list">
@@ -1324,7 +1503,9 @@ export default function PrimerPage() {
                 const tmDiff2 = Math.abs(p.left_tm - p.right_tm);
                 const blastLS = p.blast_left.status ?? "validated";
                 const blastRS = p.blast_right.status ?? "validated";
-                const blastOk2 = blastLS === "validated" && blastRS === "validated" && p.is_specific;
+                const blastOk2 = p.genome_pair_validation
+                  ? p.genome_pair_validation.checked && p.is_specific
+                  : blastLS === "validated" && blastRS === "validated" && p.is_specific;
                 const passN = [p.left_tm>=58&&p.left_tm<=62&&p.right_tm>=58&&p.right_tm<=62, tmDiff2<2, p.left_gc>=40&&p.left_gc<=60&&p.right_gc>=40&&p.right_gc<=60, (p.left_props?.gc_clamp??0)>=1&&(p.right_props?.gc_clamp??0)>=1, (p.left_props?.hairpin_th??0)<24&&(p.right_props?.hairpin_th??0)<24, (p.left_props?.self_end_th??0)<35&&(p.right_props?.self_end_th??0)<35, blastOk2, p.exon_span.spans_junction].filter(Boolean).length;
                 const scoreColor = p.score.total >= 75 ? "var(--green)" : p.score.total >= 50 ? "var(--primer-color)" : "var(--red)";
                 return (
@@ -1389,7 +1570,7 @@ export default function PrimerPage() {
                         {/* Tab strip */}
                         <div className="primer-tab-strip">
                           <div className="primer-tab-buttons">
-                            {([{ id: "checklist", label: t("tab_checklist") },{ id: "blast", label: t("tab_blast") },{ id: "props", label: t("tab_props") },{ id: "amplicon", label: t("tab_amplicon") }] as const).map(tab => (
+                            {([{ id: "checklist", label: t("tab_checklist") },{ id: "blast", label: p.genome_pair_validation ? t("tab_genome") : t("tab_blast") },{ id: "props", label: t("tab_props") },{ id: "amplicon", label: t("tab_amplicon") }] as const).map(tab => (
                               <button key={tab.id} type="button" onClick={e => { e.stopPropagation(); setActiveTab(tab.id); }} className={`primer-tab-button${activeTab === tab.id ? " active" : ""}`}>
                                 {tab.label}
                               </button>
@@ -1406,7 +1587,7 @@ export default function PrimerPage() {
                         </div>
                         <div className="primer-tab-content">
                           {activeTab === "checklist" && <ValidationChecklist p={p} />}
-                          {activeTab === "blast" && <BlastHitsTable left={p.blast_left} right={p.blast_right} />}
+                          {activeTab === "blast" && <BlastHitsTable left={p.blast_left} right={p.blast_right} genomePair={p.genome_pair_validation} transcriptPair={p.transcriptome_pair_validation} />}
                           {activeTab === "props" && <PrimerPropsTable p={p} />}
                           {activeTab === "amplicon" && <AmpliconViewer pair={p} />}
                         </div>
@@ -1416,7 +1597,28 @@ export default function PrimerPage() {
                 );
               })}
             </div>
-            <p className="primer-click-hint">{t("click_hint")}</p>
+
+            <details className="primer-evidence-disclosure">
+              <summary>
+                <span className="primer-evidence-index">03</span>
+                <span className="primer-evidence-summary-copy">
+                  <small>{t("evidence_section_label")}</small>
+                  <strong>{t("evidence_section_title")}</strong>
+                  <span>{t("evidence_section_intro")}</span>
+                </span>
+                <span className="primer-evidence-toggle" aria-hidden="true" />
+              </summary>
+              <div className="primer-evidence-content">
+                {result.gene_info && <GeneInfoCard info={result.gene_info} />}
+                <DesignBasisCard result={result} />
+                {result.exons.length > 0 && (
+                  <div className="primer-evidence-transcript">
+                    <p className="label-caps" style={{ marginBottom: 12 }}>{t("transcript_structure")}</p>
+                    <TranscriptViz seqLen={result.sequence_length} cdsStart={result.cds_start} cdsEnd={result.cds_end} exons={result.exons} pairs={result.primer_pairs} />
+                  </div>
+                )}
+              </div>
+            </details>
           </div>
         )}
       </main>

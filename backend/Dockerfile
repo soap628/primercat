@@ -2,8 +2,8 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# Build deps for primer3-py (C extension)
-RUN apt-get update && apt-get install -y --no-install-recommends gcc && rm -rf /var/lib/apt/lists/*
+# Build deps for primer3-py plus the local genome-screening engine.
+RUN apt-get update && apt-get install -y --no-install-recommends gcc bowtie2 && rm -rf /var/lib/apt/lists/*
 
 # 国内镜像源 + 优先使用预编译轮子，避免网络抖动时回退到源码编译
 ENV PIP_INDEX_URL=https://mirrors.cloud.tencent.com/pypi/simple \

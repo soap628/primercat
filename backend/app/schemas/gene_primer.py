@@ -26,6 +26,7 @@ class BlastTopHit(BaseModel):
     title: str           # 基因/登录号描述
     identity: float      # 相似度 %
     is_off_target: bool  # 是否为脱靶
+    is_target: bool = False
 
 
 class BlastValidationStatus(str, Enum):
@@ -41,6 +42,10 @@ class BlastValidation(BaseModel):
     top_hits: list[BlastTopHit] = Field(default_factory=list)  # top 3 命中
     status: BlastValidationStatus = BlastValidationStatus.validated
     message: str = ""
+    target_accession: Optional[str] = None
+    target_found: bool = False
+    qualified_hit_count: int = 0
+    hit_limit_reached: bool = False
 
 
 class ExonSpan(BaseModel):
@@ -97,6 +102,106 @@ class PrimerDesignBasis(BaseModel):
     specificity_scope: str
     genome_wide_specificity_checked: bool
     off_target_identity_threshold: float
+    paired_amplicon_screen: bool = False
+    reference_assembly: Optional[str] = None
+    paired_transcriptome_screen: bool = False
+    transcriptome_reference: Optional[str] = None
+
+
+class GenomePairScreenStatus(str, Enum):
+    validated = "validated"
+    no_paired_amplicons = "no_paired_amplicons"
+    target_not_anchored = "target_not_anchored"
+    truncated = "truncated"
+    error = "error"
+
+
+class GenomeAmpliconHit(BaseModel):
+    accession: str
+    start: int
+    end: int
+    product_size: int
+    orientation: str
+    left_mismatches: int
+    right_mismatches: int
+    is_target: bool = False
+
+
+class GenomePairValidation(BaseModel):
+    checked: bool
+    specific: bool
+    status: GenomePairScreenStatus
+    engine: str = "bowtie2_paired_amplicon"
+    reference_assembly: Optional[str] = None
+    target_transcript: Optional[str] = None
+    target_locus_accession: Optional[str] = None
+    target_locus_start: Optional[int] = None
+    target_locus_end: Optional[int] = None
+    target_locus_strand: Optional[str] = None
+    left_hit_count: int = 0
+    right_hit_count: int = 0
+    paired_amplicon_count: int = 0
+    target_amplicon_count: int = 0
+    off_target_amplicon_count: int = 0
+    unclassified_amplicon_count: int = 0
+    hit_limit_reached: bool = False
+    min_amplicon_size: int = 50
+    max_amplicon_size: int = 5000
+    top_amplicons: list[GenomeAmpliconHit] = Field(default_factory=list)
+    message: str = ""
+
+
+class TranscriptomePairScreenStatus(str, Enum):
+    validated = "validated"
+    no_paired_amplicons = "no_paired_amplicons"
+    target_not_found = "target_not_found"
+    ambiguous_target = "ambiguous_target"
+    truncated = "truncated"
+    error = "error"
+
+
+class TranscriptAmpliconClass(str, Enum):
+    target_transcript = "target_transcript"
+    same_gene_isoform = "same_gene_isoform"
+    other_gene = "other_gene"
+    unclassified = "unclassified"
+
+
+class TranscriptAmpliconHit(BaseModel):
+    transcript_accession: str
+    start: int
+    end: int
+    product_size: int
+    orientation: str
+    left_mismatches: int
+    right_mismatches: int
+    classification: TranscriptAmpliconClass
+    gene_id: Optional[str] = None
+    gene_name: Optional[str] = None
+
+
+class TranscriptomePairValidation(BaseModel):
+    checked: bool
+    gene_specific: bool
+    isoform_specific: bool
+    status: TranscriptomePairScreenStatus
+    engine: str = "bowtie2_paired_transcriptome"
+    reference_assembly: Optional[str] = None
+    target_transcript: Optional[str] = None
+    target_gene_id: Optional[str] = None
+    target_gene_name: Optional[str] = None
+    left_hit_count: int = 0
+    right_hit_count: int = 0
+    paired_amplicon_count: int = 0
+    target_transcript_amplicon_count: int = 0
+    same_gene_isoform_amplicon_count: int = 0
+    other_gene_amplicon_count: int = 0
+    unclassified_amplicon_count: int = 0
+    hit_limit_reached: bool = False
+    min_amplicon_size: int = 50
+    max_amplicon_size: int = 5000
+    top_amplicons: list[TranscriptAmpliconHit] = Field(default_factory=list)
+    message: str = ""
 
 
 class ValidatedPrimerPair(BaseModel):
@@ -117,6 +222,8 @@ class ValidatedPrimerPair(BaseModel):
     left_props: Optional[PrimerProperties] = None
     right_props: Optional[PrimerProperties] = None
     amplicon_sequence: str = ""
+    genome_pair_validation: Optional[GenomePairValidation] = None
+    transcriptome_pair_validation: Optional[TranscriptomePairValidation] = None
 
 
 class ExonViz(BaseModel):

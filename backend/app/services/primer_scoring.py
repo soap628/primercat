@@ -1,6 +1,14 @@
 from typing import Optional
-from app.schemas.gene_primer import PrimerScore, ExonSpan, BlastValidation, BlastValidationStatus
+from app.schemas.gene_primer import (
+    BlastValidation,
+    BlastValidationStatus,
+    ExonSpan,
+    GenomePairValidation,
+    PrimerScore,
+    TranscriptomePairValidation,
+)
 from app.services.ncbi_fetch import ExonInfo
+from app.services.primer_transcriptome import combined_computational_specificity_pass
 
 
 def score_primer_pair(
@@ -14,6 +22,8 @@ def score_primer_pair(
     blast_left: BlastValidation,
     blast_right: BlastValidation,
     exon_span: ExonSpan,
+    genome_pair_validation: GenomePairValidation | None = None,
+    transcriptome_pair_validation: TranscriptomePairValidation | None = None,
 ) -> PrimerScore:
     # ── Tm 评分（最优 59-61°C，差值 < 1°C）────────────────────────
     tm_avg = (left_tm + right_tm) / 2
@@ -51,7 +61,25 @@ def score_primer_pair(
         blast_left.status == BlastValidationStatus.error
         or blast_right.status == BlastValidationStatus.error
     )
-    if both_validated and blast_left.specific and blast_right.specific:
+    if genome_pair_validation and transcriptome_pair_validation:
+        specificity_score = 30.0 if combined_computational_specificity_pass(
+            genome_pair_validation,
+            transcriptome_pair_validation,
+        ) else 0.0
+        specificity_score = max(
+            0.0,
+            specificity_score
+            - genome_pair_validation.off_target_amplicon_count * 2
+            - transcriptome_pair_validation.other_gene_amplicon_count * 2
+            - transcriptome_pair_validation.unclassified_amplicon_count * 2,
+        )
+    elif genome_pair_validation and genome_pair_validation.checked:
+        specificity_score = 30.0 if genome_pair_validation.specific else 0.0
+        specificity_score = max(
+            0.0,
+            specificity_score - genome_pair_validation.off_target_amplicon_count * 2,
+        )
+    elif both_validated and blast_left.specific and blast_right.specific:
         specificity_score = 30.0
     elif both_validated and (blast_left.specific or blast_right.specific):
         specificity_score = 15.0
@@ -60,7 +88,7 @@ def score_primer_pair(
         specificity_score = 0.0
     else:
         specificity_score = 0.0
-    if both_validated:
+    if both_validated and not genome_pair_validation:
         # 脱靶惩罚
         off = blast_left.off_target_count + blast_right.off_target_count
         specificity_score = max(0.0, specificity_score - off * 2)

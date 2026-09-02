@@ -26,6 +26,20 @@ class Settings(BaseSettings):
     GRNA_ANNOTATION_GTF_HUMAN: str = ""
     GRNA_ANNOTATION_GTF_MOUSE: str = ""
     GRNA_PROMOTER_WINDOW_BP: int = 2000
+    QPCR_GENOME_MAX_ALIGNMENTS_PER_PRIMER: int = 64
+    QPCR_GENOME_MIN_AMPLICON_BP: int = 50
+    QPCR_GENOME_MAX_AMPLICON_BP: int = 5000
+    GENOME_REFERENCE_ASSEMBLY_HUMAN: str = ""
+    GENOME_REFERENCE_ASSEMBLY_MOUSE: str = "GCF_000001635.27"
+    QPCR_TRANSCRIPT_LOCUS_DB_HUMAN: str = ""
+    QPCR_TRANSCRIPT_LOCUS_DB_MOUSE: str = ""
+    QPCR_TRANSCRIPTOME_BOWTIE2_INDEX_HUMAN: str = ""
+    QPCR_TRANSCRIPTOME_BOWTIE2_INDEX_MOUSE: str = ""
+    QPCR_TRANSCRIPTOME_FASTA_HUMAN: str = ""
+    QPCR_TRANSCRIPTOME_FASTA_MOUSE: str = ""
+    QPCR_TRANSCRIPTOME_MAX_ALIGNMENTS_PER_PRIMER: int = 128
+    QPCR_TRANSCRIPTOME_MIN_AMPLICON_BP: int = 50
+    QPCR_TRANSCRIPTOME_MAX_AMPLICON_BP: int = 5000
     DEBUG: bool = False
     COOKIE_SECURE: bool = False  # Set to True in production (HTTPS required)
     COOKIE_SAMESITE: str = "lax"
@@ -60,6 +74,34 @@ class Settings(BaseSettings):
         return {
             "human": self.GRNA_ANNOTATION_GTF_HUMAN,
             "mouse": self.GRNA_ANNOTATION_GTF_MOUSE,
+        }
+
+    @property
+    def genome_reference_assembly_by_species(self) -> dict[str, str]:
+        return {
+            "human": self.GENOME_REFERENCE_ASSEMBLY_HUMAN,
+            "mouse": self.GENOME_REFERENCE_ASSEMBLY_MOUSE,
+        }
+
+    @property
+    def qpcr_transcript_locus_db_by_species(self) -> dict[str, str]:
+        return {
+            "human": self.QPCR_TRANSCRIPT_LOCUS_DB_HUMAN,
+            "mouse": self.QPCR_TRANSCRIPT_LOCUS_DB_MOUSE,
+        }
+
+    @property
+    def qpcr_transcriptome_bowtie2_index_by_species(self) -> dict[str, str]:
+        return {
+            "human": self.QPCR_TRANSCRIPTOME_BOWTIE2_INDEX_HUMAN,
+            "mouse": self.QPCR_TRANSCRIPTOME_BOWTIE2_INDEX_MOUSE,
+        }
+
+    @property
+    def qpcr_transcriptome_fasta_by_species(self) -> dict[str, str]:
+        return {
+            "human": self.QPCR_TRANSCRIPTOME_FASTA_HUMAN,
+            "mouse": self.QPCR_TRANSCRIPTOME_FASTA_MOUSE,
         }
 
     class Config:
