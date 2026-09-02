@@ -2,8 +2,16 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# Build deps for primer3-py plus the local genome-screening engine.
-RUN apt-get update && apt-get install -y --no-install-recommends gcc bowtie2 && rm -rf /var/lib/apt/lists/*
+# Build deps for primer3-py plus the local genome-screening engine. The production
+# host is on Tencent Cloud, where the matching Debian mirrors are substantially
+# faster and more reliable than the default upstream endpoints.
+RUN sed -i \
+      -e 's|http://deb.debian.org/debian-security|https://mirrors.cloud.tencent.com/debian-security|g' \
+      -e 's|http://deb.debian.org/debian|https://mirrors.cloud.tencent.com/debian|g' \
+      /etc/apt/sources.list.d/debian.sources \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends gcc bowtie2 \
+    && rm -rf /var/lib/apt/lists/*
 
 # 国内镜像源 + 优先使用预编译轮子，避免网络抖动时回退到源码编译
 ENV PIP_INDEX_URL=https://mirrors.cloud.tencent.com/pypi/simple \
