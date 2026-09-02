@@ -4,10 +4,14 @@ export const productionEvidence = {
   schema_version: "1.0",
   snapshot_date: "2026-09-03",
   release: {
-    commit: "0f42ebe40691063006762792c745093115420524",
-    source_url: "https://github.com/soap628/primercat/commit/0f42ebe40691063006762792c745093115420524",
+    audit_basis_commit: "0f42ebe40691063006762792c745093115420524",
+    audit_basis_source_url: "https://github.com/soap628/primercat/commit/0f42ebe40691063006762792c745093115420524",
     backend_tests_passed: 283,
     frontend_production_build: "passed",
+    scope: {
+      zh: "该提交是本快照所记录的软件与线上流程核验基线；证据说明页面可能由后续文档提交发布。",
+      en: "This commit is the software and production-flow audit baseline recorded by this snapshot; the evidence page itself may be published by a later documentation commit.",
+    },
   },
   references: {
     human: {
@@ -42,20 +46,22 @@ export const productionEvidence = {
     genes_with_at_least_one_pass: cohortBenchmark.results.records_with_at_least_one_combined_pass,
   },
   deployment_verification: {
-    public_routes_http_200: 8,
-    workflows_passed: ["qPCR", "PCR", "CRISPR", "BLAST"],
+    checked_at: "2026-09-03",
+    check_type: "production smoke test",
+    public_routes_checked_http_200: 8,
+    workflows_checked_passed: ["qPCR", "PCR", "CRISPR", "BLAST"],
     status: "passed",
   },
   interpretation_limits: {
     zh: [
-      "数据库行数描述实现规模，不是独立基因、gRNA 或实验验证位点数量。",
-      "计算通过只对所述参考、阈值和命中上限成立，不是湿实验成功率。",
-      "自动化测试、构建、校验和线上流程检查提供软件及数据完整性证据，不构成生物学验证。",
+      "数据库行数只描述索引表的记录规模，不是独立基因、可用 gRNA 或实验验证位点数量。",
+      "计算筛查通过只对所列参考版本、参数、判定规则和命中上限成立，不是湿实验成功率。",
+      "自动化测试、构建、文件校验和线上冒烟测试属于软件与数据完整性证据，不构成生物学或临床验证。",
     ],
     en: [
-      "Database row counts are implementation-scale records, not counts of unique genes, guides, or experimentally validated sites.",
-      "A computational pass is limited to the stated references, thresholds, and hit caps; it is not a wet-lab success rate.",
-      "Automated tests, builds, checksums, and online smoke tests establish software and data-integrity evidence, not biological validity.",
+      "Database row counts describe indexed table records, not unique genes, usable guides, or experimentally validated sites.",
+      "A computational screen pass is limited to the listed reference versions, parameters, decision rules, and hit caps; it is not a wet-lab success rate.",
+      "Automated tests, builds, file checksums, and production smoke tests are software and data-integrity evidence, not biological or clinical validation.",
     ],
   },
 } as const;

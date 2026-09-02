@@ -475,15 +475,15 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
         <div className="home-science-shell">
           <header className="home-science-header">
             <div>
-              <h2 id="home-production-title">{zh ? "当前生产证据" : "Current production evidence"}</h2>
-              <p>{zh ? `版本、参考数据与核验结果按 ${productionEvidence.snapshot_date} 快照公开。以下记录用于说明系统实际运行范围，不把软件可用性写成生物学有效性。` : `Version, reference data, and verification results are published as a ${productionEvidence.snapshot_date} snapshot. These records define the running system; they do not turn software availability into biological validity.`}</p>
+              <h2 id="home-production-title">{zh ? "当前运行依据" : "Current operating basis"}</h2>
+              <p>{zh ? `截至 ${productionEvidence.snapshot_date}，参考组装、数据索引、计算审计和发布检查均已留档，并可追溯至原始来源或机器可读记录。这些证据界定系统的计算范围，不替代实验验证。` : `As of ${productionEvidence.snapshot_date}, reference assemblies, data indexes, computational audits, and release checks are recorded with links to primary or machine-readable records. This evidence defines the computational scope; it does not replace experimental validation.`}</p>
             </div>
           </header>
 
           <div className="home-production-ledger">
             <article>
               <span>REFERENCE</span>
-              <h3>{zh ? "固定参考" : "Pinned references"}</h3>
+              <h3>{zh ? "参考数据" : "Reference data"}</h3>
               <p>
                 <a href={productionEvidence.references.human.assembly_url} target="_blank" rel="noopener noreferrer">{productionEvidence.references.human.assembly_name} · {productionEvidence.references.human.assembly_accession}</a>
                 <i aria-hidden="true"> / </i>
@@ -492,23 +492,23 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
             </article>
             <article>
               <span>INDEX</span>
-              <h3>{zh ? "可查询记录" : "Queryable records"}</h3>
-              <p>{zh ? `人类 ${formatCount(productionEvidence.references.human.grna_feature_rows)} 条注释特征、${formatCount(productionEvidence.references.human.transcript_locus_rows)} 条转录本定位；小鼠 ${formatCount(productionEvidence.references.mouse.grna_feature_rows)} 条注释特征。` : `${formatCount(productionEvidence.references.human.grna_feature_rows)} human annotation features and ${formatCount(productionEvidence.references.human.transcript_locus_rows)} transcript loci; ${formatCount(productionEvidence.references.mouse.grna_feature_rows)} mouse annotation features.`}</p>
+              <h3>{zh ? "索引范围" : "Index scope"}</h3>
+              <p>{zh ? `当前索引含人类 ${formatCount(productionEvidence.references.human.grna_feature_rows)} 条注释特征记录、${formatCount(productionEvidence.references.human.transcript_locus_rows)} 条转录本—基因组定位记录，以及小鼠 ${formatCount(productionEvidence.references.mouse.grna_feature_rows)} 条注释特征记录。` : `Current indexes contain ${formatCount(productionEvidence.references.human.grna_feature_rows)} human annotation-feature records, ${formatCount(productionEvidence.references.human.transcript_locus_rows)} human transcript-to-genome locus records, and ${formatCount(productionEvidence.references.mouse.grna_feature_rows)} mouse annotation-feature records.`}</p>
             </article>
             <article>
               <span>AUDIT</span>
-              <h3>{zh ? "固定队列计算审计" : "Fixed-cohort computational audit"}</h3>
-              <p>{zh ? `${productionEvidence.computational_audit.genes} 个基因、${formatCount(productionEvidence.computational_audit.candidate_pairs_screened)} 对候选；${formatCount(productionEvidence.computational_audit.combined_computational_pass_pairs)} 对联合计算通过，${productionEvidence.computational_audit.genes_with_at_least_one_pass}/${productionEvidence.computational_audit.genes} 个基因至少有一对通过。` : `${productionEvidence.computational_audit.genes} genes and ${formatCount(productionEvidence.computational_audit.candidate_pairs_screened)} candidate pairs; ${formatCount(productionEvidence.computational_audit.combined_computational_pass_pairs)} joint computational passes and ${productionEvidence.computational_audit.genes_with_at_least_one_pass}/${productionEvidence.computational_audit.genes} genes with at least one pass.`}</p>
+              <h3>{zh ? "计算覆盖审计" : "Computational coverage audit"}</h3>
+              <p>{zh ? <>公开固定队列纳入 {productionEvidence.computational_audit.genes} 个基因、{formatCount(productionEvidence.computational_audit.candidate_pairs_screened)} 对候选；其中 {formatCount(productionEvidence.computational_audit.combined_computational_pass_pairs)} 对满足预设联合规则，{productionEvidence.computational_audit.genes_with_at_least_one_pass}/{productionEvidence.computational_audit.genes} 个基因至少有一对通过。 <a href={productionEvidence.computational_audit.benchmark_url}>查看审计记录</a></> : <>The public fixed cohort contains {productionEvidence.computational_audit.genes} genes and {formatCount(productionEvidence.computational_audit.candidate_pairs_screened)} candidate pairs; {formatCount(productionEvidence.computational_audit.combined_computational_pass_pairs)} pairs met the predefined joint rule, and {productionEvidence.computational_audit.genes_with_at_least_one_pass}/{productionEvidence.computational_audit.genes} genes had at least one pass. <a href={productionEvidence.computational_audit.benchmark_url}>Inspect the audit record</a></>}</p>
             </article>
             <article>
               <span>VERIFY</span>
-              <h3>{zh ? "完整性与发布核验" : "Integrity and release verification"}</h3>
-              <p>{zh ? `人类运行文件 ${productionEvidence.references.human.runtime_artifacts_sha256.passed}/${productionEvidence.references.human.runtime_artifacts_sha256.total} 通过跨主机 SHA-256；${productionEvidence.release.backend_tests_passed} 项后端测试及 qPCR、PCR、CRISPR、BLAST 线上流程通过。` : `${productionEvidence.references.human.runtime_artifacts_sha256.passed}/${productionEvidence.references.human.runtime_artifacts_sha256.total} human runtime files passed cross-host SHA-256 checks; ${productionEvidence.release.backend_tests_passed} backend tests and the qPCR, PCR, CRISPR, and BLAST production flows passed.`}</p>
+              <h3>{zh ? "完整性与发布检查" : "Integrity and release checks"}</h3>
+              <p>{zh ? `列入清单的人类运行文件 ${productionEvidence.references.human.runtime_artifacts_sha256.passed}/${productionEvidence.references.human.runtime_artifacts_sha256.total}、本次更新涉及的小鼠文件 ${productionEvidence.references.mouse.updated_artifacts_sha256.passed}/${productionEvidence.references.mouse.updated_artifacts_sha256.total} 均通过跨主机 SHA-256；软件基线通过 ${productionEvidence.release.backend_tests_passed} 项后端测试，并完成 qPCR、PCR、CRISPR、BLAST 线上冒烟测试。` : `All ${productionEvidence.references.human.runtime_artifacts_sha256.passed}/${productionEvidence.references.human.runtime_artifacts_sha256.total} listed human runtime files and ${productionEvidence.references.mouse.updated_artifacts_sha256.passed}/${productionEvidence.references.mouse.updated_artifacts_sha256.total} mouse files changed in this update passed cross-host SHA-256 checks. The software baseline passed ${productionEvidence.release.backend_tests_passed} backend tests and production smoke tests for qPCR, PCR, CRISPR, and BLAST.`}</p>
             </article>
           </div>
 
           <div className="home-production-foot">
-            <p>{zh ? "记录数是数据库实现规模，不是独立基因、gRNA 或实验验证位点数量；计算通过也不是湿实验成功率。" : "Row counts describe implementation scale, not unique genes, gRNAs, or experimentally validated sites. A computational pass is not a wet-lab success rate."}</p>
+            <p>{zh ? "记录数描述索引表规模，不代表独立基因或可用候选；“通过”仅表示在所列版本和规则下完成检查，不是湿实验成功率。" : "Record counts describe index-table scale, not unique genes or usable candidates. A pass means the stated check completed under the listed versions and rules; it is not a wet-lab success rate."}</p>
             <div>
               <Link href="/validation#production-snapshot">{zh ? "查看完整证据说明" : "Read the full evidence note"} →</Link>
               <a href="/evidence/production-snapshot-v1.json">JSON ↗</a>

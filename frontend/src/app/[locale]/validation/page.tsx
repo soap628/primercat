@@ -69,11 +69,11 @@ const COPY = {
     ],
     reproTitle: "复现与变更因素", reproLead: "要让另一位研究者能够重建本次结果，输出必须携带计算上下文，而不只是复制一条候选序列。",
     reproHead: ["必须记录", "原因"], reproRows: [["原始输入或 accession + version", "数据库 accession 更新后序列可能改变。"], ["物种与参考组装", "同一序列在不同组装中的命中和坐标不同。"], ["全部设计参数", "预设只是初值，实际提交值决定候选。"], ["筛查后端、数据库和日期", "本地 Bowtie2 与 NCBI BLAST 的覆盖范围不同，远程数据库持续更新。"], ["返回上限与异常状态", "hit 截断、超时或回退会改变可见证据。"], ["PrimerCat/依赖版本", "Primer3、Biopython、索引和评分规则变更可能改变输出。"]],
-    productionTitle: "当前生产证据快照", productionLead: "本节记录当前线上版本实际使用的参考、索引规模和发布核验结果。它回答“系统运行的是什么”，而不是“实验一定会不会成功”。",
-    productionFacts: ["人类注释特征", "人类转录本定位", "小鼠注释特征"],
-    productionHead: ["记录", "当前值", "核验方式", "正确解释"],
-    productionNote: "数据库行数用于描述实现规模，不等于独立基因、可用 gRNA 或实验验证位点数量。自动化测试、构建、校验和线上流程检查属于软件及数据完整性证据，不构成生物学或临床验证。",
-    productionSnapshotLink: "下载机器可读证据快照", productionChecksumsLink: "查看逐文件校验值", productionSourceLink: "查看对应源代码提交",
+    productionTitle: "当前运行依据与核验记录", productionLead: "为使结果可追溯，本节固定记录当前服务采用的参考版本、索引规模、软件质量基线和线上抽查结果。每项结论只在标注的数据范围、规则与检查日期内成立。",
+    productionFacts: ["人类注释特征记录", "人类转录本定位记录", "小鼠注释特征记录"],
+    productionHead: ["核验对象", "记录值", "检查结果", "结论边界"],
+    productionNote: "这里的“通过”只表示相应软件或数据检查在记录时完成：数据库行数不是独立基因或可用候选数量，计算审计不是湿实验成功率，自动化测试和线上冒烟测试也不构成生物学或临床验证。",
+    productionSnapshotLink: "证据快照（JSON）", productionChecksumsLink: "文件校验清单", productionSourceLink: "审计基线代码",
     benchmarkTitle: "固定参考计算覆盖审计 v0.6", benchmarkLead: "从固定版小鼠 RefSeq RNA 以公开、确定性的散列规则选取 200 个不同基因，每个基因保留一个 NM_ 转录本，重新生成并筛查候选。这一批次扩大了流程覆盖面；它不是随机抽样、外部准确率测试或湿实验验证。",
     benchmarkFacts: ["候选对已筛查", "联合计算通过", "基因至少一对通过"],
     benchmarkMethodTitle: "本轮如何运行",
@@ -113,11 +113,11 @@ const COPY = {
     validationGroups: [["RT-qPCR / qPCR", ["Confirm the accession, target isoform, and amplicon; inspect common variants when relevant.", "Include NTC and no-RT controls and confirm a single product by melt curve and/or gel.", "Use a standard curve to assess efficiency, linear range, and detection limit; report sequences, concentrations, chemistry, and raw data.", "Use validated reference genes and appropriate normalisation; follow MIQE 2.0."]], ["Endpoint PCR", ["Run an annealing-temperature gradient with positive, negative, and no-template controls.", "Confirm product count and size by gel; confirm sequence by Sanger or another method for critical applications.", "Check the relevant assembly and sample variation for the real specimen source."]], ["CRISPR", ["Cross-check candidates in an independent genome-aware design tool and provide an explicit target locus where possible.", "Measure on-target editing and indel spectrum in the target cells by amplicon sequencing or an equivalent assay.", "Choose targeted-site sequencing or an unbiased method such as GUIDE-seq according to application risk; computational screening cannot replace cellular off-target measurement."]], ["BLAST & references", ["Verify critical claims against the accession and primary record; add MSA, domain, and phylogenetic analysis when required.", "Return from protocols and recipes to the primary source and institutional SOP; for chemicals, check the current label, supplier SDS, and EHS requirements."]]],
     reproTitle: "Reproducibility and change factors", reproLead: "To reconstruct a run, the output must carry its computational context, not only a copied candidate sequence.",
     reproHead: ["Record", "Why"], reproRows: [["Original input or accession + version", "The sequence can change when an accession is revised."], ["Species and reference assembly", "Hits and coordinates differ between assemblies."], ["All submitted parameters", "Presets initialise controls; submitted values determine candidates."], ["Backend, database, and date", "Local Bowtie2 and NCBI BLAST have different scope, and remote databases evolve."], ["Hit caps and exception states", "Truncation, timeout, and fallback alter the visible evidence."], ["PrimerCat and dependency versions", "Primer3, Biopython, index, and score-rule changes may alter output."]],
-    productionTitle: "Current production evidence snapshot", productionLead: "This section records the references, index scale, and release checks used by the running service. It answers what the system is running, not whether an experiment is guaranteed to succeed.",
-    productionFacts: ["Human annotation features", "Human transcript loci", "Mouse annotation features"],
-    productionHead: ["Record", "Current value", "Verification", "Correct interpretation"],
-    productionNote: "Database row counts describe implementation scale; they are not counts of unique genes, usable gRNAs, or experimentally validated sites. Automated tests, builds, checksums, and production-flow checks provide software and data-integrity evidence, not biological or clinical validation.",
-    productionSnapshotLink: "Download machine-readable evidence snapshot", productionChecksumsLink: "Inspect per-file checksums", productionSourceLink: "View the corresponding source commit",
+    productionTitle: "Current operating basis and verification record", productionLead: "To keep results traceable, this section fixes the reference versions, index scale, software quality baseline, and production spot checks used by the current service. Each conclusion is limited to the stated data scope, rules, and check date.",
+    productionFacts: ["Human annotation-feature records", "Human transcript-locus records", "Mouse annotation-feature records"],
+    productionHead: ["Object", "Recorded value", "Check performed", "Scope of conclusion"],
+    productionNote: "Pass means only that the stated software or data check completed at the recorded time. Database rows are not unique genes or usable candidates; a computational audit is not a wet-lab success rate; and automated or production smoke tests are not biological or clinical validation.",
+    productionSnapshotLink: "Evidence snapshot (JSON)", productionChecksumsLink: "File checksum manifest", productionSourceLink: "Audit-baseline source",
     benchmarkTitle: "Fixed-reference computational coverage audit v0.6", benchmarkLead: "A public deterministic hash rule selects 200 distinct genes from the pinned mouse RefSeq RNA collection, retaining one NM_ transcript per gene. Candidates are regenerated and screened for every record. This expands pipeline coverage; it is not random sampling, an external accuracy test, or wet-lab validation.",
     benchmarkFacts: ["Candidate pairs screened", "Joint computational passes", "Genes with ≥1 pass"],
     benchmarkMethodTitle: "How this run was performed",
@@ -146,16 +146,16 @@ function ProductionSnapshot({ copy, zh }: { copy: typeof COPY.zh | typeof COPY.e
   const release = productionEvidence.release;
   const verification = productionEvidence.deployment_verification;
   const formatCount = new Intl.NumberFormat(zh ? "zh-CN" : "en-US").format;
-  const rows = zh ? [
-    ["人类固定参考", `${human.assembly_name} / ${human.assembly_accession}; ${human.annotation_release}`, `运行文件 ${human.runtime_artifacts_sha256.passed}/${human.runtime_artifacts_sha256.total} 通过跨主机 SHA-256`, "限定当前人类基因组和 accessioned RefSeq RNA 的计算范围。"],
-    ["小鼠固定参考", `${mouse.assembly_name} / ${mouse.assembly_accession}; ${mouse.annotation_release}`, `本次更新文件 ${mouse.updated_artifacts_sha256.passed}/${mouse.updated_artifacts_sha256.total} 通过跨主机 SHA-256`, "限定当前小鼠基因组和 accessioned RefSeq RNA 的计算范围。"],
-    ["软件发布", release.commit.slice(0, 7), `${release.backend_tests_passed} 项后端测试通过；Next.js 生产构建通过`, "证明该版本满足已编码的测试约束，不证明生物学表现。"],
-    ["线上流程检查", `${verification.public_routes_http_200} 个公开路由；${verification.workflows_passed.join(" / ")}`, `${productionEvidence.snapshot_date} 生产环境测试请求均成功`, "证明检查时服务可访问且主流程可完成，不是可用性承诺或实验验证。"],
+  const records = zh ? [
+    { label: "人类参考数据", value: `${human.assembly_name} / ${human.assembly_accession}; ${human.annotation_release}`, check: `清单所列运行文件 ${human.runtime_artifacts_sha256.passed}/${human.runtime_artifacts_sha256.total} 通过构建端与生产端 SHA-256 比对。`, scope: "确认清单所列文件在两端一致，并限定人类基因组与 accessioned RefSeq RNA 的计算范围。" },
+    { label: "小鼠参考数据", value: `${mouse.assembly_name} / ${mouse.assembly_accession}; ${mouse.annotation_release}`, check: `本次更新涉及的文件 ${mouse.updated_artifacts_sha256.passed}/${mouse.updated_artifacts_sha256.total} 通过构建端与生产端 SHA-256 比对。`, scope: "确认本次变更涉及的三项文件一致；不表示对全部小鼠运行文件完成同范围校验。" },
+    { label: "软件质量基线", value: `Git ${release.audit_basis_commit.slice(0, 7)}`, check: `${release.backend_tests_passed} 项后端测试通过；Next.js 生产构建通过。`, scope: "证明该基线满足已编码的测试约束，不证明候选的生物学表现。" },
+    { label: "线上可用性抽查", value: `${verification.public_routes_checked_http_200} 条公开路由；${verification.workflows_checked_passed.join(" / ")}`, check: `${verification.checked_at} 完成生产环境冒烟测试。`, scope: "证明抽查时页面可访问且四条主流程可完成；不是持续可用性承诺或实验验证。" },
   ] : [
-    ["Pinned human reference", `${human.assembly_name} / ${human.assembly_accession}; ${human.annotation_release}`, `${human.runtime_artifacts_sha256.passed}/${human.runtime_artifacts_sha256.total} runtime files passed cross-host SHA-256`, "Defines the current computational scope for the human genome and accessioned RefSeq RNA."],
-    ["Pinned mouse reference", `${mouse.assembly_name} / ${mouse.assembly_accession}; ${mouse.annotation_release}`, `${mouse.updated_artifacts_sha256.passed}/${mouse.updated_artifacts_sha256.total} updated artifacts passed cross-host SHA-256`, "Defines the current computational scope for the mouse genome and accessioned RefSeq RNA."],
-    ["Software release", release.commit.slice(0, 7), `${release.backend_tests_passed} backend tests passed; Next.js production build passed`, "Shows that this release meets encoded test contracts; it does not establish biological performance."],
-    ["Production-flow check", `${verification.public_routes_http_200} public routes; ${verification.workflows_passed.join(" / ")}`, `Production test requests succeeded on ${productionEvidence.snapshot_date}`, "Shows that the service and main workflows completed at check time; it is not an uptime promise or experimental validation."],
+    { label: "Human reference data", value: `${human.assembly_name} / ${human.assembly_accession}; ${human.annotation_release}`, check: `${human.runtime_artifacts_sha256.passed}/${human.runtime_artifacts_sha256.total} listed runtime files matched by SHA-256 on the build and production hosts.`, scope: "Confirms that the listed files match across hosts and defines the computational scope for the human genome and accessioned RefSeq RNA." },
+    { label: "Mouse reference data", value: `${mouse.assembly_name} / ${mouse.assembly_accession}; ${mouse.annotation_release}`, check: `${mouse.updated_artifacts_sha256.passed}/${mouse.updated_artifacts_sha256.total} files changed in this update matched by SHA-256 on the build and production hosts.`, scope: "Confirms the three files involved in this update; it does not claim the same checksum coverage for every mouse runtime file." },
+    { label: "Software quality baseline", value: `Git ${release.audit_basis_commit.slice(0, 7)}`, check: `${release.backend_tests_passed} backend tests passed; Next.js production build passed.`, scope: "Shows that the baseline meets encoded test contracts; it does not establish biological performance of a candidate." },
+    { label: "Production availability spot check", value: `${verification.public_routes_checked_http_200} public routes; ${verification.workflows_checked_passed.join(" / ")}`, check: `Production smoke test completed on ${verification.checked_at}.`, scope: "Shows that pages were reachable and four principal workflows completed at check time; it is not an uptime promise or experimental validation." },
   ];
 
   return (
@@ -165,15 +165,34 @@ function ProductionSnapshot({ copy, zh }: { copy: typeof COPY.zh | typeof COPY.e
         <div><span>{copy.productionFacts[1]}</span><p><strong>{formatCount(human.transcript_locus_rows)}</strong></p></div>
         <div><span>{copy.productionFacts[2]}</span><p><strong>{formatCount(mouse.grna_feature_rows)}</strong></p></div>
       </div>
-      <Table head={copy.productionHead} rows={rows} />
+      <div className="academic-production-records" aria-label={zh ? "生产环境核验记录" : "Production verification records"}>
+        {records.map((record) => (
+          <article key={record.label}>
+            <header>
+              <h3>{record.label}</h3>
+              <p>{record.value}</p>
+            </header>
+            <dl>
+              <div>
+                <dt>{copy.productionHead[2]}</dt>
+                <dd>{record.check}</dd>
+              </div>
+              <div>
+                <dt>{copy.productionHead[3]}</dt>
+                <dd>{record.scope}</dd>
+              </div>
+            </dl>
+          </article>
+        ))}
+      </div>
       <p className="academic-benchmark-download academic-production-links">
-        <a href={human.assembly_url} target="_blank" rel="noopener noreferrer">NCBI {human.assembly_name}</a>
+        <a href={human.assembly_url} target="_blank" rel="noopener noreferrer">{zh ? "NCBI 人类组装" : "NCBI human assembly"}</a>
         <span aria-hidden="true"> · </span>
-        <a href={human.annotation_url} target="_blank" rel="noopener noreferrer">{human.annotation_release}</a>
+        <a href={human.annotation_url} target="_blank" rel="noopener noreferrer">{zh ? "人类注释版本" : "Human annotation release"}</a>
         <span aria-hidden="true"> · </span>
-        <a href={mouse.assembly_url} target="_blank" rel="noopener noreferrer">NCBI {mouse.assembly_name}</a>
+        <a href={mouse.assembly_url} target="_blank" rel="noopener noreferrer">{zh ? "NCBI 小鼠组装" : "NCBI mouse assembly"}</a>
         <span aria-hidden="true"> · </span>
-        <a href={release.source_url} target="_blank" rel="noopener noreferrer">{copy.productionSourceLink}</a>
+        <a href={release.audit_basis_source_url} target="_blank" rel="noopener noreferrer">{copy.productionSourceLink}</a>
         <span aria-hidden="true"> · </span>
         <a href={human.checksums_url}>{copy.productionChecksumsLink}</a>
         <span aria-hidden="true"> · </span>
