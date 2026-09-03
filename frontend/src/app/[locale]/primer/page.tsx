@@ -979,6 +979,7 @@ export default function PrimerPage() {
   const [geneName, setGeneName] = useState("");
   const [species, setSpecies] = useState<"human" | "mouse">("human");
   const [loading, setLoading] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [progress, setProgress] = useState<{ step: number; total: number; msg: string }[]>([]);
   const [result, setResult] = useState<GenePrimerResult | null>(null);
   const [error, setError] = useState("");
@@ -1007,6 +1008,16 @@ export default function PrimerPage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [showHelp]);
+
+  useEffect(() => {
+    if (!loading) return;
+
+    const startedAt = Date.now();
+    const updateElapsed = () => setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    updateElapsed();
+    const timerId = window.setInterval(updateElapsed, 1000);
+    return () => window.clearInterval(timerId);
+  }, [loading]);
 
   function getProgressLabel(step: number) {
     switch (step) {
@@ -1143,7 +1154,7 @@ export default function PrimerPage() {
       if (/[^ATGCNatgcn\s]/.test(trimmed)) { setError(t("validate_seq_invalid")); return; }
     }
 
-    setLoading(true); setError(""); setNotice(""); setResult(null); setProgress([]); setExpandedRow(null);
+    setLoading(true); setElapsedSeconds(0); setError(""); setNotice(""); setResult(null); setProgress([]); setExpandedRow(null);
     abortRef.current = new AbortController();
 
     // 3 分钟全局超时
@@ -1216,6 +1227,9 @@ export default function PrimerPage() {
   }
 
   const lastStep = progress[progress.length - 1];
+  const activeProgressStep = Math.min(Math.max(lastStep?.step ?? 1, 1), 4);
+  const elapsedTime = `${String(Math.floor(elapsedSeconds / 60)).padStart(2, "0")}:${String(elapsedSeconds % 60).padStart(2, "0")}`;
+  const progressSteps = [t("wait_step1"), t("wait_step2"), t("wait_step3"), t("wait_step4")];
   const blastWarningCount = result
     ? result.primer_pairs.filter((pair) => {
         if (pair.transcriptome_pair_validation && (!pair.transcriptome_pair_validation.checked || ["error", "truncated"].includes(pair.transcriptome_pair_validation.status))) return true;
@@ -1333,7 +1347,7 @@ export default function PrimerPage() {
             )}
             <div className="primer-action-row">
               <button type="submit" disabled={loading} className="btn-primary primer-primary-btn" style={{ flex: 1, padding: "11px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                {loading ? (<><svg className="animate-spin" style={{ width: 16, height: 16 }} viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg>{t("designing_btn")}</>) : t("submit_btn")}
+                {loading ? (<><span className="primer-button-progress" aria-hidden="true"><i /></span>{t("designing_btn")}</>) : t("submit_btn")}
               </button>
               {loading && (
                 <button type="button" onClick={() => abortRef.current?.abort()} className="primer-stop-btn">
@@ -1423,17 +1437,39 @@ export default function PrimerPage() {
           </div>
         )}
         {loading && (
-          <div className="primer-main-loading workbench-loading-state">
-            <div className="workbench-state-head"><span>PROCESS · qPCR PIPELINE</span><small>{lastStep?.step ?? 1} / 4</small></div>
-            <div className="workbench-loading-body">
-              <span className="workbench-spinner" />
-              <div>
-                <strong>{lastStep ? getProgressLabel(lastStep.step) : t("designing_btn")}</strong>
-                <p>{lastStep ? getProgressMessage(lastStep) : t("wait_body")}</p>
-              </div>
+          <div className="primer-main-loading workbench-loading-state" aria-live="polite" aria-busy="true">
+            <div className="workbench-state-head">
+              <span>PROCESS · qPCR PIPELINE</span>
+              <small>{t("progress_elapsed", { time: elapsedTime })}</small>
             </div>
-            <div className="workbench-stage-grid">
-              {[1, 2, 3, 4].map((step) => <i key={step} data-active={step <= (lastStep?.step ?? 1) ? "true" : "false"} />)}
+            <div className="workbench-loading-body">
+              <div className="primer-live-progress">
+                <span className="primer-live-progress-stage">{t("progress_stage_of", { current: activeProgressStep, total: 4 })}</span>
+                <strong>{getProgressLabel(activeProgressStep)}</strong>
+                <p>{lastStep ? getProgressMessage(lastStep) : t("progress_detail_fetch")}</p>
+                <div
+                  className="primer-live-progress-track"
+                  role="progressbar"
+                  aria-label={t("progress_aria_label")}
+                  aria-valuemin={1}
+                  aria-valuemax={4}
+                  aria-valuenow={activeProgressStep}
+                  aria-valuetext={`${getProgressLabel(activeProgressStep)} (${activeProgressStep}/4)`}
+                >
+                  {progressSteps.map((_, index) => {
+                    const step = index + 1;
+                    const state = step < activeProgressStep ? "complete" : step === activeProgressStep ? "current" : "pending";
+                    return <i key={step} data-state={state}><span /></i>;
+                  })}
+                </div>
+                <div className="primer-live-progress-labels" aria-hidden="true">
+                  {progressSteps.map((label, index) => (
+                    <span key={label} data-active={index + 1 === activeProgressStep ? "true" : "false"} data-complete={index + 1 < activeProgressStep ? "true" : "false"}>
+                      <b>{String(index + 1).padStart(2, "0")}</b>{label}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}
