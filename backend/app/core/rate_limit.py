@@ -46,7 +46,7 @@ class _TokenBucket:
         return False
 
 
-_buckets: dict[str, tuple[_TokenBucket, float]] = {}
+_buckets: dict[tuple[str, str], tuple[_TokenBucket, float]] = {}
 _lock = Lock()
 _PRUNE_INTERVAL = 300.0  # seconds between pruning sweeps
 _last_prune: float = 0.0
@@ -61,7 +61,12 @@ def _get_client_ip(request: Request) -> str:
     return "unknown"
 
 
-def _get_or_create_bucket(ip: str, capacity: int, refill_rate: float) -> _TokenBucket:
+def _get_or_create_bucket(
+    ip: str,
+    route_key: str,
+    capacity: int,
+    refill_rate: float,
+) -> _TokenBucket:
     global _last_prune
     now = time.monotonic()
     with _lock:
@@ -72,13 +77,14 @@ def _get_or_create_bucket(ip: str, capacity: int, refill_rate: float) -> _TokenB
                 del _buckets[k]
             _last_prune = now
 
-        entry = _buckets.get(ip)
+        key = (ip, route_key)
+        entry = _buckets.get(key)
         if entry is None:
             bucket = _TokenBucket(capacity=capacity, refill_rate=refill_rate)
-            _buckets[ip] = (bucket, now)
+            _buckets[key] = (bucket, now)
             return bucket
         bucket, _ = entry
-        _buckets[ip] = (bucket, now)
+        _buckets[key] = (bucket, now)
         return bucket
 
 
@@ -93,7 +99,8 @@ def rate_limit_dependency(rpm: int) -> Callable:
 
     async def _check(request: Request) -> None:
         ip = _get_client_ip(request)
-        bucket = _get_or_create_bucket(ip, capacity, refill_rate)
+        route_key = f"{request.method}:{request.url.path}"
+        bucket = _get_or_create_bucket(ip, route_key, capacity, refill_rate)
         if not bucket.consume():
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,

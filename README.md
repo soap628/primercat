@@ -108,7 +108,22 @@ python scripts/build_qpcr_catalog.py \
   --species human --species mouse
 ```
 
-Set `QPCR_CATALOG_DB` to the generated file. Official qPrimerDB or PrimerBank exports can be added later with `--qprimerdb FILE` or `--primerbank FILE`. The import layer preserves each record's source and evidence class; it does not convert computational records into experimental claims.
+Set `QPCR_CATALOG_DB` to the generated file. Official or otherwise authorized qPrimerDB/PrimerBank exports can be added with `--qprimerdb [SPECIES=]FILE` or `--primerbank [SPECIES=]FILE`. Curated literature tables can be added with `--publication [SPECIES=]FILE`; each row must include a reviewable `source_url`, DOI, or PMID. The import layer preserves each record's source and evidence class; it does not convert computational records into experimental claims.
+
+A publication table may be TSV, CSV, JSON, or ZIP and should provide: `source_record_id`/`id`, `gene_symbol`/`gene`, `target_accession`, forward and reverse primer sequences, `source_name`, and `source_url` or `doi`/`pmid`. Amplicon size and F/R Tm are optional. Records without a target accession or traceable publication link are rejected.
+
+Every successful build writes a SHA-256 manifest beside the database. For a later refresh, build a complete temporary database and replace the active file only after validation:
+
+```bash
+python scripts/build_qpcr_catalog.py \
+  --output ../reference-data/qpcr-catalog.sqlite3 \
+  --species human --species mouse \
+  --qprimerdb human=/path/to/human-export.zip \
+  --qprimerdb mouse=/path/to/mouse-export.zip \
+  --replace
+```
+
+PrimerBank documents public web search and source-level validation pages, but as of 2026-09-04 its official help does not document a bulk-download endpoint. PrimerCat therefore does not crawl the full site as a production update mechanism. Use a data export obtained from the source or with permission, and keep its retrieval date and checksum in the generated manifest.
 
 ### Citation
 
@@ -216,7 +231,22 @@ python scripts/build_qpcr_catalog.py \
   --species human --species mouse
 ```
 
-然后将 `QPCR_CATALOG_DB` 指向该文件。获得官方导出文件后，可用 `--qprimerdb FILE` 或 `--primerbank FILE` 导入。导入层保留原始来源和证据类型，不会将计算数据库记录写成实验验证。
+然后将 `QPCR_CATALOG_DB` 指向该文件。获得官方或已授权的导出文件后，可用 `--qprimerdb [SPECIES=]FILE` 或 `--primerbank [SPECIES=]FILE` 导入。人工核对的论文表格可用 `--publication [SPECIES=]FILE` 导入，但每条记录必须提供可核查的 `source_url`、DOI 或 PMID。导入层保留原始来源和证据类型，不会将计算数据库记录写成实验验证。
+
+论文表格可使用 TSV、CSV、JSON 或 ZIP，应包含：`source_record_id`/`id`、`gene_symbol`/`gene`、`target_accession`、正反向引物序列、`source_name`，以及 `source_url` 或 `doi`/`pmid`；扩增子长度和 F/R Tm 为可选字段。缺少靶标 accession 或可追溯论文链接的记录会被拒绝。
+
+每次成功构建都会在数据库旁生成包含 SHA-256 的清单。后续更新可先完整构建临时数据库，通过后再原子替换当前文件：
+
+```bash
+python scripts/build_qpcr_catalog.py \
+  --output ../reference-data/qpcr-catalog.sqlite3 \
+  --species human --species mouse \
+  --qprimerdb human=/path/to/human-export.zip \
+  --qprimerdb mouse=/path/to/mouse-export.zip \
+  --replace
+```
+
+PrimerBank 公开说明提供网页检索与逐条实验记录，但截至 2026-09-04，其官方帮助页没有说明批量下载端点。因此 PrimerCat 不把整站抓取作为生产更新机制；应使用从来源方取得或获得许可的数据导出，并在构建清单中保留获取日期与校验和。
 
 ### 引用
 

@@ -231,6 +231,13 @@ class KnownPrimerEvidence(str, Enum):
     computed_database = "computed_database"
 
 
+class KnownPrimerTranscriptMatch(str, Enum):
+    exact_accession = "exact_accession"
+    accession_root = "accession_root"
+    different_transcript = "different_transcript"
+    not_assessed = "not_assessed"
+
+
 class KnownPrimerRecord(BaseModel):
     id: str
     gene_symbol: str
@@ -248,17 +255,31 @@ class KnownPrimerRecord(BaseModel):
     source_reverse_tm_c: Optional[float] = None
     retrieved_on: str
     source_reference: Optional[str] = None
+    evidence_code: str = ""
+    transcript_match: KnownPrimerTranscriptMatch = KnownPrimerTranscriptMatch.not_assessed
 
 
 class PrimerCatalogSnapshot(BaseModel):
     source_name: str
     release: str
     imported_at: str
+    source_url: Optional[str] = None
+    citation_url: Optional[str] = None
+    retrieved_on: Optional[str] = None
+    record_count: Optional[int] = None
+    data_sha256: Optional[str] = None
+
+
+class PrimerCatalogSourceSummary(BaseModel):
+    source_name: str
+    record_count: int
+    evidence_counts: dict[str, int] = Field(default_factory=dict)
 
 
 class KnownPrimerCatalogResponse(BaseModel):
     query: str
     species: Species
+    target_transcript: Optional[str] = None
     resolved_gene_symbol: Optional[str] = None
     ncbi_gene_id: Optional[str] = None
     gene_index_available: bool = False
@@ -267,7 +288,9 @@ class KnownPrimerCatalogResponse(BaseModel):
     records: list[KnownPrimerRecord] = Field(default_factory=list)
     catalog_gene_count: int = 0
     catalog_pair_count: int = 0
+    catalog_updated_at: Optional[str] = None
     snapshots: list[PrimerCatalogSnapshot] = Field(default_factory=list)
+    source_summaries: list[PrimerCatalogSourceSummary] = Field(default_factory=list)
 
 
 class KnownPrimerValidationResponse(BaseModel):

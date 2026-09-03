@@ -638,6 +638,11 @@ export type KnownPrimerEvidence =
   | "published_record"
   | "database_record"
   | "computed_database";
+export type KnownPrimerTranscriptMatch =
+  | "exact_accession"
+  | "accession_root"
+  | "different_transcript"
+  | "not_assessed";
 export interface KnownQpcrPrimerRecord {
   id: string;
   gene_symbol: string;
@@ -655,10 +660,13 @@ export interface KnownQpcrPrimerRecord {
   source_reverse_tm_c?: number | null;
   retrieved_on: string;
   source_reference?: string | null;
+  evidence_code?: string;
+  transcript_match?: KnownPrimerTranscriptMatch;
 }
 export interface KnownPrimerCatalogResponse {
   query: string;
   species: "human" | "mouse";
+  target_transcript?: string | null;
   resolved_gene_symbol?: string | null;
   ncbi_gene_id?: string | null;
   gene_index_available: boolean;
@@ -667,7 +675,22 @@ export interface KnownPrimerCatalogResponse {
   records: KnownQpcrPrimerRecord[];
   catalog_gene_count: number;
   catalog_pair_count: number;
-  snapshots: { source_name: string; release: string; imported_at: string }[];
+  catalog_updated_at?: string | null;
+  snapshots: {
+    source_name: string;
+    release: string;
+    imported_at: string;
+    source_url?: string | null;
+    citation_url?: string | null;
+    retrieved_on?: string | null;
+    record_count?: number | null;
+    data_sha256?: string | null;
+  }[];
+  source_summaries?: {
+    source_name: string;
+    record_count: number;
+    evidence_counts: Record<string, number>;
+  }[];
 }
 export interface KnownPrimerValidationResponse {
   status: KnownPrimerCheckStatus;

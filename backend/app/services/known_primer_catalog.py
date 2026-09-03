@@ -16,8 +16,11 @@ from pathlib import Path
 from app.core.config import settings
 from app.schemas.gene_primer import (
     KnownPrimerCatalogResponse,
+    KnownPrimerEvidence,
     KnownPrimerRecord,
+    KnownPrimerTranscriptMatch,
     PrimerCatalogSnapshot,
+    PrimerCatalogSourceSummary,
     Species,
 )
 
@@ -30,6 +33,21 @@ EVIDENCE_PRIORITY = {
     "vendor_tested": 2,
     "database_record": 3,
     "computed_database": 4,
+}
+
+EVIDENCE_CODES = {
+    KnownPrimerEvidence.experimental_record: "S-X",
+    KnownPrimerEvidence.published_record: "S-P",
+    KnownPrimerEvidence.vendor_tested: "S-V",
+    KnownPrimerEvidence.database_record: "S-D",
+    KnownPrimerEvidence.computed_database: "S-C",
+}
+
+TRANSCRIPT_MATCH_PRIORITY = {
+    KnownPrimerTranscriptMatch.exact_accession: 0,
+    KnownPrimerTranscriptMatch.accession_root: 1,
+    KnownPrimerTranscriptMatch.different_transcript: 2,
+    KnownPrimerTranscriptMatch.not_assessed: 3,
 }
 
 
@@ -85,11 +103,37 @@ def _record_from_row(row: sqlite3.Row) -> KnownPrimerRecord:
     )
 
 
+def _transcript_match(
+    source_accession: str,
+    target_transcript: str | None,
+) -> KnownPrimerTranscriptMatch:
+    if not target_transcript:
+        return KnownPrimerTranscriptMatch.not_assessed
+    source = _normalized(source_accession)
+    target = _normalized(target_transcript)
+    if source == target:
+        return KnownPrimerTranscriptMatch.exact_accession
+    if _accession_root(source) == _accession_root(target):
+        return KnownPrimerTranscriptMatch.accession_root
+    return KnownPrimerTranscriptMatch.different_transcript
+
+
+def _annotate_record(
+    record: KnownPrimerRecord,
+    target_transcript: str | None,
+) -> KnownPrimerRecord:
+    return record.model_copy(update={
+        "evidence_code": EVIDENCE_CODES[record.evidence],
+        "transcript_match": _transcript_match(record.target_accession, target_transcript),
+    })
+
+
 def _deduplicate(records: list[KnownPrimerRecord], limit: int) -> list[KnownPrimerRecord]:
     seen: set[tuple[str, str]] = set()
     unique: list[KnownPrimerRecord] = []
     records.sort(
         key=lambda record: (
+            TRANSCRIPT_MATCH_PRIORITY.get(record.transcript_match, 99),
             EVIDENCE_PRIORITY.get(record.evidence.value, 99),
             record.source_name.lower(),
             record.source_record_id.lower(),
@@ -122,6 +166,8 @@ def query_known_primers(
     catalog_gene_count = 0
     catalog_pair_count = 0
     snapshots: list[PrimerCatalogSnapshot] = []
+    source_summaries: list[PrimerCatalogSourceSummary] = []
+    catalog_updated_at: str | None = None
     records: list[KnownPrimerRecord] = []
 
     catalog_path = _catalog_path()
@@ -177,16 +223,53 @@ def query_known_primers(
                 catalog_pair_count = db.execute(
                     "SELECT COUNT(*) FROM primer_pairs WHERE species = ?", (species.value,)
                 ).fetchone()[0]
+                source_rows = db.execute(
+                    """
+                    SELECT source_name, evidence, COUNT(*) AS record_count
+                    FROM primer_pairs
+                    WHERE species = ?
+                    GROUP BY source_name, evidence
+                    ORDER BY source_name, evidence
+                    """,
+                    (species.value,),
+                ).fetchall()
+                summaries: dict[str, dict[str, int]] = {}
+                for row in source_rows:
+                    summaries.setdefault(row["source_name"], {})[row["evidence"]] = row["record_count"]
+                source_summaries = [
+                    PrimerCatalogSourceSummary(
+                        source_name=source_name,
+                        record_count=sum(evidence_counts.values()),
+                        evidence_counts=evidence_counts,
+                    )
+                    for source_name, evidence_counts in summaries.items()
+                ]
+                snapshot_columns = {
+                    row["name"] for row in db.execute("PRAGMA table_info(catalog_snapshots)").fetchall()
+                }
+                optional_snapshot_columns = [
+                    name for name in (
+                        "source_url", "citation_url", "retrieved_on", "record_count", "data_sha256"
+                    ) if name in snapshot_columns
+                ]
+                snapshot_select = ", ".join([
+                    "source_name", "release", "imported_at", *optional_snapshot_columns
+                ])
                 snapshots = [
                     PrimerCatalogSnapshot(
                         source_name=row["source_name"],
                         release=row["release"],
                         imported_at=row["imported_at"],
+                        **{name: row[name] for name in optional_snapshot_columns},
                     )
                     for row in db.execute(
-                        "SELECT source_name, release, imported_at FROM catalog_snapshots ORDER BY source_name"
+                        f"SELECT {snapshot_select} FROM catalog_snapshots ORDER BY source_name"
                     ).fetchall()
                 ]
+                catalog_updated_at = max(
+                    (snapshot.imported_at for snapshot in snapshots),
+                    default=None,
+                )
         except (sqlite3.Error, OSError, ValueError) as exc:
             logger.warning("qPCR catalog unavailable: %s", exc)
             gene_index_available = False
@@ -209,13 +292,19 @@ def query_known_primers(
     return KnownPrimerCatalogResponse(
         query=gene,
         species=species,
+        target_transcript=target_transcript,
         resolved_gene_symbol=resolved_symbol,
         ncbi_gene_id=ncbi_gene_id,
         gene_index_available=gene_index_available,
         gene_index_match=gene_index_match,
         computed_design_available=True,
-        records=_deduplicate(records, limit),
+        records=_deduplicate(
+            [_annotate_record(record, target_transcript) for record in records],
+            limit,
+        ),
         catalog_gene_count=catalog_gene_count,
         catalog_pair_count=catalog_pair_count,
+        catalog_updated_at=catalog_updated_at,
         snapshots=snapshots,
+        source_summaries=source_summaries,
     )

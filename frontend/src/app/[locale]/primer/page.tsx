@@ -973,6 +973,7 @@ function PrimerEmptyPreview({ locale }: { locale: string }) {
 
 function KnownPrimerSection({
   records,
+  catalog,
   loading,
   checks,
   checking,
@@ -980,6 +981,7 @@ function KnownPrimerSection({
   copyPrimer,
 }: {
   records: readonly KnownQpcrPrimerRecord[];
+  catalog: KnownPrimerCatalogResponse | null;
   loading: boolean;
   checks: Record<string, KnownPrimerValidationResponse>;
   checking: Record<string, boolean>;
@@ -987,6 +989,15 @@ function KnownPrimerSection({
   copyPrimer: (key: string, value: string) => void;
 }) {
   const t = useTranslations("primer");
+  const locale = useLocale();
+  const catalogDate = catalog?.catalog_updated_at
+    ? new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-CA", {
+        timeZone: "Asia/Shanghai",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date(catalog.catalog_updated_at))
+    : null;
 
   return (
     <section id="known-primers" className="known-primer-section" aria-labelledby="known-primer-title">
@@ -998,6 +1009,26 @@ function KnownPrimerSection({
         <strong>{loading ? t("known_loading_short") : t("known_match_count", { count: records.length })}</strong>
       </div>
       <p className="known-primer-intro">{t("known_section_intro")}</p>
+      {catalog?.gene_index_available && (
+        <details className="known-primer-catalog-scope">
+          <summary>
+            {t("known_catalog_scope", {
+              genes: catalog.catalog_gene_count.toLocaleString(),
+              pairs: catalog.catalog_pair_count.toLocaleString(),
+              date: catalogDate ?? t("known_not_reported"),
+            })}
+          </summary>
+          <ul>
+            {(catalog.source_summaries ?? []).map((source) => (
+              <li key={source.source_name}>
+                <span>{source.source_name}</span>
+                <strong>{t("known_catalog_source_count", { count: source.record_count.toLocaleString() })}</strong>
+              </li>
+            ))}
+          </ul>
+          <p>{t("known_catalog_scope_note")}</p>
+        </details>
+      )}
 
       {loading ? (
         <p className="known-primer-empty">{t("known_loading")}</p>
@@ -1011,13 +1042,20 @@ function KnownPrimerSection({
             const status = isChecking ? "checking" : check?.status ?? "unavailable";
             const evidenceLabel = t(`known_evidence_${record.evidence}`);
             const evidenceNote = t(`known_evidence_${record.evidence}_note`);
+            const transcriptMatch = record.transcript_match ?? "not_assessed";
+            const transcriptMatchLabel = t(`known_transcript_${transcriptMatch}`);
             const checkLabel = t(`known_check_${status}`);
 
             return (
               <article key={record.id} className="known-primer-record">
                 <header>
                   <div>
-                    <span className={`known-primer-evidence is-${record.evidence}`}>{evidenceLabel}</span>
+                    <div className="known-primer-classification">
+                      <span className={`known-primer-evidence is-${record.evidence}`}>
+                        {record.evidence_code ? `${record.evidence_code} · ` : ""}{evidenceLabel}
+                      </span>
+                      <span className={`known-primer-transcript-match is-${transcriptMatch}`}>{transcriptMatchLabel}</span>
+                    </div>
                     <h3>{record.source_name} · {record.source_record_id}</h3>
                     <p>{record.gene_symbol} · {record.target_accession}</p>
                   </div>
@@ -1051,12 +1089,21 @@ function KnownPrimerSection({
 
                 <dl className="known-primer-metadata">
                   <div><dt>{t("known_source_target")}</dt><dd>{record.target_accession}</dd></div>
+                  <div><dt>{t("known_source_transcript_match")}</dt><dd>{transcriptMatchLabel}</dd></div>
                   <div><dt>{t("known_source_amplicon")}</dt><dd>{record.source_amplicon_size_bp ? `${record.source_amplicon_size_bp} bp` : t("known_not_reported")}</dd></div>
                   <div><dt>{t("known_source_tm")}</dt><dd>{record.source_forward_tm_c && record.source_reverse_tm_c ? `${record.source_forward_tm_c} / ${record.source_reverse_tm_c} °C` : t("known_not_reported")}</dd></div>
-                  <div><dt>{t("known_retrieved_on")}</dt><dd>{record.retrieved_on}</dd></div>
                 </dl>
 
                 <p className="known-primer-source-note"><strong>{evidenceLabel}：</strong>{evidenceNote}</p>
+                {transcriptMatch !== "exact_accession" && (
+                  <p className={`known-primer-transcript-note is-${transcriptMatch}`}>
+                    <strong>{t("known_source_transcript_match")}：</strong>
+                    {t(`known_transcript_${transcriptMatch}_note`, {
+                      source: record.target_accession,
+                      target: catalog?.target_transcript ?? t("known_not_reported"),
+                    })}
+                  </p>
+                )}
                 <div className={`known-primer-check is-${status}`}>
                   <span aria-hidden="true">{status === "passed" ? "✓" : status === "checking" ? "…" : "!"}</span>
                   <div>
@@ -1109,6 +1156,7 @@ export default function PrimerPage() {
   const [activeTab, setActiveTab] = useState<"checklist" | "blast" | "props" | "amplicon">("checklist");
   const [copiedPrimer, setCopiedPrimer] = useState<string | null>(null);
   const [knownPrimerRecords, setKnownPrimerRecords] = useState<KnownQpcrPrimerRecord[]>([]);
+  const [knownPrimerCatalog, setKnownPrimerCatalog] = useState<KnownPrimerCatalogResponse | null>(null);
   const [knownPrimerLoading, setKnownPrimerLoading] = useState(false);
   const [knownPrimerChecks, setKnownPrimerChecks] = useState<Record<string, KnownPrimerValidationResponse>>({});
   const [knownPrimerChecking, setKnownPrimerChecking] = useState<Record<string, boolean>>({});
@@ -1279,8 +1327,10 @@ export default function PrimerPage() {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const catalog = await response.json() as KnownPrimerCatalogResponse;
       records = catalog.records;
+      setKnownPrimerCatalog(catalog);
       setKnownPrimerRecords(records);
     } catch {
+      setKnownPrimerCatalog(null);
       setKnownPrimerRecords([]);
     } finally {
       setKnownPrimerLoading(false);
@@ -1334,7 +1384,7 @@ export default function PrimerPage() {
       if (/[^ATGCNatgcn\s]/.test(trimmed)) { setError(t("validate_seq_invalid")); return; }
     }
 
-    setLoading(true); setElapsedSeconds(0); setError(""); setNotice(""); setResult(null); setProgress([]); setExpandedRow(null); setKnownPrimerRecords([]); setKnownPrimerLoading(false); setKnownPrimerChecks({}); setKnownPrimerChecking({});
+    setLoading(true); setElapsedSeconds(0); setError(""); setNotice(""); setResult(null); setProgress([]); setExpandedRow(null); setKnownPrimerRecords([]); setKnownPrimerCatalog(null); setKnownPrimerLoading(false); setKnownPrimerChecks({}); setKnownPrimerChecking({});
     abortRef.current = new AbortController();
 
     // 3 分钟全局超时
@@ -1707,6 +1757,7 @@ export default function PrimerPage() {
 
             <KnownPrimerSection
               records={knownPrimerRecords}
+              catalog={knownPrimerCatalog}
               loading={knownPrimerLoading}
               checks={knownPrimerChecks}
               checking={knownPrimerChecking}

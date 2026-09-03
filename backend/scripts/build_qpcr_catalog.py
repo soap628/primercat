@@ -21,6 +21,7 @@ import gzip
 import hashlib
 import io
 import json
+import os
 import sqlite3
 import sys
 import time
@@ -96,9 +97,38 @@ CREATE INDEX ix_primer_pairs_accession ON primer_pairs(species, target_accession
 CREATE TABLE catalog_snapshots (
     source_name TEXT PRIMARY KEY,
     release TEXT NOT NULL,
-    imported_at TEXT NOT NULL
+    imported_at TEXT NOT NULL,
+    source_url TEXT,
+    citation_url TEXT,
+    retrieved_on TEXT,
+    record_count INTEGER,
+    data_sha256 TEXT
+);
+
+CREATE TABLE catalog_metadata (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
 );
 """
+
+CATALOG_SCHEMA_VERSION = "2"
+SOURCE_METADATA = {
+    "qprimerdb": {
+        "name": "qPrimerDB 2.0",
+        "url": "https://qprimerdb.biodb.org/browse",
+        "citation": "https://doi.org/10.1093/nar/gkae684",
+    },
+    "primerbank": {
+        "name": "PrimerBank",
+        "url": "https://pga.mgh.harvard.edu/primerbank/",
+        "citation": "https://doi.org/10.1093/nar/gkr1013",
+    },
+    "publication": {
+        "name": "Curated publication record",
+        "url": "",
+        "citation": "",
+    },
+}
 
 
 def normalized(value: str | None) -> str:
@@ -107,6 +137,68 @@ def normalized(value: str | None) -> str:
 
 def accession_root(value: str | None) -> str:
     return normalized(value).split(".", 1)[0]
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def reference_url(value: str) -> str:
+    reference = value.strip()
+    if not reference:
+        return ""
+    lower = reference.lower()
+    if lower.startswith(("https://", "http://")):
+        return reference
+    if lower.startswith("doi:"):
+        return f"https://doi.org/{reference[4:].strip()}"
+    if lower.startswith("10."):
+        return f"https://doi.org/{reference}"
+    if lower.startswith("pmid:"):
+        return f"https://pubmed.ncbi.nlm.nih.gov/{reference[5:].strip()}/"
+    if reference.isdigit():
+        return f"https://pubmed.ncbi.nlm.nih.gov/{reference}/"
+    return ""
+
+
+def http_url(value: str) -> str:
+    candidate = value.strip()
+    return candidate if candidate.lower().startswith(("https://", "http://")) else ""
+
+
+def write_snapshot(
+    db: sqlite3.Connection,
+    *,
+    source_name: str,
+    release: str,
+    source_url: str | None,
+    citation_url: str | None = None,
+    retrieved_on: str | None = None,
+    record_count: int | None = None,
+    data_sha256: str | None = None,
+) -> None:
+    db.execute(
+        """
+        INSERT OR REPLACE INTO catalog_snapshots(
+            source_name, release, imported_at, source_url, citation_url,
+            retrieved_on, record_count, data_sha256
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            source_name,
+            release,
+            datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            source_url,
+            citation_url,
+            retrieved_on or date.today().isoformat(),
+            record_count,
+            data_sha256,
+        ),
+    )
 
 
 def first(row: dict, *keys: str) -> str:
@@ -137,7 +229,7 @@ def sequence(value: str) -> str:
     return cleaned if 15 <= len(cleaned) <= 40 and set(cleaned) <= set("ACGT") else ""
 
 
-def open_ncbi_gene_info(url: str) -> Iterator[dict[str, str]]:
+def open_ncbi_gene_info(url: str) -> tuple[Iterator[dict[str, str]], str]:
     last_error: Exception | None = None
     for attempt in range(1, 4):
         request = urllib.request.Request(
@@ -151,8 +243,8 @@ def open_ncbi_gene_info(url: str) -> Iterator[dict[str, str]]:
             if expected and len(payload) != expected:
                 raise EOFError(f"downloaded {len(payload)} of {expected} compressed bytes")
             decompressed = gzip.decompress(payload).decode("utf-8", errors="replace")
-            yield from csv.DictReader(io.StringIO(decompressed), delimiter="\t")
-            return
+            rows = csv.DictReader(io.StringIO(decompressed), delimiter="\t")
+            return rows, hashlib.sha256(payload).hexdigest()
         except (EOFError, OSError, TimeoutError, urllib.error.URLError) as exc:
             last_error = exc
             if attempt < 3:
@@ -165,7 +257,9 @@ def import_gene_index(db: sqlite3.Connection, species: str) -> tuple[int, int]:
     config = SPECIES[species]
     gene_count = 0
     alias_count = 0
-    for row in open_ncbi_gene_info(config["url"]):
+    newest_modified_on = ""
+    rows, source_sha256 = open_ncbi_gene_info(config["url"])
+    for row in rows:
         if row.get("#tax_id") != config["tax_id"]:
             continue
         symbol = row.get("Symbol", "").strip()
@@ -203,13 +297,18 @@ def import_gene_index(db: sqlite3.Connection, species: str) -> tuple[int, int]:
         )
         gene_count += 1
         alias_count += len(aliases)
+        newest_modified_on = max(newest_modified_on, row.get("Modification_date", ""))
         if gene_count % 10_000 == 0:
             print(f"  {species}: {gene_count:,} genes", file=sys.stderr)
 
-    imported_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    db.execute(
-        "INSERT OR REPLACE INTO catalog_snapshots(source_name, release, imported_at) VALUES (?, ?, ?)",
-        (f"NCBI Gene ({species})", date.today().isoformat(), imported_at),
+    write_snapshot(
+        db,
+        source_name=f"NCBI Gene ({species})",
+        release=newest_modified_on or f"retrieved-{date.today().isoformat()}",
+        source_url=config["url"],
+        citation_url="https://www.ncbi.nlm.nih.gov/books/NBK50679/",
+        record_count=gene_count,
+        data_sha256=source_sha256,
     )
     return gene_count, alias_count
 
@@ -266,21 +365,12 @@ def find_gene_id(db: sqlite3.Connection, species: str, symbol: str) -> int | Non
 
 
 def normalized_primer_row(row: dict, source: str, species: str) -> dict | None:
-    source_defaults = {
-        "qprimerdb": (
-            "qPrimerDB 2.0",
-            "computed_database",
-            "https://qprimerdb.biodb.org/browse",
-            "https://doi.org/10.1093/nar/gkae684",
-        ),
-        "primerbank": (
-            "PrimerBank",
-            "database_record",
-            "https://pga.mgh.harvard.edu/primerbank/",
-            "https://doi.org/10.1093/nar/gkr1013",
-        ),
-    }
-    source_name, evidence, source_url, source_reference = source_defaults[source]
+    metadata = SOURCE_METADATA[source]
+    evidence = {
+        "qprimerdb": "computed_database",
+        "primerbank": "database_record",
+        "publication": "published_record",
+    }[source]
 
     # qPrimerDB's JSON API represents primer sequences as [id, sequence] and
     # identifiers as [display value, related id].  Delimited exports use scalars.
@@ -304,7 +394,14 @@ def normalized_primer_row(row: dict, source: str, species: str) -> dict | None:
     target = first(flat, "target_accession", "cds_id", "transcript_id", "refseq")
     record_id = first(flat, "source_record_id", "primer_name", "primer_id", "id")
     gene_symbol = first(flat, "gene_symbol", "symbol", "gene")
-    if not forward or not reverse or not target or not record_id:
+    source_reference = reference_url(first(flat, "source_reference", "reference", "doi", "pmid"))
+    source_url = http_url(first(flat, "source_url")) or source_reference or metadata["url"]
+    source_name = (
+        first(flat, "source_name", "journal") or metadata["name"]
+        if source == "publication"
+        else metadata["name"]
+    )
+    if not forward or not reverse or not target or not record_id or not source_url:
         return None
     digest = hashlib.sha256(f"{source}:{species}:{record_id}".encode()).hexdigest()[:20]
     return {
@@ -317,14 +414,14 @@ def normalized_primer_row(row: dict, source: str, species: str) -> dict | None:
         "reverse_primer": reverse,
         "source_name": source_name,
         "source_record_id": record_id,
-        "source_url": first(flat, "source_url") or source_url,
+        "source_url": source_url,
         "evidence": evidence,
         "evidence_url": first(flat, "evidence_url") or None,
         "source_amplicon_size_bp": optional_int(first(flat, "source_amplicon_size_bp", "product_size", "amplicon_size")),
         "source_forward_tm_c": optional_float(first(flat, "source_forward_tm_c", "forward_primer_tm", "fp_tm", "forward_tm")),
         "source_reverse_tm_c": optional_float(first(flat, "source_reverse_tm_c", "reverse_primer_tm", "rp_tm", "reverse_tm")),
         "retrieved_on": date.today().isoformat(),
-        "source_reference": first(flat, "source_reference", "reference", "doi", "pmid") or source_reference,
+        "source_reference": source_reference or metadata["citation"] or None,
     }
 
 
@@ -374,13 +471,20 @@ def import_primer_file(
             continue
         inserted += int(insert_primer(db, record))
         target_counts[target] = target_counts.get(target, 0) + 1
-    db.execute(
-        "INSERT OR REPLACE INTO catalog_snapshots(source_name, release, imported_at) VALUES (?, ?, ?)",
-        (
-            f"qPrimerDB 2.0 ({species})" if source == "qprimerdb" else f"PrimerBank ({species})",
-            path.name,
-            datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        ),
+    metadata = SOURCE_METADATA[source]
+    snapshot_name = (
+        f"{metadata['name']} ({species}; {path.name})"
+        if source == "publication"
+        else f"{metadata['name']} ({species})"
+    )
+    write_snapshot(
+        db,
+        source_name=snapshot_name,
+        release=path.name,
+        source_url=metadata["url"] or None,
+        citation_url=metadata["citation"] or None,
+        record_count=inserted,
+        data_sha256=file_sha256(path),
     )
     return inserted, skipped
 
@@ -397,9 +501,13 @@ def import_seed_records(db: sqlite3.Connection, path: Path) -> int:
             **{key: value for key, value in row.items() if key != "id"},
         }
         inserted += int(insert_primer(db, record))
-    db.execute(
-        "INSERT OR REPLACE INTO catalog_snapshots(source_name, release, imported_at) VALUES (?, ?, ?)",
-        ("PrimerCat reviewed seed", date.today().isoformat(), datetime.now(timezone.utc).isoformat(timespec="seconds")),
+    write_snapshot(
+        db,
+        source_name="PrimerCat reviewed seed",
+        release=date.today().isoformat(),
+        source_url="https://primercat.tech/",
+        record_count=inserted,
+        data_sha256=file_sha256(path),
     )
     return inserted
 
@@ -410,8 +518,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--species", action="append", choices=sorted(SPECIES), dest="species_list")
     parser.add_argument("--qprimerdb", action="append", default=[], metavar="[SPECIES=]FILE")
     parser.add_argument("--primerbank", action="append", default=[], metavar="[SPECIES=]FILE")
+    parser.add_argument(
+        "--publication",
+        action="append",
+        default=[],
+        metavar="[SPECIES=]FILE",
+        help="Import a curated publication table with a source URL or DOI/PMID per row",
+    )
     parser.add_argument("--primer-species", choices=sorted(SPECIES), default="human")
     parser.add_argument("--max-pairs-per-target", type=int, default=3)
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        help="Build beside the current catalog and atomically replace it only after success",
+    )
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Manifest output path (default: <catalog>.manifest.json)",
+    )
     return parser.parse_args()
 
 
@@ -422,17 +547,85 @@ def parse_primer_file(value: str, default_species: str) -> tuple[str, Path]:
     return default_species, Path(value)
 
 
+def build_manifest(path: Path) -> dict:
+    with sqlite3.connect(f"file:{path}?mode=ro&immutable=1", uri=True) as db:
+        db.row_factory = sqlite3.Row
+        snapshots = [dict(row) for row in db.execute(
+            "SELECT * FROM catalog_snapshots ORDER BY source_name"
+        ).fetchall()]
+        genes = {
+            row["species"]: row["record_count"]
+            for row in db.execute(
+                "SELECT species, COUNT(*) AS record_count FROM genes GROUP BY species ORDER BY species"
+            ).fetchall()
+        }
+        pairs = {
+            row["species"]: row["record_count"]
+            for row in db.execute(
+                "SELECT species, COUNT(*) AS record_count FROM primer_pairs GROUP BY species ORDER BY species"
+            ).fetchall()
+        }
+        evidence = [dict(row) for row in db.execute(
+            """
+            SELECT species, source_name, evidence, COUNT(*) AS record_count
+            FROM primer_pairs
+            GROUP BY species, source_name, evidence
+            ORDER BY species, source_name, evidence
+            """
+        ).fetchall()]
+        metadata = dict(db.execute("SELECT key, value FROM catalog_metadata").fetchall())
+    return {
+        "schema_version": metadata.get("schema_version", CATALOG_SCHEMA_VERSION),
+        "built_at": metadata.get("built_at"),
+        "database": {
+            "filename": path.name,
+            "size_bytes": path.stat().st_size,
+            "sha256": file_sha256(path),
+        },
+        "gene_records_by_species": genes,
+        "primer_pairs_by_species": pairs,
+        "sources": snapshots,
+        "evidence_counts": evidence,
+    }
+
+
+def write_manifest(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    temporary.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(temporary, path)
+
+
 def main() -> int:
     args = parse_args()
     species_list = args.species_list or ["human", "mouse"]
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    if args.output.exists():
+    if args.output.exists() and not args.replace:
         raise SystemExit(f"Refusing to overwrite existing catalog: {args.output}")
+    build_path = (
+        args.output.with_name(f".{args.output.name}.{os.getpid()}.building")
+        if args.replace
+        else args.output
+    )
+    if build_path.exists():
+        raise SystemExit(f"Temporary build path already exists: {build_path}")
 
     seed_path = Path(__file__).resolve().parents[1] / "app" / "data" / "known_qpcr_primers.json"
-    db = sqlite3.connect(args.output)
+    built_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    db = sqlite3.connect(build_path)
     try:
         db.executescript(SCHEMA)
+        db.executemany(
+            "INSERT INTO catalog_metadata(key, value) VALUES (?, ?)",
+            (
+                ("schema_version", CATALOG_SCHEMA_VERSION),
+                ("built_at", built_at),
+                ("species", ",".join(species_list)),
+            ),
+        )
         for species in species_list:
             genes, aliases = import_gene_index(db, species)
             print(f"Imported {genes:,} {species} genes and {aliases:,} aliases")
@@ -450,18 +643,31 @@ def main() -> int:
                 db, path, "primerbank", primer_species, args.max_pairs_per_target
             )
             print(f"Imported {inserted:,} PrimerBank {primer_species} pairs from {path}; skipped {skipped:,}")
+        for value in args.publication:
+            primer_species, path = parse_primer_file(value, args.primer_species)
+            inserted, skipped = import_primer_file(
+                db, path, "publication", primer_species, args.max_pairs_per_target
+            )
+            print(f"Imported {inserted:,} publication {primer_species} pairs from {path}; skipped {skipped:,}")
         db.commit()
         db.execute("PRAGMA optimize")
+        db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        db.execute("PRAGMA journal_mode=DELETE")
     except Exception:
         db.close()
-        args.output.unlink(missing_ok=True)
+        build_path.unlink(missing_ok=True)
         raise
     finally:
         try:
             db.close()
         except sqlite3.Error:
             pass
+    if build_path != args.output:
+        os.replace(build_path, args.output)
+    manifest_path = args.manifest or args.output.with_suffix(".manifest.json")
+    write_manifest(manifest_path, build_manifest(args.output))
     print(f"Catalog ready: {args.output}")
+    print(f"Manifest ready: {manifest_path}")
     return 0
 
 
