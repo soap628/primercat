@@ -56,7 +56,10 @@ def _catalog_path() -> Path | None:
 
 
 def _connect(path: Path) -> sqlite3.Connection:
-    connection = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=3)
+    # The production catalog is a completed snapshot mounted read-only.  Mark
+    # it immutable so SQLite never tries to create WAL/SHM sidecar files in
+    # the read-only reference-data mount.
+    connection = sqlite3.connect(f"file:{path}?mode=ro&immutable=1", uri=True, timeout=3)
     connection.row_factory = sqlite3.Row
     return connection
 

@@ -2,7 +2,7 @@ import sqlite3
 
 from app.core.config import settings
 from app.schemas.gene_primer import Species
-from app.services.known_primer_catalog import query_known_primers
+from app.services.known_primer_catalog import _connect, query_known_primers
 from scripts.build_qpcr_catalog import SCHEMA, normalized_primer_row
 
 
@@ -15,6 +15,24 @@ def test_seed_catalog_remains_available_without_full_index(monkeypatch):
     assert result.computed_design_available is True
     assert result.resolved_gene_symbol == "TP53"
     assert [record.source_name for record in result.records] == ["OriGene qSTAR", "PrimerBank"]
+
+
+def test_catalog_connection_is_read_only_and_immutable(tmp_path, monkeypatch):
+    original_connect = sqlite3.connect
+    observed = {}
+
+    def capture_connect(database, **kwargs):
+        observed["database"] = database
+        observed.update(kwargs)
+        return original_connect(":memory:")
+
+    monkeypatch.setattr("app.services.known_primer_catalog.sqlite3.connect", capture_connect)
+
+    connection = _connect(tmp_path / "catalog.sqlite3")
+    connection.close()
+
+    assert observed["database"].endswith("?mode=ro&immutable=1")
+    assert observed["uri"] is True
 
 
 def test_catalog_resolves_alias_and_returns_versioned_record(tmp_path, monkeypatch):
