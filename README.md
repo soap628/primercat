@@ -97,6 +97,19 @@ docker compose up -d --build
 ```
 This starts PostgreSQL, the backend, the frontend, nginx, and certbot (for automatic HTTPS certificate renewal).
 
+### Versioned qPCR source catalog
+
+PrimerCat keeps computed candidates separate from third-party source records. Build the local human/mouse gene index with the official NCBI `gene_info` snapshots:
+
+```bash
+cd backend
+python scripts/build_qpcr_catalog.py \
+  --output ../reference-data/qpcr-catalog.sqlite3 \
+  --species human --species mouse
+```
+
+Set `QPCR_CATALOG_DB` to the generated file. Official qPrimerDB or PrimerBank exports can be added later with `--qprimerdb FILE` or `--primerbank FILE`. The import layer preserves each record's source and evidence class; it does not convert computational records into experimental claims.
+
 ### Citation
 
 If PrimerCat helps your research, please cite it (see the in-app **Cite** page for BibTeX / APA):
@@ -191,6 +204,19 @@ cp .env.example .env        # 设置 POSTGRES_PASSWORD 与 SECRET_KEY
 docker compose up -d --build
 ```
 将启动 PostgreSQL、后端、前端、nginx 和 certbot（自动续期 HTTPS 证书）。
+
+### 版本化 qPCR 来源目录
+
+PrimerCat 将本站计算候选与第三方来源记录分开保存。可使用 NCBI 官方 `gene_info` 快照建立人和小鼠的本地基因索引：
+
+```bash
+cd backend
+python scripts/build_qpcr_catalog.py \
+  --output ../reference-data/qpcr-catalog.sqlite3 \
+  --species human --species mouse
+```
+
+然后将 `QPCR_CATALOG_DB` 指向该文件。获得官方导出文件后，可用 `--qprimerdb FILE` 或 `--primerbank FILE` 导入。导入层保留原始来源和证据类型，不会将计算数据库记录写成实验验证。
 
 ### 引用
 

@@ -21,6 +21,18 @@ class GenePrimerRequest(BaseModel):
     num_return: int = Field(5, description="返回引物对数量", ge=1, le=10)
 
 
+class KnownPrimerValidationRequest(BaseModel):
+    forward_primer: str = Field(..., min_length=15, max_length=40, pattern=r"^[ACGTacgt]+$")
+    reverse_primer: str = Field(..., min_length=15, max_length=40, pattern=r"^[ACGTacgt]+$")
+    species: Species
+    target_transcript: str = Field(
+        ...,
+        min_length=4,
+        max_length=32,
+        pattern=r"^(?:NM|NR|XM|XR)_\d+(?:\.\d+)?$",
+    )
+
+
 class BlastTopHit(BaseModel):
     rank: int
     title: str           # 基因/登录号描述
@@ -201,6 +213,71 @@ class TranscriptomePairValidation(BaseModel):
     min_amplicon_size: int = 50
     max_amplicon_size: int = 5000
     top_amplicons: list[TranscriptAmpliconHit] = Field(default_factory=list)
+    message: str = ""
+
+
+class KnownPrimerCheckStatus(str, Enum):
+    passed = "passed"
+    review = "review"
+    partial = "partial"
+    unavailable = "unavailable"
+
+
+class KnownPrimerEvidence(str, Enum):
+    vendor_tested = "vendor_tested"
+    experimental_record = "experimental_record"
+    published_record = "published_record"
+    database_record = "database_record"
+    computed_database = "computed_database"
+
+
+class KnownPrimerRecord(BaseModel):
+    id: str
+    gene_symbol: str
+    species: Species
+    target_accession: str
+    forward_primer: str
+    reverse_primer: str
+    source_name: str
+    source_record_id: str
+    source_url: str
+    evidence: KnownPrimerEvidence
+    evidence_url: Optional[str] = None
+    source_amplicon_size_bp: Optional[int] = None
+    source_forward_tm_c: Optional[float] = None
+    source_reverse_tm_c: Optional[float] = None
+    retrieved_on: str
+    source_reference: Optional[str] = None
+
+
+class PrimerCatalogSnapshot(BaseModel):
+    source_name: str
+    release: str
+    imported_at: str
+
+
+class KnownPrimerCatalogResponse(BaseModel):
+    query: str
+    species: Species
+    resolved_gene_symbol: Optional[str] = None
+    ncbi_gene_id: Optional[str] = None
+    gene_index_available: bool = False
+    gene_index_match: bool = False
+    computed_design_available: bool = True
+    records: list[KnownPrimerRecord] = Field(default_factory=list)
+    catalog_gene_count: int = 0
+    catalog_pair_count: int = 0
+    snapshots: list[PrimerCatalogSnapshot] = Field(default_factory=list)
+
+
+class KnownPrimerValidationResponse(BaseModel):
+    status: KnownPrimerCheckStatus
+    scope: str
+    reference_assembly: Optional[str] = None
+    target_transcript: str
+    observed_product_size: Optional[int] = None
+    genome_pair_validation: Optional[GenomePairValidation] = None
+    transcriptome_pair_validation: Optional[TranscriptomePairValidation] = None
     message: str = ""
 
 

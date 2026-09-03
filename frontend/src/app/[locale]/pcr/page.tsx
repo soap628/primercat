@@ -81,7 +81,7 @@ function SequenceRow({
   const t = useTranslations("pcr");
   return (
     <div className="pcr-sequence-row">
-      <div className={`pcr-direction pcr-direction-${direction.toLowerCase()}`}>{direction}</div>
+      <div className={`pcr-direction pcr-direction-${direction.toLowerCase()}`}><strong>{direction}</strong><small>5′→3′</small></div>
       <div className="pcr-sequence-main">
         <code>{sequence}</code>
         <div className="pcr-sequence-meta">
@@ -221,7 +221,7 @@ function PrimerPairCard({
         <button
           type="button"
           className="pcr-secondary-button"
-          onClick={() => copy(`${pair.left_primer}\n${pair.right_primer}`, "pair")}
+          onClick={() => copy(`F (5′→3′): ${pair.left_primer}\nR (5′→3′): ${pair.right_primer}`, "pair")}
         >
           {copied === "pair" ? t("copied_pair") : t("copy_pair")}
         </button>
@@ -509,7 +509,7 @@ export default function PCRPage() {
   function exportSummary() {
     if (!result) return;
     const header = [
-      "Pair", "Forward primer", "Reverse primer", "Forward Tm", "Reverse Tm",
+      "Pair", "Forward primer (5'-3')", "Reverse primer (5'-3')", "Forward Tm", "Reverse Tm",
       "Forward GC%", "Reverse GC%", "Product size", "Amplicon start", "Amplicon end",
       "Annealing estimate", "Primer3 penalty", "NCBI RefSeq genomic pair screen",
       "NCBI species", "Paired candidates", "Genome-wide specificity checked",
@@ -644,7 +644,7 @@ export default function PCRPage() {
               <div className="pcr-empty-preview" aria-hidden="true">
                 <span className="pcr-empty-primer is-forward">F&nbsp;&nbsp;5′→3′</span>
                 <div className="pcr-empty-track"><i /><b /><i /></div>
-                <span className="pcr-empty-primer is-reverse">3′←5′&nbsp;&nbsp;R</span>
+                <span className="pcr-empty-primer is-reverse">R&nbsp;&nbsp;5′→3′</span>
               </div>
               <p>{t("empty_body")}</p>
               <div className="pcr-empty-features">
@@ -680,6 +680,8 @@ export default function PCRPage() {
                   <button type="button" onClick={exportOrderSheet}>{t("export_order")}</button>
                 </div>
               </section>
+
+              <p className="primer-sequence-convention pcr-sequence-convention"><strong>{t("sequence_direction_title")}</strong>{t("sequence_direction_note")}</p>
 
               <section className="pcr-specificity-warning">
                 <div aria-hidden="true">!</div>

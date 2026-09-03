@@ -17,6 +17,9 @@ import type {
   ValidatedPrimerPair,
   ExonViz,
   GenePrimerResult,
+  KnownPrimerCatalogResponse,
+  KnownQpcrPrimerRecord,
+  KnownPrimerValidationResponse,
 } from "@/lib/api";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -898,7 +901,7 @@ function TranscriptViz({ seqLen, cdsStart, cdsEnd, exons, pairs }: {
 }
 
 function exportCSV(pairs: ValidatedPrimerPair[], geneName?: string) {
-  const header = ["Rank","Score","Forward","Reverse","F-Tm","R-Tm","F-GC%","R-GC%","Amplicon(bp)","Specificity_Pass","Specificity_Engine","Reference_Assembly","Target_Locus","Genome_Paired_Products","Genome_Target_Products","Genome_Offtarget_Products","Genome_Unclassified_Products","Genome_Hit_Limit_Reached","Target_Transcript","Transcript_Gene_Specific","Transcript_Isoform_Specific","Transcript_Paired_Products","Transcript_Target_Products","Transcript_Same_Gene_Isoforms","Transcript_Other_Gene_Products","Transcript_Unclassified_Products","Transcript_Hit_Limit_Reached","ExonSpan","Introns","F-HairpinTm","F-SelfEnd","F-GCclamp","R-HairpinTm","R-SelfEnd","R-GCclamp","F-Identity%","F-Offtarget","R-Identity%","R-Offtarget"].join(",");
+  const header = ["Rank","Score","Forward_5to3","Reverse_5to3","F-Tm","R-Tm","F-GC%","R-GC%","Amplicon(bp)","Specificity_Pass","Specificity_Engine","Reference_Assembly","Target_Locus","Genome_Paired_Products","Genome_Target_Products","Genome_Offtarget_Products","Genome_Unclassified_Products","Genome_Hit_Limit_Reached","Target_Transcript","Transcript_Gene_Specific","Transcript_Isoform_Specific","Transcript_Paired_Products","Transcript_Target_Products","Transcript_Same_Gene_Isoforms","Transcript_Other_Gene_Products","Transcript_Unclassified_Products","Transcript_Hit_Limit_Reached","ExonSpan","Introns","F-HairpinTm","F-SelfEnd","F-GCclamp","R-HairpinTm","R-SelfEnd","R-GCclamp","F-Identity%","F-Offtarget","R-Identity%","R-Offtarget"].join(",");
   const rows = pairs.map(p => [p.rank,p.score.total,p.left_primer,p.right_primer,p.left_tm,p.right_tm,p.left_gc,p.right_gc,p.product_size,p.is_specific?"Yes":"No",p.transcriptome_pair_validation?"bowtie2_joint_genome_transcriptome":p.genome_pair_validation?.engine??"ncbi_refseq_rna_blast",p.genome_pair_validation?.reference_assembly??"",p.genome_pair_validation?.target_locus_accession?`${p.genome_pair_validation.target_locus_accession}:${p.genome_pair_validation.target_locus_start}-${p.genome_pair_validation.target_locus_end}`:"",p.genome_pair_validation?.paired_amplicon_count??"",p.genome_pair_validation?.target_amplicon_count??"",p.genome_pair_validation?.off_target_amplicon_count??"",p.genome_pair_validation?.unclassified_amplicon_count??"",p.genome_pair_validation?.hit_limit_reached??p.blast_left.hit_limit_reached??false,p.transcriptome_pair_validation?.target_transcript??"",p.transcriptome_pair_validation?.gene_specific??"",p.transcriptome_pair_validation?.isoform_specific??"",p.transcriptome_pair_validation?.paired_amplicon_count??"",p.transcriptome_pair_validation?.target_transcript_amplicon_count??"",p.transcriptome_pair_validation?.same_gene_isoform_amplicon_count??"",p.transcriptome_pair_validation?.other_gene_amplicon_count??"",p.transcriptome_pair_validation?.unclassified_amplicon_count??"",p.transcriptome_pair_validation?.hit_limit_reached??"",p.exon_span.spans_junction?"Yes":"No",p.exon_span.junction_count,p.left_props?.hairpin_th??"",p.left_props?.self_end_th??"",p.left_props?.gc_clamp??"",p.right_props?.hairpin_th??"",p.right_props?.self_end_th??"",p.right_props?.gc_clamp??"",p.blast_left.top_hit_identity,p.blast_left.off_target_count,p.blast_right.top_hit_identity,p.blast_right.off_target_count].join(","));
   const csv = [header,...rows].join("\n");
   const blob = new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
@@ -912,9 +915,9 @@ function exportHTMLReport(result: GenePrimerResult) {
     const tmDiff = Math.abs(p.left_tm - p.right_tm);
     const checks: [string,boolean][] = [["Tm 58-62C",p.left_tm>=58&&p.left_tm<=62&&p.right_tm>=58&&p.right_tm<=62],["Tm diff<2C",tmDiff<2],["GC 40-60%",p.left_gc>=40&&p.left_gc<=60&&p.right_gc>=40&&p.right_gc<=60],["GC clamp>=1",(p.left_props?.gc_clamp??0)>=1&&(p.right_props?.gc_clamp??0)>=1],["Hairpin<24C",(p.left_props?.hairpin_th??0)<24&&(p.right_props?.hairpin_th??0)<24],[p.transcriptome_pair_validation?"Joint genome + transcript screen pass":p.genome_pair_validation?"Paired genome screen pass":"RefSeq RNA screen pass",p.is_specific],["Exon-spanning",p.exon_span.spans_junction]];
     const passN = checks.filter(c=>c[1]).length;
-    return `<div style="border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:20px"><h3>Primer Pair #${p.rank} — Score ${p.score.total} — ${passN}/${checks.length} passed — ${p.product_size} bp</h3><p>F: <code>${p.left_primer}</code> Tm ${p.left_tm}°C GC ${p.left_gc}%</p><p>R: <code>${p.right_primer}</code> Tm ${p.right_tm}°C GC ${p.right_gc}%</p><div>${checks.map(([l,ok])=>`<span style="margin:2px;padding:2px 8px;border-radius:12px;font-size:12px;background:${ok?"#d1fae5":"#fee2e2"};color:${ok?"#065f46":"#991b1b"}">${ok?"✓":"✗"} ${l}</span>`).join("")}</div></div>`;
+    return `<div style="border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:20px"><h3>Primer Pair #${p.rank} — Score ${p.score.total} — ${passN}/${checks.length} passed — ${p.product_size} bp</h3><p>F (5′→3′): <code>${p.left_primer}</code> Tm ${p.left_tm}°C GC ${p.left_gc}%</p><p>R (5′→3′): <code>${p.right_primer}</code> Tm ${p.right_tm}°C GC ${p.right_gc}%</p><div>${checks.map(([l,ok])=>`<span style="margin:2px;padding:2px 8px;border-radius:12px;font-size:12px;background:${ok?"#d1fae5":"#fee2e2"};color:${ok?"#065f46":"#991b1b"}">${ok?"✓":"✗"} ${l}</span>`).join("")}</div></div>`;
   }).join("");
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PrimerCat Report</title></head><body style="font-family:sans-serif;max-width:900px;margin:0 auto;padding:32px"><h1>PrimerCat Report</h1><p>${result.gene_name?`Gene: ${result.gene_name} · `:""}${result.sequence_length} bp · ${now}</p>${pairsHtml}<p style="color:#94a3b8;font-size:12px">Generated by PrimerCat · ${now}</p></body></html>`;
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PrimerCat Report</title></head><body style="font-family:sans-serif;max-width:900px;margin:0 auto;padding:32px"><h1>PrimerCat Report</h1><p>${result.gene_name?`Gene: ${result.gene_name} · `:""}${result.sequence_length} bp · ${now}</p><p style="color:#475569;font-size:13px"><strong>Sequence orientation:</strong> Forward and reverse primers are both reported 5′→3′. The reverse primer is the reverse complement of its binding site and may be ordered exactly as shown.</p>${pairsHtml}<p style="color:#94a3b8;font-size:12px">Generated by PrimerCat · ${now}</p></body></html>`;
   const blob = new Blob([html],{type:"text/html;charset=utf-8;"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href=url; a.download=`PrimerCat_${result.gene_name||"report"}_${new Date().toISOString().slice(0,10)}.html`; a.click(); URL.revokeObjectURL(url);
@@ -952,7 +955,7 @@ function PrimerEmptyPreview({ locale }: { locale: string }) {
       <div className="primer-preview-transcript">
         <div className="primer-preview-coordinates"><span>5′</span><span>{isZh ? "外显子结构" : "Exon structure"}</span><span>3′</span></div>
         <div className="primer-preview-gene" aria-hidden="true"><i /><b /><i /><b /><i /></div>
-        <div className="primer-preview-arrows" aria-hidden="true"><span>F&nbsp; 5′→3′</span><span>3′←5′ &nbsp;R</span></div>
+        <div className="primer-preview-arrows" aria-hidden="true"><span>F&nbsp; 5′→3′</span><span>R&nbsp; 5′→3′</span></div>
       </div>
       <div className="primer-preview-candidate">
         <div><span>{isZh ? "候选 01" : "Candidate 01"}</span><strong>{isZh ? "跨外显子优先" : "Exon-spanning preferred"}</strong></div>
@@ -965,6 +968,124 @@ function PrimerEmptyPreview({ locale }: { locale: string }) {
       </div>
       <p>{isZh ? "输入目标后显示候选序列、质量指标和筛查依据。" : "Enter a target to see candidate sequences, quality metrics, and screening evidence."}</p>
     </div>
+  );
+}
+
+function KnownPrimerSection({
+  records,
+  loading,
+  checks,
+  checking,
+  copiedPrimer,
+  copyPrimer,
+}: {
+  records: readonly KnownQpcrPrimerRecord[];
+  loading: boolean;
+  checks: Record<string, KnownPrimerValidationResponse>;
+  checking: Record<string, boolean>;
+  copiedPrimer: string | null;
+  copyPrimer: (key: string, value: string) => void;
+}) {
+  const t = useTranslations("primer");
+
+  return (
+    <section id="known-primers" className="known-primer-section" aria-labelledby="known-primer-title">
+      <div className="known-primer-heading">
+        <div>
+          <span>{t("known_section_label")}</span>
+          <h2 id="known-primer-title">{t("known_section_title")}</h2>
+        </div>
+        <strong>{loading ? t("known_loading_short") : t("known_match_count", { count: records.length })}</strong>
+      </div>
+      <p className="known-primer-intro">{t("known_section_intro")}</p>
+
+      {loading ? (
+        <p className="known-primer-empty">{t("known_loading")}</p>
+      ) : records.length === 0 ? (
+        <p className="known-primer-empty">{t("known_empty")}</p>
+      ) : (
+        <div className="known-primer-list">
+          {records.map((record) => {
+            const check = checks[record.id];
+            const isChecking = checking[record.id];
+            const status = isChecking ? "checking" : check?.status ?? "unavailable";
+            const evidenceLabel = t(`known_evidence_${record.evidence}`);
+            const evidenceNote = t(`known_evidence_${record.evidence}_note`);
+            const checkLabel = t(`known_check_${status}`);
+
+            return (
+              <article key={record.id} className="known-primer-record">
+                <header>
+                  <div>
+                    <span className={`known-primer-evidence is-${record.evidence}`}>{evidenceLabel}</span>
+                    <h3>{record.source_name} · {record.source_record_id}</h3>
+                    <p>{record.gene_symbol} · {record.target_accession}</p>
+                  </div>
+                  <div className="known-primer-links">
+                    <a href={record.source_url} target="_blank" rel="noreferrer">{t("known_open_source")} ↗</a>
+                    {record.evidence_url && (
+                      <a href={record.evidence_url} target="_blank" rel="noreferrer">{t("known_open_evidence")} ↗</a>
+                    )}
+                    {record.source_reference && (
+                      <a href={record.source_reference} target="_blank" rel="noreferrer">{t("known_open_reference")} ↗</a>
+                    )}
+                  </div>
+                </header>
+
+                <div className="known-primer-sequences">
+                  <div>
+                    <span>F <small>5′→3′</small></span>
+                    <code>{record.forward_primer}</code>
+                    <button type="button" onClick={() => copyPrimer(`${record.id}-f`, record.forward_primer)}>
+                      {copiedPrimer === `${record.id}-f` ? t("amplicon_copied") : t("amplicon_copy")}
+                    </button>
+                  </div>
+                  <div>
+                    <span>R <small>5′→3′</small></span>
+                    <code>{record.reverse_primer}</code>
+                    <button type="button" onClick={() => copyPrimer(`${record.id}-r`, record.reverse_primer)}>
+                      {copiedPrimer === `${record.id}-r` ? t("amplicon_copied") : t("amplicon_copy")}
+                    </button>
+                  </div>
+                </div>
+
+                <dl className="known-primer-metadata">
+                  <div><dt>{t("known_source_target")}</dt><dd>{record.target_accession}</dd></div>
+                  <div><dt>{t("known_source_amplicon")}</dt><dd>{record.source_amplicon_size_bp ? `${record.source_amplicon_size_bp} bp` : t("known_not_reported")}</dd></div>
+                  <div><dt>{t("known_source_tm")}</dt><dd>{record.source_forward_tm_c && record.source_reverse_tm_c ? `${record.source_forward_tm_c} / ${record.source_reverse_tm_c} °C` : t("known_not_reported")}</dd></div>
+                  <div><dt>{t("known_retrieved_on")}</dt><dd>{record.retrieved_on}</dd></div>
+                </dl>
+
+                <p className="known-primer-source-note"><strong>{evidenceLabel}：</strong>{evidenceNote}</p>
+                <div className={`known-primer-check is-${status}`}>
+                  <span aria-hidden="true">{status === "passed" ? "✓" : status === "checking" ? "…" : "!"}</span>
+                  <div>
+                    <strong>{t("known_check_title")} · {checkLabel}</strong>
+                    <p>
+                      {isChecking
+                        ? t("known_check_checking_note")
+                        : check
+                          ? t(`known_check_${check.status}_note`, {
+                              assembly: check.reference_assembly ?? t("basis_not_applicable"),
+                              transcript: check.target_transcript,
+                              product: check.observed_product_size ? `${check.observed_product_size} bp` : t("known_not_observed"),
+                            })
+                          : t("known_check_unavailable_note", {
+                              assembly: t("basis_not_applicable"),
+                              transcript: record.target_accession,
+                              product: t("known_not_observed"),
+                            })}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+
+      <p className="known-primer-disclaimer">{t("known_disclaimer")}</p>
+    </section>
   );
 }
 
@@ -987,6 +1108,10 @@ export default function PrimerPage() {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"checklist" | "blast" | "props" | "amplicon">("checklist");
   const [copiedPrimer, setCopiedPrimer] = useState<string | null>(null);
+  const [knownPrimerRecords, setKnownPrimerRecords] = useState<KnownQpcrPrimerRecord[]>([]);
+  const [knownPrimerLoading, setKnownPrimerLoading] = useState(false);
+  const [knownPrimerChecks, setKnownPrimerChecks] = useState<Record<string, KnownPrimerValidationResponse>>({});
+  const [knownPrimerChecking, setKnownPrimerChecking] = useState<Record<string, boolean>>({});
   const [showHelp, setShowHelp] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -1139,6 +1264,61 @@ export default function PrimerPage() {
     });
   }
 
+  async function runKnownPrimerChecks(data: GenePrimerResult) {
+    if (!data.gene_name || !data.transcript_id || (data.species !== "human" && data.species !== "mouse")) return;
+    setKnownPrimerLoading(true);
+    let records: KnownQpcrPrimerRecord[] = [];
+    try {
+      const params = new URLSearchParams({
+        gene: data.gene_name,
+        species: data.species,
+        target_transcript: data.transcript_id,
+        limit: "5",
+      });
+      const response = await fetch(`${API}/gene-primer/known?${params.toString()}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const catalog = await response.json() as KnownPrimerCatalogResponse;
+      records = catalog.records;
+      setKnownPrimerRecords(records);
+    } catch {
+      setKnownPrimerRecords([]);
+    } finally {
+      setKnownPrimerLoading(false);
+    }
+    if (!records.length) return;
+
+    setKnownPrimerChecking(Object.fromEntries(records.map((record) => [record.id, true])));
+    await Promise.all(records.map(async (record) => {
+      try {
+        const response = await fetch(`${API}/gene-primer/validate-known`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            forward_primer: record.forward_primer,
+            reverse_primer: record.reverse_primer,
+            species: record.species,
+            target_transcript: data.transcript_id,
+          }),
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const check = await response.json() as KnownPrimerValidationResponse;
+        setKnownPrimerChecks((current) => ({ ...current, [record.id]: check }));
+      } catch {
+        setKnownPrimerChecks((current) => ({
+          ...current,
+          [record.id]: {
+            status: "unavailable",
+            scope: "none",
+            target_transcript: data.transcript_id as string,
+            message: "Reference re-screen unavailable.",
+          },
+        }));
+      } finally {
+        setKnownPrimerChecking((current) => ({ ...current, [record.id]: false }));
+      }
+    }));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -1154,7 +1334,7 @@ export default function PrimerPage() {
       if (/[^ATGCNatgcn\s]/.test(trimmed)) { setError(t("validate_seq_invalid")); return; }
     }
 
-    setLoading(true); setElapsedSeconds(0); setError(""); setNotice(""); setResult(null); setProgress([]); setExpandedRow(null);
+    setLoading(true); setElapsedSeconds(0); setError(""); setNotice(""); setResult(null); setProgress([]); setExpandedRow(null); setKnownPrimerRecords([]); setKnownPrimerLoading(false); setKnownPrimerChecks({}); setKnownPrimerChecking({});
     abortRef.current = new AbortController();
 
     // 3 分钟全局超时
@@ -1185,6 +1365,7 @@ export default function PrimerPage() {
             gotResult = true;
             const localizedData = { ...data, message: localizeResultMessage(data) } as GenePrimerResult;
             setResult(localizedData);
+            void runKnownPrimerChecks(localizedData);
             pushProgress({
               step: 4,
               total: 4,
@@ -1524,6 +1705,15 @@ export default function PrimerPage() {
               </div>
             )}
 
+            <KnownPrimerSection
+              records={knownPrimerRecords}
+              loading={knownPrimerLoading}
+              checks={knownPrimerChecks}
+              checking={knownPrimerChecking}
+              copiedPrimer={copiedPrimer}
+              copyPrimer={copyPrimer}
+            />
+
             <div className="primer-result-tier-head">
               <div>
                 <span>{t("candidate_section_label")}</span>
@@ -1532,6 +1722,7 @@ export default function PrimerPage() {
               </div>
               <strong>{t("candidate_count", { count: result.primer_pairs.length })}</strong>
             </div>
+            <p className="primer-sequence-convention"><strong>{t("sequence_direction_title")}</strong>{t("sequence_direction_note")}</p>
 
             {/* ── Primer Pair Cards ── */}
             <div className="primer-pair-list">
@@ -1571,21 +1762,21 @@ export default function PrimerPage() {
                         {/* Sequences */}
                         <div className="primer-pair-sequences">
                           <div className="primer-sequence-row forward">
-                            <span className="primer-sequence-label">F</span>
+                            <span className="primer-sequence-label"><b>F</b><small>5′→3′</small></span>
                             <code className="primer-sequence-code">{p.left_primer}</code>
                             <button type="button" aria-label={`${t("amplicon_copy")} ${t("forward")}`} onClick={(e) => { e.stopPropagation(); copyPrimer(`${p.rank}-f`, p.left_primer); }} className="primer-sequence-copy">
                               {copiedPrimer === `${p.rank}-f` ? `✓ ${t("amplicon_copied")}` : t("amplicon_copy")}
                             </button>
                           </div>
                           <div className="primer-sequence-row reverse">
-                            <span className="primer-sequence-label">R</span>
+                            <span className="primer-sequence-label"><b>R</b><small>5′→3′</small></span>
                             <code className="primer-sequence-code">{p.right_primer}</code>
                             <button type="button" aria-label={`${t("amplicon_copy")} ${t("reverse")}`} onClick={(e) => { e.stopPropagation(); copyPrimer(`${p.rank}-r`, p.right_primer); }} className="primer-sequence-copy">
                               {copiedPrimer === `${p.rank}-r` ? `✓ ${t("amplicon_copied")}` : t("amplicon_copy")}
                             </button>
                           </div>
                         </div>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); copyPrimer(`${p.rank}-both`, `F: ${p.left_primer}\nR: ${p.right_primer}`); }} className="primer-copy-pair">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); copyPrimer(`${p.rank}-both`, `F (5′→3′): ${p.left_primer}\nR (5′→3′): ${p.right_primer}`); }} className="primer-copy-pair">
                           {copiedPrimer === `${p.rank}-both` ? `✓ ${t("amplicon_copied")}` : t("copy_pair")}
                         </button>
                       </div>

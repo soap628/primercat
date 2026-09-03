@@ -60,7 +60,8 @@ def _pick_best_transcript(records: list[SeqRecord]) -> tuple[SeqRecord, str]:
     选取最佳转录本，优先级：
     1. MANE Select（人类基因组官方标准转录本，NCBI/Ensembl 联合认定）
     2. NM_ RefSeq 编码转录本中 CDS 最长的
-    3. 所有记录中 CDS 最长的（兜底）
+    3. NR_ RefSeq 非编码转录本中转录本最长的
+    4. 所有记录中目标区域最长的（兜底）
     返回 (record, selection_reason)
     """
     def cds_length(r: SeqRecord) -> int:
@@ -79,9 +80,16 @@ def _pick_best_transcript(records: list[SeqRecord]) -> tuple[SeqRecord, str]:
     if nm_records:
         best = max(nm_records, key=cds_length)
         reason = f"从 {len(nm_records)} 条 NM_ RefSeq 编码转录本中选取 CDS 最长的（{cds_length(best)} bp）"
-    else:
-        best = max(records, key=cds_length)
-        reason = f"未找到 NM_ 转录本，从 {len(records)} 条记录中选取 CDS 最长的"
+        return best, reason
+
+    nr_records = [r for r in records if r.id.startswith("NR_")]
+    if nr_records:
+        best = max(nr_records, key=lambda record: len(record.seq))
+        reason = f"未找到 NM_ 转录本；从 {len(nr_records)} 条 NR_ RefSeq 非编码转录本中选取最长记录（{len(best.seq)} bp）"
+        return best, reason
+
+    best = max(records, key=lambda record: cds_length(record) or len(record.seq))
+    reason = f"未找到 NM_/NR_ 转录本，从 {len(records)} 条 RNA 记录中选取目标区域最长的"
 
     return best, reason
 
@@ -97,13 +105,13 @@ def _extract_exons(record: SeqRecord, seq_offset: int = 0) -> list[ExonInfo]:
     return exons
 
 
-def _extract_cds(record: SeqRecord, seq_offset: int = 0) -> tuple[int, int]:
+def _extract_cds(record: SeqRecord, seq_offset: int = 0) -> tuple[int, int, bool]:
     for feat in record.features:
         if feat.type == "CDS":
             s = int(feat.location.start) - seq_offset
             e = int(feat.location.end) - seq_offset
-            return max(0, s), e
-    return 0, len(str(record.seq))
+            return max(0, s), e, True
+    return 0, len(str(record.seq)), False
 
 
 def fetch_gene_info(gene_name: str, species: str) -> GeneInfoData:
@@ -161,12 +169,13 @@ def fetch_transcript(gene_name: str, species: str) -> TranscriptInfo:
     organism = SPECIES_ORGANISM.get(species, "Homo sapiens")
 
     def _load() -> TranscriptInfo:
-        query = f"{normalized_gene}[Gene Name] AND {organism}[Organism] AND mRNA[Filter] AND RefSeq[Filter]"
+        molecule_filter = "(biomol_mrna[PROP] OR biomol_ncrna[PROP])"
+        query = f"{normalized_gene}[Gene Name] AND {organism}[Organism] AND srcdb_refseq[PROP] AND {molecule_filter}"
         record = entrez_esearch(db="nucleotide", term=query, retmax=10, sort="relevance")
 
         ids = record.get("IdList", [])
         if not ids:
-            fallback_query = f"{normalized_gene}[Title] AND {organism}[Organism] AND mRNA[Filter]"
+            fallback_query = f"{normalized_gene}[Title] AND {organism}[Organism] AND {molecule_filter}"
             record = entrez_esearch(db="nucleotide", term=fallback_query, retmax=10)
             ids = record.get("IdList", [])
 
@@ -187,13 +196,13 @@ def fetch_transcript(gene_name: str, species: str) -> TranscriptInfo:
         full_seq = str(best.seq).upper()
 
         # 提取 CDS 信息
-        cds_s, cds_e = _extract_cds(best, 0)
-        cds_bp = cds_e - cds_s
-        protein_aa = max(0, (cds_bp - 3) // 3)  # 减去终止密码子
+        cds_s, cds_e, has_cds = _extract_cds(best, 0)
+        cds_bp = cds_e - cds_s if has_cds else 0
+        protein_aa = max(0, (cds_bp - 3) // 3) if has_cds else 0  # 减去终止密码子
 
-        # 截取 CDS ±200bp（最多 3000bp）
-        region_start = max(0, cds_s - 200)
-        region_end = min(len(full_seq), cds_e + 200, region_start + 3000)
+        # 编码转录本截取 CDS ±200 bp；非编码 RNA 使用转录本前 3000 bp。
+        region_start = max(0, cds_s - 200) if has_cds else 0
+        region_end = min(len(full_seq), cds_e + 200, region_start + 3000) if has_cds else min(len(full_seq), 3000)
         sequence = full_seq[region_start:region_end]
 
         exons = _extract_exons(best, seq_offset=region_start)

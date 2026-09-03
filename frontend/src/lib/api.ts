@@ -631,6 +631,54 @@ export interface ValidatedPrimerPair {
   genome_pair_validation?: GenomePairValidation | null;
   transcriptome_pair_validation?: TranscriptomePairValidation | null;
 }
+export type KnownPrimerCheckStatus = "passed" | "review" | "partial" | "unavailable";
+export type KnownPrimerEvidence =
+  | "vendor_tested"
+  | "experimental_record"
+  | "published_record"
+  | "database_record"
+  | "computed_database";
+export interface KnownQpcrPrimerRecord {
+  id: string;
+  gene_symbol: string;
+  species: "human" | "mouse";
+  target_accession: string;
+  forward_primer: string;
+  reverse_primer: string;
+  source_name: string;
+  source_record_id: string;
+  source_url: string;
+  evidence: KnownPrimerEvidence;
+  evidence_url?: string | null;
+  source_amplicon_size_bp?: number | null;
+  source_forward_tm_c?: number | null;
+  source_reverse_tm_c?: number | null;
+  retrieved_on: string;
+  source_reference?: string | null;
+}
+export interface KnownPrimerCatalogResponse {
+  query: string;
+  species: "human" | "mouse";
+  resolved_gene_symbol?: string | null;
+  ncbi_gene_id?: string | null;
+  gene_index_available: boolean;
+  gene_index_match: boolean;
+  computed_design_available: boolean;
+  records: KnownQpcrPrimerRecord[];
+  catalog_gene_count: number;
+  catalog_pair_count: number;
+  snapshots: { source_name: string; release: string; imported_at: string }[];
+}
+export interface KnownPrimerValidationResponse {
+  status: KnownPrimerCheckStatus;
+  scope: string;
+  reference_assembly?: string | null;
+  target_transcript: string;
+  observed_product_size?: number | null;
+  genome_pair_validation?: GenomePairValidation | null;
+  transcriptome_pair_validation?: TranscriptomePairValidation | null;
+  message: string;
+}
 export interface ExonViz { index: number; start: number; end: number; }
 export interface GenePrimerResult {
   success: boolean; gene_name?: string; species: string; transcript_id?: string;

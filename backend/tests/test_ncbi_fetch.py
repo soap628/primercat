@@ -1,4 +1,7 @@
-from app.services.ncbi_fetch import fetch_gene_info
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+
+from app.services.ncbi_fetch import _pick_best_transcript, fetch_gene_info
 
 
 def test_fetch_gene_info_reuses_cached_wrappers(monkeypatch):
@@ -37,3 +40,13 @@ def test_fetch_gene_info_reuses_cached_wrappers(monkeypatch):
     assert calls == {"search": 1, "summary": 1}
     assert first.gene_symbol == "TP53"
     assert second.chromosome == "17"
+
+
+def test_non_coding_refseq_is_selected_when_no_coding_transcript_exists():
+    short = SeqRecord(Seq("A" * 400), id="NR_000001.1")
+    long = SeqRecord(Seq("A" * 900), id="NR_000002.2")
+
+    selected, reason = _pick_best_transcript([short, long])
+
+    assert selected.id == "NR_000002.2"
+    assert "NR_ RefSeq" in reason

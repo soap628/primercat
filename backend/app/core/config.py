@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     QPCR_TRANSCRIPTOME_MAX_ALIGNMENTS_PER_PRIMER: int = 128
     QPCR_TRANSCRIPTOME_MIN_AMPLICON_BP: int = 50
     QPCR_TRANSCRIPTOME_MAX_AMPLICON_BP: int = 5000
+    QPCR_CATALOG_DB: str = ""
     DEBUG: bool = False
     COOKIE_SECURE: bool = False  # Set to True in production (HTTPS required)
     COOKIE_SAMESITE: str = "lax"

@@ -1,11 +1,19 @@
 import asyncio
 import json
 import logging
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 
-from app.schemas.gene_primer import GenePrimerRequest
+from app.schemas.gene_primer import (
+    GenePrimerRequest,
+    KnownPrimerCatalogResponse,
+    KnownPrimerValidationRequest,
+    KnownPrimerValidationResponse,
+    Species,
+)
 from app.services.gene_primer_service import gene_primer_stream
+from app.services.known_primer_catalog import query_known_primers
+from app.services.known_primer_validation import validate_known_primer_pair
 from app.db.session import AsyncSessionLocal
 from app.db.models.jobs import PrimerJob
 from app.core.security import get_optional_user
@@ -63,4 +71,29 @@ async def design_gene_primers(
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",
         },
+    )
+
+
+@router.post("/validate-known", response_model=KnownPrimerValidationResponse)
+async def validate_known_primers(
+    req: KnownPrimerValidationRequest,
+    _rl: None = rate_limit_dependency(rpm=10),
+):
+    return await validate_known_primer_pair(req)
+
+
+@router.get("/known", response_model=KnownPrimerCatalogResponse)
+async def get_known_primers(
+    gene: str = Query(..., min_length=1, max_length=100),
+    species: Species = Query(...),
+    target_transcript: str | None = Query(None, max_length=32),
+    limit: int = Query(5, ge=1, le=10),
+    _rl: None = rate_limit_dependency(rpm=30),
+):
+    return await asyncio.to_thread(
+        query_known_primers,
+        gene,
+        species,
+        target_transcript,
+        limit,
     )

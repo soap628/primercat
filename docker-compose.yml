@@ -42,6 +42,7 @@ services:
       QPCR_TRANSCRIPTOME_BOWTIE2_INDEX_MOUSE: /var/lib/primercat/reference/GCF_000001635.27_GRCm39/bowtie2-transcriptome/GCF_000001635.27_GRCm39_rna
       QPCR_TRANSCRIPTOME_FASTA_MOUSE: /var/lib/primercat/reference/GCF_000001635.27_GRCm39/GCF_000001635.27_GRCm39_rna.fna
       GENOME_REFERENCE_ASSEMBLY_MOUSE: GCF_000001635.27
+      QPCR_CATALOG_DB: /var/lib/primercat/reference/qpcr-catalog.sqlite3
     volumes:
       - ncbi-cache:/var/cache/primercat/ncbi
       - ${PRIMERCAT_REFERENCE_ROOT:-./reference-data}:/var/lib/primercat/reference:ro
