@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   verification: {
     other: {
-      "baidu-site-verification": "codeva-8yg84JXAaU",
+      "baidu-site-verification": "codeva-5RKwqDsb2Y",
     },
   },
 };
