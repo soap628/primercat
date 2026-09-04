@@ -103,6 +103,46 @@ def test_catalog_resolves_alias_and_returns_versioned_record(tmp_path, monkeypat
     assert result.catalog_updated_at == "2026-09-04T00:00:00+00:00"
 
 
+def test_catalog_maps_accession_only_qprimerdb_rows_for_requested_gene(tmp_path, monkeypatch):
+    path = tmp_path / "catalog.sqlite3"
+    db = sqlite3.connect(path)
+    db.executescript(SCHEMA)
+    db.execute(
+        """
+        INSERT INTO genes(species, tax_id, ncbi_gene_id, symbol, symbol_norm)
+        VALUES ('human', '9606', '2597', 'GAPDH', 'GAPDH')
+        """
+    )
+    db.execute(
+        """
+        INSERT INTO primer_pairs(
+            record_id, gene_id, gene_symbol, species, target_accession,
+            target_accession_root, forward_primer, reverse_primer, source_name,
+            source_record_id, source_url, evidence, retrieved_on
+        ) VALUES (
+            'qprimerdb-accession-only', NULL, '', 'human', 'NM_002046.7', 'NM_002046',
+            'ACCCAGAAGACTGTGGATGG', 'TTCTAGACGGCAGGTCAGGT',
+            'qPrimerDB 2.0', 'NM_002046.7.P000001.117',
+            'https://qprimerdb.biodb.org/browse', 'computed_database', '2026-09-04'
+        )
+        """
+    )
+    db.commit()
+    db.close()
+    monkeypatch.setattr(settings, "QPCR_CATALOG_DB", str(path))
+    monkeypatch.setattr(
+        "app.services.known_primer_catalog._refseq_accession_roots_for_gene",
+        lambda gene, species: ("NM_002046", "NM_001289745"),
+    )
+
+    result = query_known_primers("GAPDH", Species.human, "NM_001289745.3")
+
+    qprimerdb = next(record for record in result.records if record.source_name == "qPrimerDB 2.0")
+    assert qprimerdb.gene_symbol == "GAPDH"
+    assert qprimerdb.target_accession == "NM_002046.7"
+    assert qprimerdb.transcript_match.value == "different_transcript"
+
+
 def test_qprimerdb_json_shape_is_normalized_without_swapping_identifiers():
     row = {
         "primer_name": ["NM_000546.6.P000001.117", "NM_000546.6", "117"],

@@ -32,6 +32,7 @@ const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: Valida
   const blastRightStatus = p.blast_right.status ?? "validated";
   const genomePair = p.genome_pair_validation;
   const transcriptPair = p.transcriptome_pair_validation;
+  const specificityState = getSpecificityEvidenceState(p);
   const genomeCompatible = genomePair
     ? genomePair.checked &&
       Boolean(genomePair.target_locus_accession) &&
@@ -40,10 +41,6 @@ const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: Valida
       genomePair.unclassified_amplicon_count === 0 &&
       ((genomePair.target_amplicon_count === 1 && genomePair.paired_amplicon_count === 1) || genomePair.paired_amplicon_count === 0)
     : false;
-  const blastValidated = genomePair
-    ? genomePair.checked && !genomePair.hit_limit_reached
-    : blastLeftStatus === "validated" && blastRightStatus === "validated";
-  const blastOk = genomePair ? genomeCompatible : blastValidated && p.is_specific;
   const blastDetail = genomePair
     ? genomePair.specific
       ? t("check_genome_pair_specific")
@@ -56,6 +53,8 @@ const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: Valida
           : genomePair.status === "no_paired_amplicons"
             ? t("check_genome_pair_no_product")
             : t("check_genome_pair_offtarget")
+    : p.blast_left.hit_limit_reached || p.blast_right.hit_limit_reached
+      ? t("check_blast_limited")
     : blastLeftStatus === "error" || blastRightStatus === "error"
       ? t("check_blast_error")
       : blastLeftStatus === "no_hits" || blastRightStatus === "no_hits"
@@ -81,19 +80,29 @@ const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: Valida
   const hairpinOk = (p.left_props?.hairpin_th ?? 0) < 24 && (p.right_props?.hairpin_th ?? 0) < 24;
   const dimerOk = (p.left_props?.self_end_th ?? 0) < 35 && (p.right_props?.self_end_th ?? 0) < 35;
 
-  const items = [
-    { label: t("check_tm_range"), pass: tmOk, detail: `F: ${p.left_tm}°C / R: ${p.right_tm}°C · ${t("tm_conditions_note")}` },
-    { label: t("check_tm_diff"), pass: tmMatchOk, detail: `${t("diff_label")} ${tmDiff.toFixed(1)}°C` },
-    { label: t("check_gc"), pass: gcOk, detail: `F: ${p.left_gc}% / R: ${p.right_gc}%` },
-    { label: t("check_clamp"), pass: clampOk, detail: `F: ${p.left_props?.gc_clamp ?? "—"} / R: ${p.right_props?.gc_clamp ?? "—"}` },
-    { label: t("check_hairpin"), pass: hairpinOk, detail: `F: ${p.left_props?.hairpin_th ?? "—"}°C / R: ${p.right_props?.hairpin_th ?? "—"}°C` },
-    { label: t("check_dimer"), pass: dimerOk, detail: `F: ${p.left_props?.self_end_th ?? "—"}°C / R: ${p.right_props?.self_end_th ?? "—"}°C` },
-    { label: genomePair ? t("check_genome_pair") : t("check_blast"), pass: blastOk, detail: blastDetail },
-    ...(transcriptPair ? [{ label: t("check_transcriptome_pair"), pass: transcriptPair.gene_specific, detail: transcriptDetail }] : []),
-    { label: t("check_exon"), pass: p.exon_span.spans_junction, detail: p.exon_span.spans_junction ? t("check_exon_spans", { n: p.exon_span.junction_count }) : t("check_exon_none") },
+  type ChecklistState = "pass" | "fail" | "incomplete";
+  const stateFor = (pass: boolean): ChecklistState => pass ? "pass" : "fail";
+  const specificityChecklistState: ChecklistState = specificityState === "passed"
+    ? "pass"
+    : specificityState === "incomplete" ? "incomplete" : "fail";
+  const transcriptChecklistState: ChecklistState = transcriptPair
+    ? !transcriptPair.checked || transcriptPair.hit_limit_reached || ["error", "truncated", "target_not_found", "no_paired_amplicons", "ambiguous_target"].includes(transcriptPair.status)
+      ? "incomplete"
+      : stateFor(transcriptPair.gene_specific)
+    : "incomplete";
+  const items: { label: string; state: ChecklistState; detail: string }[] = [
+    { label: t("check_tm_range"), state: stateFor(tmOk), detail: `F: ${p.left_tm}°C / R: ${p.right_tm}°C · ${t("tm_conditions_note")}` },
+    { label: t("check_tm_diff"), state: stateFor(tmMatchOk), detail: `${t("diff_label")} ${tmDiff.toFixed(1)}°C` },
+    { label: t("check_gc"), state: stateFor(gcOk), detail: `F: ${p.left_gc}% / R: ${p.right_gc}%` },
+    { label: t("check_clamp"), state: stateFor(clampOk), detail: `F: ${p.left_props?.gc_clamp ?? "—"} / R: ${p.right_props?.gc_clamp ?? "—"}` },
+    { label: t("check_hairpin"), state: stateFor(hairpinOk), detail: `F: ${p.left_props?.hairpin_th ?? "—"}°C / R: ${p.right_props?.hairpin_th ?? "—"}°C` },
+    { label: t("check_dimer"), state: stateFor(dimerOk), detail: `F: ${p.left_props?.self_end_th ?? "—"}°C / R: ${p.right_props?.self_end_th ?? "—"}°C` },
+    { label: genomePair ? t("check_genome_pair") : t("check_blast"), state: specificityChecklistState, detail: blastDetail },
+    ...(transcriptPair ? [{ label: t("check_transcriptome_pair"), state: transcriptChecklistState, detail: transcriptDetail }] : []),
+    { label: t("check_exon"), state: stateFor(p.exon_span.spans_junction), detail: p.exon_span.spans_junction ? t("check_exon_spans", { n: p.exon_span.junction_count }) : t("check_exon_none") },
   ];
 
-  const passCount = items.filter(i => i.pass).length;
+  const passCount = items.filter(i => i.state === "pass").length;
   const countBg =
     passCount === items.length ? { bg: "#d1fae5", color: "#065f46" } :
     passCount >= 6             ? { bg: "#e0e7ff", color: "#3730a3" } :
@@ -108,13 +117,18 @@ const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: Valida
         </span>
       </div>
       <div className="primer-checklist-list">
-        {items.map(item => (
-          <div key={item.label} className="primer-checklist-item">
-            <span style={{ flexShrink: 0, width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 10, fontWeight: 700, background: item.pass ? "#10b981" : "#f87171" }}>{item.pass ? "✓" : "✗"}</span>
-            <span className="primer-checklist-label" style={{ color: item.pass ? "var(--text-2)" : "var(--red)" }}>{item.label}</span>
+        {items.map(item => {
+          const isPass = item.state === "pass";
+          const isIncomplete = item.state === "incomplete";
+          const tone = isPass ? "#10b981" : isIncomplete ? "#d97706" : "#ef4444";
+          return (
+          <div key={item.label} className={`primer-checklist-item is-${item.state}`}>
+            <span style={{ flexShrink: 0, width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 10, fontWeight: 700, background: tone }}>{isPass ? "✓" : isIncomplete ? "!" : "✗"}</span>
+            <span className="primer-checklist-label" style={{ color: isPass ? "var(--text-2)" : tone }}>{item.label}</span>
             <span className="primer-checklist-detail">{item.detail}</span>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -257,6 +271,7 @@ const BlastHitsTable = memo(function BlastHitsTable({ left, right, genomePair, t
                     <span style={{ flex: 1, lineHeight: 1.5, color: hit.is_off_target ? "var(--orange)" : "var(--text-2)" }}>
                       {hit.title}
                       {hit.is_target && <span style={{ marginLeft: 4, color: "var(--green)", fontWeight: 500 }}>✓ {t("target_hit")}</span>}
+                      {hit.is_same_gene && <span style={{ marginLeft: 4, color: "var(--accent)", fontWeight: 500 }}>{t("same_gene_hit")}</span>}
                       {hit.is_off_target && <span style={{ marginLeft: 4, color: "var(--orange)", fontWeight: 500 }}>⚠ {t("off_target")}</span>}
                     </span>
                   </div>
@@ -621,17 +636,26 @@ function getSequenceParameterState(p: ValidatedPrimerPair): SequenceParameterSta
 
 function getSpecificityEvidenceState(p: ValidatedPrimerPair): SpecificityEvidenceState {
   const transcript = p.transcriptome_pair_validation;
-  if (transcript && (!transcript.checked || ["error", "truncated"].includes(transcript.status))) return "incomplete";
+  if (transcript && (
+    !transcript.checked || transcript.hit_limit_reached ||
+    ["error", "truncated", "target_not_found", "no_paired_amplicons", "ambiguous_target"].includes(transcript.status)
+  )) return "incomplete";
 
   const genome = p.genome_pair_validation;
   if (genome) {
-    if (!genome.checked || ["error", "truncated"].includes(genome.status)) return "incomplete";
+    if (!genome.checked || genome.hit_limit_reached || ["error", "truncated", "target_not_anchored"].includes(genome.status)) return "incomplete";
+    if (!transcript && genome.status === "no_paired_amplicons") return "incomplete";
     return p.is_specific ? "passed" : "review";
   }
 
   const leftStatus = p.blast_left.status ?? "validated";
   const rightStatus = p.blast_right.status ?? "validated";
-  if (leftStatus !== "validated" || rightStatus !== "validated") return "incomplete";
+  if (
+    leftStatus !== "validated" || rightStatus !== "validated" ||
+    !p.blast_left.target_accession || !p.blast_right.target_accession ||
+    !p.blast_left.target_found || !p.blast_right.target_found ||
+    p.blast_left.hit_limit_reached || p.blast_right.hit_limit_reached
+  ) return "incomplete";
   return p.is_specific ? "passed" : "review";
 }
 
@@ -644,9 +668,13 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
   const blastRightStatus = p.blast_right.status ?? "validated";
   const genomePair = p.genome_pair_validation;
   const transcriptPair = p.transcriptome_pair_validation;
+  const specificityState = getSpecificityEvidenceState(p);
   const bothBlastValidated = genomePair
     ? genomePair.checked && !genomePair.hit_limit_reached && (!transcriptPair || transcriptPair.checked && !transcriptPair.hit_limit_reached)
-    : blastLeftStatus === "validated" && blastRightStatus === "validated";
+    : blastLeftStatus === "validated" && blastRightStatus === "validated" &&
+      Boolean(p.blast_left.target_accession && p.blast_right.target_accession) &&
+      Boolean(p.blast_left.target_found && p.blast_right.target_found) &&
+      !p.blast_left.hit_limit_reached && !p.blast_right.hit_limit_reached;
   const offTargetCount = p.blast_left.off_target_count + p.blast_right.off_target_count;
   const leftSelfEnd = p.left_props?.self_end_th ?? 0;
   const rightSelfEnd = p.right_props?.self_end_th ?? 0;
@@ -666,7 +694,7 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
       : gcAvg >= 40 && gcAvg <= 60
         ? "ok"
         : "watch";
-  const specificityTone = p.is_specific ? "strong" : "watch";
+  const specificityTone = specificityState === "passed" ? "strong" : specificityState === "review" ? "watch" : "neutral";
   const exonTone = p.exon_span.spans_junction ? "strong" : "watch";
   const dimerTone =
     worstSelfEnd < 20 && worstHairpin < 10
@@ -697,7 +725,9 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
       label: t("score_specificity"),
       score: p.score.specificity_score,
       tone: specificityTone,
-      metric: genomePair
+      metric: specificityState === "incomplete"
+        ? t("reason_specificity_metric_pending")
+        : genomePair
         ? transcriptPair
           ? `${genomePair.reference_assembly || "Genome"} · genome target/extra ${genomePair.target_amplicon_count}/${genomePair.off_target_amplicon_count} · RNA target/other-gene ${transcriptPair.target_transcript_amplicon_count}/${transcriptPair.other_gene_amplicon_count}`
           : `${genomePair.reference_assembly || "Genome"} · target ${genomePair.target_amplicon_count} · off-target ${genomePair.off_target_amplicon_count}`
@@ -705,11 +735,13 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
           ? `Top hit ${p.blast_left.top_hit_identity}% / ${p.blast_right.top_hit_identity}% · off-target ${offTargetCount}`
           : t("reason_specificity_metric_pending"),
       observation:
-        genomePair
-          ? p.is_specific
+        specificityState === "incomplete"
+          ? t("reason_specificity_partial")
+          : genomePair
+          ? specificityState === "passed"
             ? t("reason_genome_specificity_validated")
             : t("reason_genome_specificity_offtarget")
-          : bothBlastValidated && p.is_specific
+          : bothBlastValidated && specificityState === "passed"
           ? t("reason_specificity_validated")
           : blastLeftStatus === "error" || blastRightStatus === "error"
             ? t("reason_specificity_unvalidated")
@@ -741,8 +773,8 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
     .slice(0, 3);
   const cautions = insights.filter((item) => item.tone === "watch");
 
-  const toneColor = { strong: "var(--green)", ok: "var(--primer-color)", watch: "var(--orange)" } as const;
-  const toneDot = { strong: "●", ok: "●", watch: "▲" } as const;
+  const toneColor = { strong: "var(--green)", ok: "var(--primer-color)", watch: "var(--red)", neutral: "var(--orange)" } as const;
+  const toneDot = { strong: "●", ok: "●", watch: "▲", neutral: "!" } as const;
 
   return (
     <div className="primer-recommendation-card" style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)" }}>
@@ -1014,6 +1046,8 @@ function PrimerEmptyPreview({ locale }: { locale: string }) {
 }
 
 function KnownPrimerSection({
+  gene,
+  species,
   records,
   catalog,
   loading,
@@ -1022,6 +1056,8 @@ function KnownPrimerSection({
   copiedPrimer,
   copyPrimer,
 }: {
+  gene: string;
+  species: "human" | "mouse";
   records: readonly KnownQpcrPrimerRecord[];
   catalog: KnownPrimerCatalogResponse | null;
   loading: boolean;
@@ -1032,6 +1068,9 @@ function KnownPrimerSection({
 }) {
   const t = useTranslations("primer");
   const locale = useLocale();
+  const searchGene = (catalog?.resolved_gene_symbol || catalog?.query || gene).trim();
+  const primerBankSpecies = species === "mouse" ? "Mouse" : "Human";
+  const origeneSearchUrl = `https://www.origene.com/catalog/gene-expression/qpcr-primer-pairs?q=${encodeURIComponent(searchGene)}`;
   const catalogDate = catalog?.catalog_updated_at
     ? new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-CA", {
         timeZone: "Asia/Shanghai",
@@ -1170,6 +1209,31 @@ function KnownPrimerSection({
               </article>
             );
           })}
+        </div>
+      )}
+
+      {!loading && searchGene && (
+        <div className="known-primer-external-search">
+          <div>
+            <strong>{t("known_external_title")}</strong>
+            <p>{t("known_external_intro", { gene: searchGene })}</p>
+          </div>
+          <div className="known-primer-external-links">
+            <a href={origeneSearchUrl} target="_blank" rel="noreferrer">
+              {t("known_search_origene")} ↗
+            </a>
+            <form action="https://pga.mgh.harvard.edu/cgi-bin/primerbank/new_search2.cgi" method="post" target="_blank">
+              <input type="hidden" name="selectBox" value="NCBI Gene Symbol" />
+              <input type="hidden" name="species" value={primerBankSpecies} />
+              <input type="hidden" name="searchBox" value={searchGene} />
+              <input type="hidden" name="Submit" value="Submit" />
+              <button type="submit">{t("known_search_primerbank")} ↗</button>
+            </form>
+            <a href="https://qprimerdb.biodb.org/browse" target="_blank" rel="noreferrer">
+              {t("known_search_qprimerdb")} ↗
+            </a>
+          </div>
+          <small>{t("known_external_note")}</small>
         </div>
       )}
 
@@ -1511,18 +1575,16 @@ export default function PrimerPage() {
   const elapsedTime = `${String(Math.floor(elapsedSeconds / 60)).padStart(2, "0")}:${String(elapsedSeconds % 60).padStart(2, "0")}`;
   const progressSteps = [t("wait_step1"), t("wait_step2"), t("wait_step3"), t("wait_step4")];
   const blastWarningCount = result
-    ? result.primer_pairs.filter((pair) => {
-        if (pair.transcriptome_pair_validation && (!pair.transcriptome_pair_validation.checked || ["error", "truncated"].includes(pair.transcriptome_pair_validation.status))) return true;
-        if (pair.genome_pair_validation) {
-          return !pair.genome_pair_validation.checked || ["error", "truncated"].includes(pair.genome_pair_validation.status);
-        }
-        const leftStatus = pair.blast_left.status ?? "validated";
-        const rightStatus = pair.blast_right.status ?? "validated";
-        return leftStatus !== "validated" || rightStatus !== "validated";
-      }).length
+    ? result.primer_pairs.filter((pair) => getSpecificityEvidenceState(pair) === "incomplete").length
     : 0;
   const validatedPrimerCount = result
     ? result.primer_pairs.filter((pair) => getSpecificityEvidenceState(pair) === "passed").length
+    : 0;
+  const specificityReviewCount = result
+    ? result.primer_pairs.filter((pair) => getSpecificityEvidenceState(pair) === "review").length
+    : 0;
+  const specificityIncompleteCount = result
+    ? result.primer_pairs.filter((pair) => getSpecificityEvidenceState(pair) === "incomplete").length
     : 0;
   const parameterQualifiedCount = result
     ? result.primer_pairs.filter((pair) => getSequenceParameterState(pair) !== "review").length
@@ -1777,7 +1839,7 @@ export default function PrimerPage() {
                 {[
                   { label: t("result_primary_candidate"), value: resultPairCount > 0 ? "#1" : "—", sub: t("result_primary_candidate_sub") },
                   { label: t("result_parameter_qualified"), value: `${parameterQualifiedCount}/${resultPairCount}`, sub: t("result_parameter_qualified_sub") },
-                  { label: t("result_specificity_passed"), value: `${validatedPrimerCount}/${resultPairCount}`, sub: specificityScopeLabel },
+                  { label: t("result_specificity_evidence"), value: `${validatedPrimerCount}/${resultPairCount}`, sub: t("result_specificity_summary", { passed: validatedPrimerCount, review: specificityReviewCount, incomplete: specificityIncompleteCount }) },
                   { label: t("result_exon_spanning"), value: `${exonPreferredCount}/${resultPairCount}`, sub: t("result_exon_spanning_sub") },
                 ].map((item) => (
                   <div key={item.label} className="primer-result-stat">
@@ -1801,16 +1863,6 @@ export default function PrimerPage() {
                 <p style={{ fontSize: 12, color: "#a16207", lineHeight: 1.6 }}>{t("blast_warning_body", { count: blastWarningCount })}</p>
               </div>
             )}
-
-            <KnownPrimerSection
-              records={knownPrimerRecords}
-              catalog={knownPrimerCatalog}
-              loading={knownPrimerLoading}
-              checks={knownPrimerChecks}
-              checking={knownPrimerChecking}
-              copiedPrimer={copiedPrimer}
-              copyPrimer={copyPrimer}
-            />
 
             <div className="primer-result-tier-head">
               <div>
@@ -1915,6 +1967,18 @@ export default function PrimerPage() {
                 );
               })}
             </div>
+
+            <KnownPrimerSection
+              gene={result.gene_name ?? ""}
+              species={result.species === "mouse" ? "mouse" : "human"}
+              records={knownPrimerRecords}
+              catalog={knownPrimerCatalog}
+              loading={knownPrimerLoading}
+              checks={knownPrimerChecks}
+              checking={knownPrimerChecking}
+              copiedPrimer={copiedPrimer}
+              copyPrimer={copyPrimer}
+            />
 
             <details className="primer-evidence-disclosure">
               <summary>

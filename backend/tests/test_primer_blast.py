@@ -86,6 +86,35 @@ def test_exact_matches_to_other_transcripts_are_counted_as_non_targets():
     assert result.top_hits[1].is_off_target is True
 
 
+def test_same_gene_transcript_variants_are_not_counted_as_off_targets():
+    hsp = SimpleNamespace(align_length=20, identities=20)
+    record = SimpleNamespace(alignments=[
+        SimpleNamespace(
+            title="ref|NM_001289745.3| Homo sapiens GAPDH (GAPDH), transcript variant 3, mRNA",
+            accession="NM_001289745",
+            hsps=[hsp],
+        ),
+        SimpleNamespace(
+            title="ref|NM_002046.7| Homo sapiens GAPDH (GAPDH), transcript variant 1, mRNA",
+            accession="NM_002046",
+            hsps=[hsp],
+        ),
+    ])
+
+    result = primer_blast._summarize_record(
+        record,
+        query_length=20,
+        target_accession="NM_001289745.3",
+    )
+
+    assert result.target_found is True
+    assert result.off_target_count == 0
+    assert result.specific is True
+    assert result.top_hits[0].is_target is True
+    assert result.top_hits[1].is_same_gene is True
+    assert result.top_hits[1].is_off_target is False
+
+
 def test_missing_target_or_hit_limit_prevents_specificity_pass():
     hsp = SimpleNamespace(align_length=20, identities=20)
     alignments = [

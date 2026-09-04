@@ -39,6 +39,7 @@ class BlastTopHit(BaseModel):
     identity: float      # 相似度 %
     is_off_target: bool  # 是否为脱靶
     is_target: bool = False
+    is_same_gene: bool = False  # 是否为同一基因的其他转录本
 
 
 class BlastValidationStatus(str, Enum):

@@ -494,7 +494,7 @@ export interface BlastResponse {
 
 // ── Gene Primer Types ────────────────────────────────────────────────────────
 
-export interface BlastTopHit { rank: number; title: string; identity: number; is_off_target: boolean; is_target?: boolean; }
+export interface BlastTopHit { rank: number; title: string; identity: number; is_off_target: boolean; is_target?: boolean; is_same_gene?: boolean; }
 export interface BlastValidation {
   specific: boolean;
   top_hit_identity: number;

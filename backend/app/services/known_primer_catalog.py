@@ -23,6 +23,8 @@ from app.schemas.gene_primer import (
     PrimerCatalogSourceSummary,
     Species,
 )
+from app.services.ncbi_client import cached_call, entrez_esearch, entrez_esummary
+from app.services.ncbi_fetch import SPECIES_ORGANISM
 
 logger = logging.getLogger("uvicorn")
 SEED_PATH = Path(__file__).resolve().parents[1] / "data" / "known_qpcr_primers.json"
@@ -57,6 +59,49 @@ def _normalized(value: str) -> str:
 
 def _accession_root(value: str | None) -> str:
     return (value or "").strip().upper().split(".", 1)[0]
+
+
+def _refseq_accession_roots_for_gene(gene: str, species: Species) -> tuple[str, ...]:
+    """Resolve all current RefSeq RNA accessions for one gene through NCBI.
+
+    qPrimerDB's public export identifies many records by transcript accession but
+    does not retain an NCBI Gene ID.  Resolving the requested gene's RefSeq RNA
+    accessions on demand lets those rows remain searchable without guessing a
+    gene assignment.  The NCBI result is cached by ``cached_call``.
+    """
+
+    normalized_gene = gene.strip()
+    organism = SPECIES_ORGANISM.get(species.value, "Homo sapiens")
+
+    def _load() -> tuple[str, ...]:
+        query = (
+            f"{normalized_gene}[Gene Name] AND {organism}[Organism] "
+            "AND srcdb_refseq[PROP] "
+            "AND (biomol_mrna[PROP] OR biomol_ncrna[PROP])"
+        )
+        search = entrez_esearch(db="nucleotide", term=query, retmax=100)
+        ids = list(search.get("IdList", []))
+        if not ids:
+            return ()
+
+        summary = entrez_esummary(db="nucleotide", id=",".join(ids))
+        if isinstance(summary, dict):
+            documents = summary.get("DocumentSummarySet", {}).get("DocumentSummary", [])
+        else:
+            documents = summary
+
+        roots = {
+            _accession_root(str(document.get("AccessionVersion") or document.get("Caption") or ""))
+            for document in documents
+        }
+        return tuple(sorted(root for root in roots if root.startswith(("NM_", "NR_", "XM_", "XR_"))))
+
+    return cached_call(
+        "known_primer_refseq_accessions_v1",
+        normalized_gene.upper(),
+        species.value,
+        loader=_load,
+    )
 
 
 @lru_cache(maxsize=1)
@@ -169,6 +214,7 @@ def query_known_primers(
     source_summaries: list[PrimerCatalogSourceSummary] = []
     catalog_updated_at: str | None = None
     records: list[KnownPrimerRecord] = []
+    lookup_unmapped_accessions = False
 
     catalog_path = _catalog_path()
     if catalog_path:
@@ -204,6 +250,10 @@ def query_known_primers(
                             "SELECT * FROM primer_pairs WHERE species = ? AND gene_id = ?",
                             (species.value, gene_row["id"]),
                         ).fetchall()
+                    lookup_unmapped_accessions = bool(db.execute(
+                        "SELECT 1 FROM primer_pairs WHERE species = ? AND gene_id IS NULL LIMIT 1",
+                        (species.value,),
+                    ).fetchone())
                 elif target_transcript:
                     pair_rows = db.execute(
                         "SELECT * FROM primer_pairs WHERE species = ? AND target_accession_root = ?",
@@ -273,6 +323,30 @@ def query_known_primers(
         except (sqlite3.Error, OSError, ValueError) as exc:
             logger.warning("qPCR catalog unavailable: %s", exc)
             gene_index_available = False
+
+    if catalog_path and gene_index_match and resolved_symbol and lookup_unmapped_accessions:
+        try:
+            accession_roots = _refseq_accession_roots_for_gene(resolved_symbol, species)
+            if accession_roots:
+                placeholders = ",".join("?" for _ in accession_roots)
+                with _connect(catalog_path) as db:
+                    accession_rows = db.execute(
+                        f"""
+                        SELECT * FROM primer_pairs
+                        WHERE species = ? AND gene_id IS NULL
+                          AND target_accession_root IN ({placeholders})
+                        """,
+                        (species.value, *accession_roots),
+                    ).fetchall()
+                for row in accession_rows:
+                    record = _record_from_row(row)
+                    if not record.gene_symbol:
+                        record = record.model_copy(update={"gene_symbol": resolved_symbol})
+                    records.append(record)
+        except Exception as exc:
+            # The local, versioned catalog and official-source links remain
+            # usable if NCBI is temporarily unavailable.
+            logger.warning("qPCR accession mapping unavailable for %s: %s", resolved_symbol, exc)
 
     seed_symbols = {normalized_query}
     if resolved_symbol:

@@ -8,7 +8,7 @@ SPECIES_ENTREZ_FILTER = {
     "human": "txid9606[Organism]",
     "mouse": "txid10090[Organism]",
 }
-BLAST_HITLIST_SIZE = 5
+BLAST_HITLIST_SIZE = 10
 QUALIFIED_IDENTITY_THRESHOLD = 80.0
 
 
@@ -19,10 +19,25 @@ def _accession_base(value: str | None) -> str:
     return match.group(1) if match else value.upper().split(".", 1)[0]
 
 
+def _title_matches_gene(title: str, target_gene: str | None) -> bool:
+    """Return whether an NCBI hit title identifies the requested gene symbol."""
+    gene = (target_gene or "").strip()
+    if not gene:
+        return False
+    return bool(re.search(rf"\({re.escape(gene)}\)(?:\s*[,;]|\s|$)", title, re.IGNORECASE))
+
+
+def _gene_symbol_from_title(title: str) -> str:
+    """Extract the RefSeq title's parenthesized gene symbol when present."""
+    matches = re.findall(r"\(([A-Za-z][A-Za-z0-9._-]{0,30})\)", title)
+    return matches[-1] if matches else ""
+
+
 def _summarize_record(
     record,
     query_length: int,
     target_accession: str | None = None,
+    target_gene: str | None = None,
 ) -> BlastValidation:
     target_base = _accession_base(target_accession)
     if record is None or not record.alignments:
@@ -53,19 +68,41 @@ def _summarize_record(
         alignment_accession = _accession_base(
             getattr(alignment, "accession", None) or alignment.title
         )
+        is_target = bool(target_base and alignment_accession == target_base)
         qualified_hits.append({
             "title": alignment.title,
             "identity": best_identity,
-            "is_target": bool(target_base and alignment_accession == target_base),
+            "is_target": is_target,
+            "gene_symbol": _gene_symbol_from_title(alignment.title),
         })
 
+    effective_target_gene = (target_gene or "").strip()
+    if not effective_target_gene:
+        effective_target_gene = next(
+            (hit["gene_symbol"] for hit in qualified_hits if hit["is_target"] and hit["gene_symbol"]),
+            "",
+        )
+    for hit in qualified_hits:
+        hit["is_same_gene"] = bool(
+            not hit["is_target"]
+            and effective_target_gene
+            and _title_matches_gene(hit["title"], effective_target_gene)
+        )
+
     qualified_hits.sort(
-        key=lambda hit: (not hit["is_target"], -hit["identity"], hit["title"])
+        key=lambda hit: (
+            not hit["is_target"],
+            not hit["is_same_gene"],
+            -hit["identity"],
+            hit["title"],
+        )
     )
     target_found = any(
         hit["is_target"] and hit["identity"] >= 99.0 for hit in qualified_hits
     )
-    off_target_count = sum(not hit["is_target"] for hit in qualified_hits)
+    off_target_count = sum(
+        not hit["is_target"] and not hit["is_same_gene"] for hit in qualified_hits
+    )
     hit_limit_reached = len(record.alignments) >= BLAST_HITLIST_SIZE
     top_identity = max((hit["identity"] for hit in qualified_hits), default=0.0)
     top_hits: list[BlastTopHit] = []
@@ -77,8 +114,9 @@ def _summarize_record(
             rank=len(top_hits) + 1,
             title=title,
             identity=round(hit["identity"], 1),
-            is_off_target=not hit["is_target"],
+            is_off_target=not hit["is_target"] and not hit["is_same_gene"],
             is_target=hit["is_target"],
+            is_same_gene=hit["is_same_gene"],
         ))
 
     if not target_accession:
@@ -89,6 +127,8 @@ def _summarize_record(
         message = "The BLAST hit limit was reached; additional transcript hits may exist."
     elif off_target_count:
         message = "Additional qualified RefSeq RNA transcript hits were returned."
+    elif any(hit["is_same_gene"] for hit in qualified_hits):
+        message = "The target and same-gene transcript variants were found with no qualified hit outside the requested gene."
     else:
         message = "The target transcript was found with no additional qualified returned hit."
 
@@ -115,6 +155,7 @@ def blast_primer(
     primer_seq: str,
     species: str,
     target_accession: str | None = None,
+    target_gene: str | None = None,
 ) -> BlastValidation:
     """对单条引物做 BLAST，检查特异性，返回 top 3 命中。"""
     entrez_filter = SPECIES_ENTREZ_FILTER.get(species, "txid9606[Organism]")
@@ -148,13 +189,15 @@ def blast_primer(
             records[0] if records else None,
             query_length,
             target_accession,
+            target_gene,
         )
 
     return cached_call(
-        "primer_blast",
+        "primer_blast_gene_aware_v3",
         species,
         primer_hash,
         _accession_base(target_accession),
+        (target_gene or "").strip().upper(),
         loader=_load,
         should_cache=lambda response: response.status != BlastValidationStatus.error,
     )
@@ -164,6 +207,7 @@ def blast_primers_batch(
     primer_seqs: list[str],
     species: str,
     target_accession: str | list[str | None] | None = None,
+    target_gene: str | None = None,
 ) -> list[BlastValidation]:
     """一次 QBlast 请求验证全部候选引物，避免并发提交大量远程任务。"""
     if not primer_seqs:
@@ -179,7 +223,7 @@ def blast_primers_batch(
     entrez_filter = SPECIES_ENTREZ_FILTER.get(species, "txid9606[Organism]")
     fasta = "\n".join(f">primer_{idx + 1}\n{seq}" for idx, seq in enumerate(normalized))
     batch_hash = sha1(
-        f"{'|'.join(_accession_base(item) for item in target_accessions)}:{fasta}".encode("utf-8")
+        f"gene-aware-v3:{(target_gene or '').strip().upper()}:{'|'.join(_accession_base(item) for item in target_accessions)}:{fasta}".encode("utf-8")
     ).hexdigest()
 
     def _load() -> list[BlastValidation]:
@@ -214,12 +258,13 @@ def blast_primers_batch(
                 records[idx] if idx < len(records) else None,
                 len(seq),
                 target_accessions[idx],
+                target_gene,
             )
             for idx, seq in enumerate(normalized)
         ]
 
     return cached_call(
-        "primer_blast_batch",
+        "primer_blast_batch_gene_aware_v3",
         species,
         batch_hash,
         loader=_load,
