@@ -1985,6 +1985,34 @@ body:has(.home-hero-wrap) .site-main {
   gap: 5px;
   margin-bottom: 6px;
 }
+.primer-status-chip {
+  display: inline-flex;
+  min-height: 18px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  align-items: center;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+.primer-status-chip.is-strong,
+.primer-status-chip.is-passed {
+  border-color: color-mix(in srgb, var(--green) 34%, var(--border));
+  color: var(--green);
+}
+.primer-status-chip.is-ok {
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+  color: var(--accent);
+}
+.primer-status-chip.is-review,
+.primer-status-chip.is-incomplete {
+  border-color: color-mix(in srgb, var(--orange) 32%, var(--border));
+  color: var(--orange);
+}
+.primer-status-chip.is-neutral { color: var(--text-3); }
 .primer-basis-header,
 .primer-recommendation-head,
 .primer-gene-head,
@@ -9378,6 +9406,19 @@ html[data-theme="light"] { color-scheme: light; }
 .home-evidence-score { display: flex; align-items: center; gap: 8px; }
 .home-evidence-score strong { color: var(--accent); font-size: 30px; line-height: 1; letter-spacing: -0.05em; }
 .home-evidence-score span { line-height: 1.45; }
+.home-evidence-score.is-status {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 3px;
+}
+.home-evidence-score.is-status strong {
+  font-size: 13px;
+  letter-spacing: 0;
+}
+.home-evidence-score.is-status span {
+  color: var(--text-3);
+  font-size: 9px;
+}
 .home-evidence-sources { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
 .home-evidence-sources span {
   padding: 4px 7px;

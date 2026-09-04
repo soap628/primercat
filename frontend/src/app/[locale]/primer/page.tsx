@@ -594,6 +594,46 @@ function DesignBasisCard({ result }: { result: GenePrimerResult }) {
   );
 }
 
+type SequenceParameterState = "strong" | "ok" | "review";
+type SpecificityEvidenceState = "passed" | "review" | "incomplete";
+
+function getSequenceParameterState(p: ValidatedPrimerPair): SequenceParameterState {
+  const tmAverage = (p.left_tm + p.right_tm) / 2;
+  const tmDifference = Math.abs(p.left_tm - p.right_tm);
+  const gcAverage = (p.left_gc + p.right_gc) / 2;
+  const worstSelfEnd = Math.max(p.left_props?.self_end_th ?? 0, p.right_props?.self_end_th ?? 0);
+  const worstHairpin = Math.max(p.left_props?.hairpin_th ?? 0, p.right_props?.hairpin_th ?? 0);
+  const withinDesignRange =
+    p.left_tm >= 58 && p.left_tm <= 62 &&
+    p.right_tm >= 58 && p.right_tm <= 62 &&
+    tmDifference < 2 &&
+    p.left_gc >= 40 && p.left_gc <= 60 &&
+    p.right_gc >= 40 && p.right_gc <= 60 &&
+    worstSelfEnd < 35 && worstHairpin < 24;
+
+  if (!withinDesignRange) return "review";
+  if (tmAverage >= 59 && tmAverage <= 61 && tmDifference < 1 && gcAverage >= 45 && gcAverage <= 55 && worstSelfEnd < 20 && worstHairpin < 10) {
+    return "strong";
+  }
+  return "ok";
+}
+
+function getSpecificityEvidenceState(p: ValidatedPrimerPair): SpecificityEvidenceState {
+  const transcript = p.transcriptome_pair_validation;
+  if (transcript && (!transcript.checked || ["error", "truncated"].includes(transcript.status))) return "incomplete";
+
+  const genome = p.genome_pair_validation;
+  if (genome) {
+    if (!genome.checked || ["error", "truncated"].includes(genome.status)) return "incomplete";
+    return p.is_specific ? "passed" : "review";
+  }
+
+  const leftStatus = p.blast_left.status ?? "validated";
+  const rightStatus = p.blast_right.status ?? "validated";
+  if (leftStatus !== "validated" || rightStatus !== "validated") return "incomplete";
+  return p.is_specific ? "passed" : "review";
+}
+
 function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
   const t = useTranslations("primer");
   const tmDiff = Math.abs(p.left_tm - p.right_tm);
@@ -710,10 +750,11 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
         <div>
           <p className="label-caps" style={{ marginBottom: 4 }}>{t("reason_title")}</p>
           <p style={{ fontSize: 12, color: "var(--text-3)", margin: 0 }}>{t("reason_subtitle", { rank: p.rank })}</p>
+          <p style={{ fontSize: 10, color: "var(--text-3)", margin: "3px 0 0" }}>{t("ranking_score_note")}</p>
         </div>
         <div style={{ flexShrink: 0, padding: "4px 10px", borderRadius: 4, background: "var(--bg-inset)", border: "1px solid var(--border)", textAlign: "center" }}>
-          <div style={{ fontSize: 9, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{t("score_total")}</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "var(--text-1)", lineHeight: 1.2 }}>{p.score.total}</div>
+          <div style={{ fontSize: 9, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{t("ranking_score")}</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "var(--text-1)", lineHeight: 1.2 }}>{p.score.total}<small style={{ fontSize: 9, fontWeight: 500, color: "var(--text-3)" }}> / 100</small></div>
         </div>
       </div>
 
@@ -901,7 +942,7 @@ function TranscriptViz({ seqLen, cdsStart, cdsEnd, exons, pairs }: {
 }
 
 function exportCSV(pairs: ValidatedPrimerPair[], geneName?: string) {
-  const header = ["Rank","Score","Forward_5to3","Reverse_5to3","F-Tm","R-Tm","F-GC%","R-GC%","Amplicon(bp)","Specificity_Pass","Specificity_Engine","Reference_Assembly","Target_Locus","Genome_Paired_Products","Genome_Target_Products","Genome_Offtarget_Products","Genome_Unclassified_Products","Genome_Hit_Limit_Reached","Target_Transcript","Transcript_Gene_Specific","Transcript_Isoform_Specific","Transcript_Paired_Products","Transcript_Target_Products","Transcript_Same_Gene_Isoforms","Transcript_Other_Gene_Products","Transcript_Unclassified_Products","Transcript_Hit_Limit_Reached","ExonSpan","Introns","F-HairpinTm","F-SelfEnd","F-GCclamp","R-HairpinTm","R-SelfEnd","R-GCclamp","F-Identity%","F-Offtarget","R-Identity%","R-Offtarget"].join(",");
+  const header = ["Rank","RankingScore_NotSuccessProbability","Forward_5to3","Reverse_5to3","F-Tm","R-Tm","F-GC%","R-GC%","Amplicon(bp)","Specificity_Pass","Specificity_Engine","Reference_Assembly","Target_Locus","Genome_Paired_Products","Genome_Target_Products","Genome_Offtarget_Products","Genome_Unclassified_Products","Genome_Hit_Limit_Reached","Target_Transcript","Transcript_Gene_Specific","Transcript_Isoform_Specific","Transcript_Paired_Products","Transcript_Target_Products","Transcript_Same_Gene_Isoforms","Transcript_Other_Gene_Products","Transcript_Unclassified_Products","Transcript_Hit_Limit_Reached","ExonSpan","Introns","F-HairpinTm","F-SelfEnd","F-GCclamp","R-HairpinTm","R-SelfEnd","R-GCclamp","F-Identity%","F-Offtarget","R-Identity%","R-Offtarget"].join(",");
   const rows = pairs.map(p => [p.rank,p.score.total,p.left_primer,p.right_primer,p.left_tm,p.right_tm,p.left_gc,p.right_gc,p.product_size,p.is_specific?"Yes":"No",p.transcriptome_pair_validation?"bowtie2_joint_genome_transcriptome":p.genome_pair_validation?.engine??"ncbi_refseq_rna_blast",p.genome_pair_validation?.reference_assembly??"",p.genome_pair_validation?.target_locus_accession?`${p.genome_pair_validation.target_locus_accession}:${p.genome_pair_validation.target_locus_start}-${p.genome_pair_validation.target_locus_end}`:"",p.genome_pair_validation?.paired_amplicon_count??"",p.genome_pair_validation?.target_amplicon_count??"",p.genome_pair_validation?.off_target_amplicon_count??"",p.genome_pair_validation?.unclassified_amplicon_count??"",p.genome_pair_validation?.hit_limit_reached??p.blast_left.hit_limit_reached??false,p.transcriptome_pair_validation?.target_transcript??"",p.transcriptome_pair_validation?.gene_specific??"",p.transcriptome_pair_validation?.isoform_specific??"",p.transcriptome_pair_validation?.paired_amplicon_count??"",p.transcriptome_pair_validation?.target_transcript_amplicon_count??"",p.transcriptome_pair_validation?.same_gene_isoform_amplicon_count??"",p.transcriptome_pair_validation?.other_gene_amplicon_count??"",p.transcriptome_pair_validation?.unclassified_amplicon_count??"",p.transcriptome_pair_validation?.hit_limit_reached??"",p.exon_span.spans_junction?"Yes":"No",p.exon_span.junction_count,p.left_props?.hairpin_th??"",p.left_props?.self_end_th??"",p.left_props?.gc_clamp??"",p.right_props?.hairpin_th??"",p.right_props?.self_end_th??"",p.right_props?.gc_clamp??"",p.blast_left.top_hit_identity,p.blast_left.off_target_count,p.blast_right.top_hit_identity,p.blast_right.off_target_count].join(","));
   const csv = [header,...rows].join("\n");
   const blob = new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
@@ -915,7 +956,7 @@ function exportHTMLReport(result: GenePrimerResult) {
     const tmDiff = Math.abs(p.left_tm - p.right_tm);
     const checks: [string,boolean][] = [["Tm 58-62C",p.left_tm>=58&&p.left_tm<=62&&p.right_tm>=58&&p.right_tm<=62],["Tm diff<2C",tmDiff<2],["GC 40-60%",p.left_gc>=40&&p.left_gc<=60&&p.right_gc>=40&&p.right_gc<=60],["GC clamp>=1",(p.left_props?.gc_clamp??0)>=1&&(p.right_props?.gc_clamp??0)>=1],["Hairpin<24C",(p.left_props?.hairpin_th??0)<24&&(p.right_props?.hairpin_th??0)<24],[p.transcriptome_pair_validation?"Joint genome + transcript screen pass":p.genome_pair_validation?"Paired genome screen pass":"RefSeq RNA screen pass",p.is_specific],["Exon-spanning",p.exon_span.spans_junction]];
     const passN = checks.filter(c=>c[1]).length;
-    return `<div style="border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:20px"><h3>Primer Pair #${p.rank} — Score ${p.score.total} — ${passN}/${checks.length} passed — ${p.product_size} bp</h3><p>F (5′→3′): <code>${p.left_primer}</code> Tm ${p.left_tm}°C GC ${p.left_gc}%</p><p>R (5′→3′): <code>${p.right_primer}</code> Tm ${p.right_tm}°C GC ${p.right_gc}%</p><div>${checks.map(([l,ok])=>`<span style="margin:2px;padding:2px 8px;border-radius:12px;font-size:12px;background:${ok?"#d1fae5":"#fee2e2"};color:${ok?"#065f46":"#991b1b"}">${ok?"✓":"✗"} ${l}</span>`).join("")}</div></div>`;
+    return `<div style="border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:20px"><h3>Primer Pair #${p.rank} — Ranking score ${p.score.total}/100 — ${passN}/${checks.length} checks passed — ${p.product_size} bp</h3><p style="color:#64748b;font-size:12px">The ranking score compares candidates from this run; it is not an experimental success probability.</p><p>F (5′→3′): <code>${p.left_primer}</code> Tm ${p.left_tm}°C GC ${p.left_gc}%</p><p>R (5′→3′): <code>${p.right_primer}</code> Tm ${p.right_tm}°C GC ${p.right_gc}%</p><div>${checks.map(([l,ok])=>`<span style="margin:2px;padding:2px 8px;border-radius:12px;font-size:12px;background:${ok?"#d1fae5":"#fee2e2"};color:${ok?"#065f46":"#991b1b"}">${ok?"✓":"✗"} ${l}</span>`).join("")}</div></div>`;
   }).join("");
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PrimerCat Report</title></head><body style="font-family:sans-serif;max-width:900px;margin:0 auto;padding:32px"><h1>PrimerCat Report</h1><p>${result.gene_name?`Gene: ${result.gene_name} · `:""}${result.sequence_length} bp · ${now}</p><p style="color:#475569;font-size:13px"><strong>Sequence orientation:</strong> Forward and reverse primers are both reported 5′→3′. The reverse primer is the reverse complement of its binding site and may be ordered exactly as shown.</p>${pairsHtml}<p style="color:#94a3b8;font-size:12px">Generated by PrimerCat · ${now}</p></body></html>`;
   const blob = new Blob([html],{type:"text/html;charset=utf-8;"});
@@ -963,7 +1004,7 @@ function PrimerEmptyPreview({ locale }: { locale: string }) {
           <div><dt>Tm</dt><dd>— °C</dd></div>
           <div><dt>GC</dt><dd>— %</dd></div>
           <div><dt>{isZh ? "产物" : "Product"}</dt><dd>— bp</dd></div>
-          <div><dt>{isZh ? "评分" : "Score"}</dt><dd>— / 100</dd></div>
+          <div><dt>{isZh ? "特异性" : "Specificity"}</dt><dd>{isZh ? "待筛查" : "Pending"}</dd></div>
         </dl>
       </div>
       <p>{isZh ? "输入目标后显示候选序列、质量指标和筛查依据。" : "Enter a target to see candidate sequences, quality metrics, and screening evidence."}</p>
@@ -1208,7 +1249,14 @@ export default function PrimerPage() {
   }
 
   function getProgressMessage(entry: { step: number; msg: string }) {
-    if (locale === "zh") return entry.msg;
+    if (locale === "zh") {
+      if (entry.step === 4) {
+        return entry.msg.includes("返回")
+          ? entry.msg.replace("本次特异性得分按 0 处理", "本次特异性证据标记为待复核")
+          : t("progress_detail_rank");
+      }
+      return entry.msg;
+    }
 
     if (entry.step === 1) {
       if (entry.msg.includes("转录本：")) return t("progress_detail_transcript");
@@ -1234,7 +1282,7 @@ export default function PrimerPage() {
   }
 
   function localizeResultMessage(data: GenePrimerResult) {
-    if (locale === "zh") return data.message;
+    if (locale === "zh") return data.message.replace("本次特异性得分按 0 处理", "本次特异性证据标记为待复核");
 
     const pairs = data.primer_pairs ?? [];
     const incomplete = pairs.some((pair) =>
@@ -1473,15 +1521,13 @@ export default function PrimerPage() {
       }).length
     : 0;
   const validatedPrimerCount = result
-    ? result.primer_pairs.filter((pair) => {
-        if (pair.genome_pair_validation) return pair.is_specific;
-        const leftStatus = pair.blast_left.status ?? "validated";
-        const rightStatus = pair.blast_right.status ?? "validated";
-        return leftStatus === "validated" && rightStatus === "validated" && pair.is_specific;
-      }).length
+    ? result.primer_pairs.filter((pair) => getSpecificityEvidenceState(pair) === "passed").length
+    : 0;
+  const parameterQualifiedCount = result
+    ? result.primer_pairs.filter((pair) => getSequenceParameterState(pair) !== "review").length
     : 0;
   const exonPreferredCount = result ? result.primer_pairs.filter((pair) => pair.exon_span.spans_junction).length : 0;
-  const topScore = result ? Math.max(...result.primer_pairs.map((pair) => pair.score.total), 0) : 0;
+  const resultPairCount = result?.primer_pairs.length ?? 0;
   const specificityScopeLabel =
     result?.design_basis?.specificity_scope === "refseq_rna_transcripts"
       ? t("basis_scope_refseq_rna")
@@ -1728,10 +1774,10 @@ export default function PrimerPage() {
               {/* Stat row */}
               <div className="primer-result-stats">
                 {[
-                  { label: t("basis_pairs_returned"), value: String(result.primer_pairs.length), sub: result.message },
-                  { label: t("score_total") + " (top)", value: String(topScore), sub: t("reason_strengths_title") },
-                  { label: t("check_exon"), value: String(exonPreferredCount), sub: t("basis_exon_preference_yes") },
-                  { label: t("score_specificity"), value: String(validatedPrimerCount), sub: specificityScopeLabel },
+                  { label: t("result_primary_candidate"), value: resultPairCount > 0 ? "#1" : "—", sub: t("result_primary_candidate_sub") },
+                  { label: t("result_parameter_qualified"), value: `${parameterQualifiedCount}/${resultPairCount}`, sub: t("result_parameter_qualified_sub") },
+                  { label: t("result_specificity_passed"), value: `${validatedPrimerCount}/${resultPairCount}`, sub: specificityScopeLabel },
+                  { label: t("result_exon_spanning"), value: `${exonPreferredCount}/${resultPairCount}`, sub: t("result_exon_spanning_sub") },
                 ].map((item) => (
                   <div key={item.label} className="primer-result-stat">
                     <div style={{ fontSize: 9, fontWeight: 700, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>{item.label}</div>
@@ -1779,36 +1825,28 @@ export default function PrimerPage() {
             <div className="primer-pair-list">
               {result.primer_pairs.map((p, idx) => {
                 const isExpanded = expandedRow === p.rank;
-                const tmDiff2 = Math.abs(p.left_tm - p.right_tm);
-                const blastLS = p.blast_left.status ?? "validated";
-                const blastRS = p.blast_right.status ?? "validated";
-                const blastOk2 = p.genome_pair_validation
-                  ? p.genome_pair_validation.checked && p.is_specific
-                  : blastLS === "validated" && blastRS === "validated" && p.is_specific;
-                const passN = [p.left_tm>=58&&p.left_tm<=62&&p.right_tm>=58&&p.right_tm<=62, tmDiff2<2, p.left_gc>=40&&p.left_gc<=60&&p.right_gc>=40&&p.right_gc<=60, (p.left_props?.gc_clamp??0)>=1&&(p.right_props?.gc_clamp??0)>=1, (p.left_props?.hairpin_th??0)<24&&(p.right_props?.hairpin_th??0)<24, (p.left_props?.self_end_th??0)<35&&(p.right_props?.self_end_th??0)<35, blastOk2, p.exon_span.spans_junction].filter(Boolean).length;
-                const scoreColor = p.score.total >= 75 ? "var(--green)" : p.score.total >= 50 ? "var(--primer-color)" : "var(--red)";
+                const parameterState = getSequenceParameterState(p);
+                const specificityState = getSpecificityEvidenceState(p);
                 return (
                   <div key={p.rank} className={`primer-pair-result fade-in-up delay-${Math.min(idx + 1, 5)}`} data-expanded={isExpanded ? "true" : "false"} data-top={idx === 0 ? "true" : "false"} style={{ borderTop: idx > 0 ? "1px solid var(--border)" : undefined, background: isExpanded ? "var(--bg-card)" : "var(--bg-page)" }}>
                     {/* Summary row */}
                     <div className="primer-pair-summary" onClick={() => setExpandedRow(isExpanded ? null : p.rank)}>
-                      {/* Score box */}
+                      {/* Candidate rank — the numerical ranking score stays in expanded details. */}
                       <div className="primer-pair-score" style={{ background: isExpanded ? "var(--bg-inset)" : "var(--bg-card)" }}>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: scoreColor, lineHeight: 1 }}>{p.score.total}</div>
-                        <div style={{ fontSize: 9, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>{t("score_short")}</div>
-                        <span className="primer-score-meter" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, p.score.total))}%` }} /></span>
+                        <div style={{ fontSize: 17, fontWeight: 700, color: "var(--text-1)", lineHeight: 1 }}>#{p.rank}</div>
+                        <div style={{ fontSize: 8, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 4 }}>{t("candidate_rank_short")}</div>
                       </div>
                       {/* Main content */}
                       <div className="primer-pair-main">
                         {/* badges row */}
                         <div className="primer-pair-badges">
-                          <span style={{ fontSize: 11, color: "var(--text-3)", fontWeight: 700 }}>#{p.rank}</span>
                           {idx === 0 && <span className="result-best-label">{t("best_candidate")}</span>}
                           <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-2)", background: "var(--bg-inset)", border: "1px solid var(--border)", borderRadius: 3, padding: "1px 6px" }}>{p.product_size} bp</span>
                           <span style={{ fontSize: 11, color: "var(--text-3)" }}>Tm {p.left_tm}° / {p.right_tm}°</span>
                           <span style={{ fontSize: 11, color: "var(--text-3)" }}>GC {p.left_gc}% / {p.right_gc}%</span>
-                          {p.is_specific && <span className="badge badge-green">✓ {t("specificity_pass")}</span>}
-                          {p.exon_span.spans_junction && <span className="badge badge-blue">{t("check_exon_spans", { n: p.exon_span.junction_count })}</span>}
-                          <span className={`badge ${passN===8?"badge-green":passN>=6?"badge-blue":"badge-orange"}`}>{passN}/8</span>
+                          <span className={`primer-status-chip is-${parameterState}`}>{t("sequence_parameters")}: {t(`sequence_parameters_${parameterState}`)}</span>
+                          <span className={`primer-status-chip is-${specificityState}`}>{t(`specificity_status_${specificityState}`)}</span>
+                          <span className={`primer-status-chip ${p.exon_span.spans_junction ? "is-strong" : "is-neutral"}`}>{p.exon_span.spans_junction ? t("check_exon_spans", { n: p.exon_span.junction_count }) : t("check_exon_none")}</span>
                         </div>
                         {/* Sequences */}
                         <div className="primer-pair-sequences">

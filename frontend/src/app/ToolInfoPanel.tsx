@@ -33,8 +33,8 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
           body: "候选引物并发提交至 NCBI BLAST refseq_rna 数据库，检查转录本层面非目标命中，过滤不理想候选。",
         },
         {
-          title: "4. 综合评分与展示",
-          body: "按 Tm、GC%、BLAST 状态、跨外显子能力和二聚体风险五维打分排序，结果附带设计依据和推荐理由。",
+          title: "4. 分项状态与候选排序",
+          body: "分别展示序列参数、特异性证据和跨外显子状态，再按五项透明规则排列候选；排序数字不代表实验成功率。",
         },
       ],
       boundaryTitle: "范围边界",
@@ -75,8 +75,8 @@ const CONTENT: Record<"qpcr" | "crispr" | "blast", Record<"zh" | "en", ToolInfoC
           body: "Submits all candidates concurrently to NCBI BLAST refseq_rna, screening for transcript-level off-target hits before final ranking.",
         },
         {
-          title: "4. Score, rank, and explain",
-          body: "Ranks primers across Tm, GC%, BLAST status, exon-spanning design, and dimer risk. Results include design basis, ranking rationale, and amplicon evidence.",
+          title: "4. Separate status, rank, and explain",
+          body: "Shows sequence parameters, specificity evidence, and exon-spanning status separately, then orders candidates with five transparent rules. The rank value is not an experimental success probability.",
         },
       ],
       boundaryTitle: "Scope boundary",

@@ -59,13 +59,13 @@ function PrimerExpandedDetail({ result, zh }: { result: Record<string, unknown>;
         const blastR = p.blast_right as Record<string, unknown> | null;
         return (
           <div key={i} className="account-result-row-v8" style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", padding: "12px 14px", fontSize: 12 }}>
-            {/* 头部：排名、产物大小、综合评分 */}
+            {/* 头部：排名、产物大小、候选排序分 */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <span style={{ fontWeight: 700, color: "var(--text-1)" }}>Pair {(p.rank as number ?? i + 1)}</span>
               <span style={{ color: "var(--text-2)" }}>{zh ? "产物" : "Product"} <b>{p.product_size as number} bp</b></span>
               {score && (
                 <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ color: "var(--text-2)" }}>{zh ? "综合评分" : "Composite score"}</span>
+                  <span style={{ color: "var(--text-2)" }}>{zh ? "候选排序分" : "Candidate rank score"}</span>
                   <ScoreBar value={score.total} />
                 </span>
               )}

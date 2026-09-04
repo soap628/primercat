@@ -192,7 +192,7 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
         </div>
 
         <div className="home-evidence-footer">
-          <div className="home-evidence-score"><strong>94</strong><span>/ 100<br />{isZh ? "综合评分" : "ranked score"}</span></div>
+          <div className="home-evidence-score is-status"><strong>{isZh ? "参数优秀" : "Strong parameters"}</strong><span>{isZh ? "特异性证据已记录" : "Specificity evidence recorded"}</span></div>
           <div className="home-evidence-sources"><span>NCBI RefSeq</span><span>Primer3</span><span>RNA BLAST</span></div>
         </div>
       </div>
