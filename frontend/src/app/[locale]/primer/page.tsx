@@ -18,6 +18,7 @@ import type {
   ValidatedPrimerPair,
   ExonViz,
   GenePrimerResult,
+  GeneLiteratureResponse,
   KnownPrimerCatalogResponse,
   KnownQpcrPrimerRecord,
   KnownPrimerValidationResponse,
@@ -1242,6 +1243,78 @@ function KnownPrimerSection({
   );
 }
 
+function GeneLiteratureSection({
+  gene,
+  species,
+  literature,
+  loading,
+}: {
+  gene: string;
+  species: "human" | "mouse";
+  literature: GeneLiteratureResponse | null;
+  loading: boolean;
+}) {
+  const t = useTranslations("primer");
+  const records = literature?.records ?? [];
+  const fallbackQuery = `"${gene}" qPCR ${species === "mouse" ? "mouse" : "human"}`;
+  const searchUrl = literature?.search_url ?? `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(fallbackQuery)}`;
+
+  return (
+    <section id="gene-literature" className="gene-literature-section" aria-labelledby="gene-literature-title">
+      <div className="gene-literature-heading">
+        <div>
+          <span>{t("literature_section_label")}</span>
+          <h2 id="gene-literature-title">{t("literature_section_title")}</h2>
+        </div>
+        <strong>{loading ? t("literature_loading_short") : t("literature_match_count", { count: records.length })}</strong>
+      </div>
+      <p className="gene-literature-intro">
+        {t("literature_section_intro", {
+          gene,
+          species: t(`literature_species_${species}`),
+        })}
+      </p>
+
+      {loading ? (
+        <p className="gene-literature-empty">{t("literature_loading")}</p>
+      ) : literature && !literature.available ? (
+        <p className="gene-literature-empty">{t("literature_unavailable")}</p>
+      ) : records.length === 0 ? (
+        <p className="gene-literature-empty">{t("literature_empty")}</p>
+      ) : (
+        <ol className="gene-literature-list">
+          {records.map((article, index) => {
+            const visibleAuthors = article.authors.slice(0, 4).join(", ");
+            const authors = article.authors.length > 4 ? `${visibleAuthors}, et al.` : visibleAuthors;
+            return (
+              <li key={article.pmid}>
+                <span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                <article>
+                  <h3><a href={article.pubmed_url} target="_blank" rel="noreferrer">{article.title}</a></h3>
+                  <p className="gene-literature-meta">
+                    {[article.journal, article.publication_date, `PMID ${article.pmid}`].filter(Boolean).join(" · ")}
+                  </p>
+                  {authors && <p className="gene-literature-authors">{authors}</p>}
+                  <div className="gene-literature-links">
+                    <a href={article.pubmed_url} target="_blank" rel="noreferrer">{t("literature_open_pubmed")} ↗</a>
+                    {article.pmc_url && <a href={article.pmc_url} target="_blank" rel="noreferrer">{t("literature_open_pmc")} ↗</a>}
+                    {article.doi_url && <a href={article.doi_url} target="_blank" rel="noreferrer">DOI ↗</a>}
+                  </div>
+                </article>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+
+      <div className="gene-literature-footer">
+        <a href={searchUrl} target="_blank" rel="noreferrer">{t("literature_open_all", { gene })} ↗</a>
+        <p>{t("literature_scope_note")}</p>
+      </div>
+    </section>
+  );
+}
+
 export default function PrimerPage() {
   const t = useTranslations("primer");
   const tCommon = useTranslations("common");
@@ -1266,6 +1339,8 @@ export default function PrimerPage() {
   const [knownPrimerLoading, setKnownPrimerLoading] = useState(false);
   const [knownPrimerChecks, setKnownPrimerChecks] = useState<Record<string, KnownPrimerValidationResponse>>({});
   const [knownPrimerChecking, setKnownPrimerChecking] = useState<Record<string, boolean>>({});
+  const [geneLiterature, setGeneLiterature] = useState<GeneLiteratureResponse | null>(null);
+  const [geneLiteratureLoading, setGeneLiteratureLoading] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -1482,6 +1557,38 @@ export default function PrimerPage() {
     }));
   }
 
+  async function runGeneLiteratureSearch(data: GenePrimerResult) {
+    if (!data.gene_name || (data.species !== "human" && data.species !== "mouse")) return;
+    const queryGene = data.gene_name;
+    const querySpecies = data.species;
+    setGeneLiteratureLoading(true);
+    try {
+      const params = new URLSearchParams({
+        gene: queryGene,
+        species: querySpecies,
+        limit: "6",
+      });
+      const response = await fetch(`${API}/gene-primer/literature?${params.toString()}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      setGeneLiterature(await response.json() as GeneLiteratureResponse);
+    } catch {
+      setGeneLiterature({
+        query_gene: queryGene,
+        species: querySpecies,
+        source_name: "NCBI PubMed",
+        ranking: "PubMed Best Match",
+        search_query: `${queryGene} qPCR`,
+        search_url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(`${queryGene} qPCR`)}`,
+        total_results: 0,
+        available: false,
+        records: [],
+        message: "PubMed literature lookup is temporarily unavailable.",
+      });
+    } finally {
+      setGeneLiteratureLoading(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -1497,7 +1604,7 @@ export default function PrimerPage() {
       if (/[^ATGCNatgcn\s]/.test(trimmed)) { setError(t("validate_seq_invalid")); return; }
     }
 
-    setLoading(true); setElapsedSeconds(0); setError(""); setNotice(""); setResult(null); setProgress([]); setExpandedRow(null); setKnownPrimerRecords([]); setKnownPrimerCatalog(null); setKnownPrimerLoading(false); setKnownPrimerChecks({}); setKnownPrimerChecking({});
+    setLoading(true); setElapsedSeconds(0); setError(""); setNotice(""); setResult(null); setProgress([]); setExpandedRow(null); setKnownPrimerRecords([]); setKnownPrimerCatalog(null); setKnownPrimerLoading(false); setKnownPrimerChecks({}); setKnownPrimerChecking({}); setGeneLiterature(null); setGeneLiteratureLoading(false);
     abortRef.current = new AbortController();
 
     // 3 分钟全局超时
@@ -1529,6 +1636,7 @@ export default function PrimerPage() {
             const localizedData = { ...data, message: localizeResultMessage(data) } as GenePrimerResult;
             setResult(localizedData);
             void runKnownPrimerChecks(localizedData);
+            void runGeneLiteratureSearch(localizedData);
             pushProgress({
               step: 4,
               total: 4,
@@ -1979,6 +2087,15 @@ export default function PrimerPage() {
               copiedPrimer={copiedPrimer}
               copyPrimer={copyPrimer}
             />
+
+            {result.gene_name && (
+              <GeneLiteratureSection
+                gene={result.gene_name}
+                species={result.species === "mouse" ? "mouse" : "human"}
+                literature={geneLiterature}
+                loading={geneLiteratureLoading}
+              />
+            )}
 
             <details className="primer-evidence-disclosure">
               <summary>

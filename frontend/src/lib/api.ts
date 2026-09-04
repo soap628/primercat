@@ -692,6 +692,32 @@ export interface KnownPrimerCatalogResponse {
     evidence_counts: Record<string, number>;
   }[];
 }
+export interface GeneLiteratureRecord {
+  pmid: string;
+  title: string;
+  journal: string;
+  publication_date: string;
+  year?: number | null;
+  authors: string[];
+  publication_types: string[];
+  doi?: string | null;
+  pmc_id?: string | null;
+  pubmed_url: string;
+  doi_url?: string | null;
+  pmc_url?: string | null;
+}
+export interface GeneLiteratureResponse {
+  query_gene: string;
+  species: "human" | "mouse";
+  source_name: string;
+  ranking: string;
+  search_query: string;
+  search_url: string;
+  total_results: number;
+  available: boolean;
+  records: GeneLiteratureRecord[];
+  message: string;
+}
 export interface KnownPrimerValidationResponse {
   status: KnownPrimerCheckStatus;
   scope: string;

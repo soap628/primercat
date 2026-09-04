@@ -294,6 +294,34 @@ class KnownPrimerCatalogResponse(BaseModel):
     source_summaries: list[PrimerCatalogSourceSummary] = Field(default_factory=list)
 
 
+class GeneLiteratureRecord(BaseModel):
+    pmid: str
+    title: str
+    journal: str = ""
+    publication_date: str = ""
+    year: Optional[int] = None
+    authors: list[str] = Field(default_factory=list)
+    publication_types: list[str] = Field(default_factory=list)
+    doi: Optional[str] = None
+    pmc_id: Optional[str] = None
+    pubmed_url: str
+    doi_url: Optional[str] = None
+    pmc_url: Optional[str] = None
+
+
+class GeneLiteratureResponse(BaseModel):
+    query_gene: str
+    species: Species
+    source_name: str = "NCBI PubMed"
+    ranking: str = "PubMed Best Match"
+    search_query: str
+    search_url: str
+    total_results: int = 0
+    available: bool = True
+    records: list[GeneLiteratureRecord] = Field(default_factory=list)
+    message: str = ""
+
+
 class KnownPrimerValidationResponse(BaseModel):
     status: KnownPrimerCheckStatus
     scope: str

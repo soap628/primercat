@@ -5,12 +5,14 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 
 from app.schemas.gene_primer import (
+    GeneLiteratureResponse,
     GenePrimerRequest,
     KnownPrimerCatalogResponse,
     KnownPrimerValidationRequest,
     KnownPrimerValidationResponse,
     Species,
 )
+from app.services.gene_literature import query_gene_literature
 from app.services.gene_primer_service import gene_primer_stream
 from app.services.known_primer_catalog import query_known_primers
 from app.services.known_primer_validation import validate_known_primer_pair
@@ -97,3 +99,13 @@ async def get_known_primers(
         target_transcript,
         limit,
     )
+
+
+@router.get("/literature", response_model=GeneLiteratureResponse)
+async def get_gene_literature(
+    gene: str = Query(..., min_length=1, max_length=100, pattern=r"^[\w.-]+$"),
+    species: Species = Query(...),
+    limit: int = Query(6, ge=1, le=10),
+    _rl: None = rate_limit_dependency(rpm=20),
+):
+    return await asyncio.to_thread(query_gene_literature, gene, species, limit)
