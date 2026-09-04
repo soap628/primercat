@@ -2,6 +2,7 @@
 
 import { Fragment, memo, useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { Link } from "@/navigation";
 import { useAuth } from "@/lib/useAuth";
 import { useToast } from "@/lib/useToast";
 import type {
@@ -1942,6 +1943,38 @@ export default function PrimerPage() {
 
       {showHelp && <PrimerWorkflowModal onClose={() => setShowHelp(false)} />}
     </div>
+
+    <section className="tool-seo-notes" aria-labelledby="qpcr-design-notes-title">
+      <div className="tool-seo-notes-heading">
+        <span>{locale === "zh" ? "qPCR PRIMER DESIGN" : "qPCR PRIMER DESIGN"}</span>
+        <h2 id="qpcr-design-notes-title">
+          {locale === "zh" ? "qPCR 引物在线设计：输入、输出与证据边界" : "Online qPCR primer design: inputs, outputs, and evidence boundaries"}
+        </h2>
+        <p>
+          {locale === "zh"
+            ? "PrimerCat 接收人或小鼠标准基因名，也接受自定义 DNA 序列。所有正向与反向引物均按可直接订购的 5′→3′ 方向展示。"
+            : "PrimerCat accepts standard human or mouse gene symbols as well as custom DNA sequences. Forward and reverse primers are always reported 5′→3′, ready for ordering as shown."}
+        </p>
+      </div>
+      <div className="tool-seo-notes-grid">
+        <article>
+          <h3>{locale === "zh" ? "参考序列" : "Reference sequence"}</h3>
+          <p>{locale === "zh" ? "基因模式按公开规则选择 NCBI RefSeq 转录本，并在结果中保留 accession、物种和选择依据。" : "Gene mode selects an NCBI RefSeq transcript using stated rules and retains its accession, species, and selection basis in the result."}</p>
+        </article>
+        <article>
+          <h3>{locale === "zh" ? "候选生成与筛查" : "Generation and screening"}</h3>
+          <p>{locale === "zh" ? "Primer3 根据长度、Tm、GC%、扩增子和热力学约束生成候选；可用时，再对固定参考基因组和转录组执行成对扩增筛查。" : "Primer3 generates candidates under length, Tm, GC%, amplicon, and thermodynamic constraints, followed where available by paired screening against fixed genome and transcriptome references."}</p>
+        </article>
+        <article>
+          <h3>{locale === "zh" ? "如何解释结果" : "How to interpret results"}</h3>
+          <p>{locale === "zh" ? "候选排序分只用于比较本次返回的引物对，不是实验成功率。正式实验仍应验证扩增效率、熔解曲线、单一产物与阴性对照。" : "The candidate rank score compares pairs returned in the same run; it is not an experimental success probability. Validate efficiency, melt curves, product identity, and negative controls before use."}</p>
+        </article>
+      </div>
+      <div className="tool-seo-notes-links">
+        <Link href="/methods">{locale === "zh" ? "完整计算方法" : "Complete computational methods"}</Link>
+        <Link href="/validation">{locale === "zh" ? "可信度与实验验证" : "Confidence and experimental validation"}</Link>
+      </div>
+    </section>
     </div>
   );
 }

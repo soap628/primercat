@@ -1,20 +1,20 @@
-import type { Metadata } from "next";
+import { buildPageMetadata } from "@/lib/pageMetadata";
 
-export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
-  const isZh = params.locale === "zh";
-  return {
-    title: isZh ? "常规 PCR 引物设计 | PrimerCat" : "Endpoint PCR Primer Design | PrimerCat",
-    description: isZh
-      ? "从 DNA 或 FASTA 模板生成常规、菌落与高保真 PCR 候选引物，并查看扩增子、坐标和结构参数。"
-      : "Generate endpoint, colony, and high-fidelity PCR primer candidates from DNA or FASTA templates with amplicon, coordinate, and structure metrics.",
-    alternates: {
-      canonical: `https://primercat.tech/${params.locale}/pcr`,
-      languages: {
-        zh: "https://primercat.tech/zh/pcr",
-        en: "https://primercat.tech/en/pcr",
-      },
+export function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
+  return buildPageMetadata({
+    locale,
+    path: "/pcr",
+    zh: {
+      title: "PCR 引物设计工具｜在线生成与特异性筛查｜PrimerCat",
+      description: "粘贴 DNA 或 FASTA 序列，在线生成常规 PCR、菌落 PCR 与高保真 PCR 候选引物；查看 5′→3′ 序列、Tm、GC、扩增子、二聚体和可选特异性筛查。",
+      keywords: ["PCR 引物设计", "在线 PCR 引物设计", "菌落 PCR 引物", "高保真 PCR", "Primer3", "PrimerCat"],
     },
-  };
+    en: {
+      title: "PCR Primer Design Tool｜Online Design & Screening｜PrimerCat",
+      description: "Generate endpoint, colony, and high-fidelity PCR primer candidates from DNA or FASTA. Review 5′→3′ sequences, Tm, GC, amplicons, dimers, and optional specificity screening.",
+      keywords: ["PCR primer design", "online PCR primer tool", "colony PCR primers", "high-fidelity PCR", "Primer3", "PrimerCat"],
+    },
+  });
 }
 
 export default function PCRLayout({ children }: { children: React.ReactNode }) {

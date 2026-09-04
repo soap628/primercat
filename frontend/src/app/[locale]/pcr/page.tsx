@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { Link } from "@/navigation";
 
 import {
   designPcr,
@@ -718,6 +719,38 @@ export default function PCRPage() {
           )}
         </main>
       </div>
+
+      <section className="tool-seo-notes" aria-labelledby="pcr-design-notes-title">
+        <div className="tool-seo-notes-heading">
+          <span>PCR PRIMER DESIGN</span>
+          <h2 id="pcr-design-notes-title">
+            {locale === "zh" ? "PCR 引物在线设计：常规、菌落与高保真预设" : "Online PCR primer design for endpoint, colony, and high-fidelity workflows"}
+          </h2>
+          <p>
+            {locale === "zh"
+              ? "粘贴 DNA 或 FASTA 模板后，PrimerCat 使用 Primer3 生成候选 PCR 引物对，并给出可复核的序列、坐标、扩增子和结构参数。"
+              : "Paste a DNA or FASTA template and PrimerCat uses Primer3 to generate PCR primer pairs with reviewable sequences, coordinates, amplicons, and structural metrics."}
+          </p>
+        </div>
+        <div className="tool-seo-notes-grid">
+          <article>
+            <h3>{locale === "zh" ? "选择预设" : "Choose a preset"}</h3>
+            <p>{locale === "zh" ? "常规 PCR、菌落 PCR 与高保真 PCR 预设采用不同的默认扩增子和 Tm 范围；高级参数可继续调整。" : "Endpoint, colony, and high-fidelity presets use different default amplicon and Tm ranges, while advanced constraints remain editable."}</p>
+          </article>
+          <article>
+            <h3>{locale === "zh" ? "检查候选" : "Review candidates"}</h3>
+            <p>{locale === "zh" ? "结果按 5′→3′ 输出正向和反向引物，并展示 Tm 差、GC%、发卡、自互补、末端互补与 GC clamp。" : "Results report both primers 5′→3′ and expose Tm difference, GC%, hairpins, self-complementarity, end complementarity, and GC clamps."}</p>
+          </article>
+          <article>
+            <h3>{locale === "zh" ? "确认特异性" : "Confirm specificity"}</h3>
+            <p>{locale === "zh" ? "可选筛查用于寻找声明参考范围内的成对命中，不代替正式实验或针对全部基因组版本的穷尽验证。" : "Optional screening searches for paired hits within the declared reference scope; it does not replace laboratory validation or an exhaustive check across every genome version."}</p>
+          </article>
+        </div>
+        <div className="tool-seo-notes-links">
+          <Link href="/methods">{locale === "zh" ? "完整计算方法" : "Complete computational methods"}</Link>
+          <Link href="/validation">{locale === "zh" ? "可信度与实验验证" : "Confidence and experimental validation"}</Link>
+        </div>
+      </section>
     </div>
   );
 }

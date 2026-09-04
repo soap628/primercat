@@ -34,6 +34,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         languages: {
           zh: `https://primercat.tech/zh${route.path}`,
           en: `https://primercat.tech/en${route.path}`,
+          "x-default": `https://primercat.tech/zh${route.path}`,
         },
       },
     })),
