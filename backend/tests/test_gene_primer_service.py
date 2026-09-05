@@ -69,3 +69,35 @@ def test_build_design_basis_reports_joint_genome_transcriptome_scope(monkeypatch
     assert basis.paired_transcriptome_screen is True
     assert basis.reference_assembly == "GCF_000001635.27"
     assert basis.transcriptome_reference == "GCF_000001635.27"
+
+
+def test_build_design_basis_reports_remote_paired_transcript_scope(monkeypatch):
+    transcript = TranscriptInfo(
+        transcript_id="NM_000546.6",
+        transcript_description="tumor protein p53",
+        gene_name="TP53",
+        species="human",
+        sequence="A" * 640,
+        cds_start=100,
+        cds_end=500,
+        exons=[ExonInfo(index=0, start=0, end=300), ExonInfo(index=1, start=300, end=640)],
+        cds_length=400,
+        protein_length=133,
+        total_nm_found=1,
+        selection_reason="selected RefSeq transcript",
+    )
+    monkeypatch.setattr(gene_primer_service, "primer_bowtie2_available", lambda species: False)
+    monkeypatch.setattr(gene_primer_service, "transcriptome_bowtie2_available", lambda species: False)
+
+    basis = build_design_basis(
+        transcript, 640, 2, 30, 10, 5,
+        species="human",
+        remote_transcriptome_pair_screen=True,
+    )
+
+    assert basis.blast_database == "ncbi_refseq_rna_paired_blast"
+    assert basis.specificity_scope == "refseq_rna_paired_amplicons"
+    assert basis.paired_amplicon_screen is False
+    assert basis.paired_transcriptome_screen is True
+    assert basis.genome_wide_specificity_checked is False
+    assert basis.transcriptome_reference == "NCBI RefSeq RNA live query"

@@ -79,6 +79,17 @@ def score_primer_pair(
             0.0,
             specificity_score - genome_pair_validation.off_target_amplicon_count * 2,
         )
+    elif transcriptome_pair_validation and transcriptome_pair_validation.checked:
+        # A complete transcript-pair screen is useful evidence, but without a
+        # genome-wide screen it must not receive the same weight as the joint
+        # fixed-reference decision above.
+        specificity_score = 20.0 if transcriptome_pair_validation.gene_specific else 0.0
+        specificity_score = max(
+            0.0,
+            specificity_score
+            - transcriptome_pair_validation.other_gene_amplicon_count * 2
+            - transcriptome_pair_validation.unclassified_amplicon_count * 2,
+        )
     elif both_validated and blast_left.specific and blast_right.specific:
         specificity_score = 30.0
     elif both_validated and (blast_left.specific or blast_right.specific):
@@ -88,7 +99,7 @@ def score_primer_pair(
         specificity_score = 0.0
     else:
         specificity_score = 0.0
-    if both_validated and not genome_pair_validation:
+    if both_validated and not genome_pair_validation and not transcriptome_pair_validation:
         # 脱靶惩罚
         off = blast_left.off_target_count + blast_right.off_target_count
         specificity_score = max(0.0, specificity_score - off * 2)

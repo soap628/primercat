@@ -1,6 +1,10 @@
 from types import SimpleNamespace
 
-from app.schemas.gene_primer import BlastValidationStatus
+from app.schemas.gene_primer import (
+    BlastValidationStatus,
+    TranscriptAmpliconClass,
+    TranscriptomePairScreenStatus,
+)
 from app.services import primer_blast
 
 
@@ -185,3 +189,77 @@ def test_batch_accepts_one_target_accession_per_primer(monkeypatch):
     ]
     assert all(item.target_found for item in result)
     assert all(item.specific for item in result)
+
+
+def _binding_hsp(query: str, subject_start: int, subject_end: int):
+    return SimpleNamespace(
+        align_length=len(query),
+        identities=len(query),
+        query_start=1,
+        query=query,
+        sbjct=query,
+        sbjct_start=subject_start,
+        sbjct_end=subject_end,
+    )
+
+
+def _alignment(accession: str, title: str, hsp):
+    return SimpleNamespace(accession=accession, title=title, hit_id=accession, hsps=[hsp])
+
+
+def test_remote_pair_screen_uses_amplifiable_pairs_not_single_primer_hits(monkeypatch):
+    left = "AACCGGTTAACCGGTTAACC"
+    right = "GGTTCCAAGGTTCCAAGGTT"
+    target_title = "ref|NM_000546.6| Homo sapiens tumor protein p53 (TP53), transcript variant 1, mRNA"
+    unrelated_title = "ref|NM_999999.1| Homo sapiens unrelated transcript (OTHER), mRNA"
+    records = [
+        SimpleNamespace(alignments=[
+            _alignment("NM_000546.6", target_title, _binding_hsp(left, 10, 29)),
+            _alignment("NM_999999.1", unrelated_title, _binding_hsp(left, 50, 69)),
+        ]),
+        SimpleNamespace(alignments=[
+            _alignment("NM_000546.6", target_title, _binding_hsp(right, 140, 121)),
+        ]),
+    ]
+    monkeypatch.setattr(primer_blast, "run_qblast", lambda **kwargs: records)
+
+    blast_results, pair_results = primer_blast.blast_primer_pairs_batch(
+        [(left, right)], "human", "NM_000546.6", "TP53"
+    )
+
+    assert len(blast_results) == 2
+    assert blast_results[0].off_target_count == 1
+    pair = pair_results[0]
+    assert pair.status == TranscriptomePairScreenStatus.validated
+    assert pair.gene_specific is True
+    assert pair.target_transcript_amplicon_count == 1
+    assert pair.other_gene_amplicon_count == 0
+    assert pair.top_amplicons[0].classification == TranscriptAmpliconClass.target_transcript
+
+
+def test_remote_pair_screen_reports_cross_gene_amplicons(monkeypatch):
+    left = "AACCGGTTAACCGGTTAACG"
+    right = "GGTTCCAAGGTTCCAAGGTC"
+    target_title = "ref|NM_000546.6| Homo sapiens tumor protein p53 (TP53), transcript variant 1, mRNA"
+    other_title = "ref|NM_999999.1| Homo sapiens unrelated transcript (OTHER), mRNA"
+    records = [
+        SimpleNamespace(alignments=[
+            _alignment("NM_000546.6", target_title, _binding_hsp(left, 10, 29)),
+            _alignment("NM_999999.1", other_title, _binding_hsp(left, 20, 39)),
+        ]),
+        SimpleNamespace(alignments=[
+            _alignment("NM_000546.6", target_title, _binding_hsp(right, 140, 121)),
+            _alignment("NM_999999.1", other_title, _binding_hsp(right, 180, 161)),
+        ]),
+    ]
+    monkeypatch.setattr(primer_blast, "run_qblast", lambda **kwargs: records)
+
+    _, pair_results = primer_blast.blast_primer_pairs_batch(
+        [(left, right)], "human", "NM_000546.6", "TP53"
+    )
+
+    pair = pair_results[0]
+    assert pair.status == TranscriptomePairScreenStatus.validated
+    assert pair.gene_specific is False
+    assert pair.target_transcript_amplicon_count == 1
+    assert pair.other_gene_amplicon_count == 1

@@ -33,8 +33,8 @@
       "backend/app/services/primer_transcriptome.py": "783d96d9ee5747b6debab669efec92e1eacde11333f3eee63c4735e8f05b49a7",
       "backend/app/services/primer_bowtie2.py": "34b6db4e0aea0c3745aadb9bcb50abb94af874e2196a965874d6b403c885b909",
       "backend/app/services/qpcr_target_locus.py": "3ae4d4e9335cf939c301496b155d86af5ff14f3f5acda5be7d60bb5126e9b2c3",
-      "backend/app/services/gene_primer_service.py": "6b5d45b189e7d25fc69d25b367760e42dbe4d448d02014712276264209946d55",
-      "backend/app/services/primer_scoring.py": "f4f27a57d5d3a6ff4b5b14ce2aaadd0a6851f8dea28a6375c3ef600384f1376b",
+      "backend/app/services/gene_primer_service.py": "a1210c9fb7bfb9227f166b95535f9f25e732b975488c91ee6a974e4a13e677eb",
+      "backend/app/services/primer_scoring.py": "2734777fb09c36f013d047ad0e9c867f3af3b06b72b07d6ac236ab4e4ef88e2f",
       "backend/benchmarks/build_qpcr_transcriptome_v0_5.py": "399ad158db83a3b607816bfae3c421d540093bf74ed31cea0aa4a27fd6e4c11c"
     }
   },

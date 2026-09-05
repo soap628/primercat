@@ -91,6 +91,11 @@ const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: Valida
       ? "incomplete"
       : stateFor(transcriptPair.gene_specific)
     : "incomplete";
+  const specificityItems: { label: string; state: ChecklistState; detail: string }[] = genomePair
+    ? [{ label: t("check_genome_pair"), state: specificityChecklistState, detail: blastDetail }]
+    : transcriptPair
+      ? []
+      : [{ label: t("check_blast"), state: specificityChecklistState, detail: blastDetail }];
   const items: { label: string; state: ChecklistState; detail: string }[] = [
     { label: t("check_tm_range"), state: stateFor(tmOk), detail: `F: ${p.left_tm}°C / R: ${p.right_tm}°C · ${t("tm_conditions_note")}` },
     { label: t("check_tm_diff"), state: stateFor(tmMatchOk), detail: `${t("diff_label")} ${tmDiff.toFixed(1)}°C` },
@@ -98,7 +103,7 @@ const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: Valida
     { label: t("check_clamp"), state: stateFor(clampOk), detail: `F: ${p.left_props?.gc_clamp ?? "—"} / R: ${p.right_props?.gc_clamp ?? "—"}` },
     { label: t("check_hairpin"), state: stateFor(hairpinOk), detail: `F: ${p.left_props?.hairpin_th ?? "—"}°C / R: ${p.right_props?.hairpin_th ?? "—"}°C` },
     { label: t("check_dimer"), state: stateFor(dimerOk), detail: `F: ${p.left_props?.self_end_th ?? "—"}°C / R: ${p.right_props?.self_end_th ?? "—"}°C` },
-    { label: genomePair ? t("check_genome_pair") : t("check_blast"), state: specificityChecklistState, detail: blastDetail },
+    ...specificityItems,
     ...(transcriptPair ? [{ label: t("check_transcriptome_pair"), state: transcriptChecklistState, detail: transcriptDetail }] : []),
     { label: t("check_exon"), state: stateFor(p.exon_span.spans_junction), detail: p.exon_span.spans_junction ? t("check_exon_spans", { n: p.exon_span.junction_count }) : t("check_exon_none") },
   ];
@@ -542,6 +547,8 @@ function DesignBasisCard({ result }: { result: GenePrimerResult }) {
       label: t("basis_specificity_scope"),
       value: basis.specificity_scope === "refseq_rna_transcripts"
         ? t("basis_scope_refseq_rna")
+        : basis.specificity_scope === "refseq_rna_paired_amplicons"
+          ? t("basis_scope_refseq_rna_pair")
         : basis.paired_amplicon_screen && basis.paired_transcriptome_screen
           ? t("basis_scope_joint_pair")
         : basis.paired_amplicon_screen
@@ -596,8 +603,8 @@ function DesignBasisCard({ result }: { result: GenePrimerResult }) {
       </div>
 
       <div className="primer-basis-scope-note">
-        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", flexShrink: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t(basis.paired_transcriptome_screen ? "basis_joint_note_title" : basis.paired_amplicon_screen ? "basis_genome_note_title" : "basis_scope_note_title")}</span>
-        <span style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.65 }}>{t(basis.paired_transcriptome_screen ? "basis_joint_note_body" : basis.paired_amplicon_screen ? "basis_genome_note_body" : "basis_scope_note_body")}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", flexShrink: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t(basis.paired_amplicon_screen && basis.paired_transcriptome_screen ? "basis_joint_note_title" : basis.paired_amplicon_screen ? "basis_genome_note_title" : basis.paired_transcriptome_screen ? "basis_remote_pair_note_title" : "basis_scope_note_title")}</span>
+        <span style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.65 }}>{t(basis.paired_amplicon_screen && basis.paired_transcriptome_screen ? "basis_joint_note_body" : basis.paired_amplicon_screen ? "basis_genome_note_body" : basis.paired_transcriptome_screen ? "basis_remote_pair_note_body" : "basis_scope_note_body")}</span>
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -643,6 +650,9 @@ function getSpecificityEvidenceState(p: ValidatedPrimerPair): SpecificityEvidenc
   )) return "incomplete";
 
   const genome = p.genome_pair_validation;
+  if (transcript && !genome) {
+    return transcript.gene_specific ? "passed" : "review";
+  }
   if (genome) {
     if (!genome.checked || genome.hit_limit_reached || ["error", "truncated", "target_not_anchored"].includes(genome.status)) return "incomplete";
     if (!transcript && genome.status === "no_paired_amplicons") return "incomplete";
@@ -732,6 +742,8 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
         ? transcriptPair
           ? `${genomePair.reference_assembly || "Genome"} · genome target/extra ${genomePair.target_amplicon_count}/${genomePair.off_target_amplicon_count} · RNA target/other-gene ${transcriptPair.target_transcript_amplicon_count}/${transcriptPair.other_gene_amplicon_count}`
           : `${genomePair.reference_assembly || "Genome"} · target ${genomePair.target_amplicon_count} · off-target ${genomePair.off_target_amplicon_count}`
+        : transcriptPair
+          ? `RefSeq RNA · target ${transcriptPair.target_transcript_amplicon_count} · same-gene ${transcriptPair.same_gene_isoform_amplicon_count} · other-gene ${transcriptPair.other_gene_amplicon_count}`
         : bothBlastValidated
           ? `Top hit ${p.blast_left.top_hit_identity}% / ${p.blast_right.top_hit_identity}% · off-target ${offTargetCount}`
           : t("reason_specificity_metric_pending"),
@@ -742,6 +754,10 @@ function PrimerRecommendationCard({ p }: { p: ValidatedPrimerPair }) {
           ? specificityState === "passed"
             ? t("reason_genome_specificity_validated")
             : t("reason_genome_specificity_offtarget")
+          : transcriptPair
+            ? specificityState === "passed"
+              ? t("reason_specificity_validated")
+              : t("reason_specificity_offtarget")
           : bothBlastValidated && specificityState === "passed"
           ? t("reason_specificity_validated")
           : blastLeftStatus === "error" || blastRightStatus === "error"
@@ -1425,13 +1441,8 @@ export default function PrimerPage() {
     if (locale === "zh") return data.message.replace("本次特异性得分按 0 处理", "本次特异性证据标记为待复核");
 
     const pairs = data.primer_pairs ?? [];
-    const incomplete = pairs.some((pair) =>
-      pair.transcriptome_pair_validation && (!pair.transcriptome_pair_validation.checked || ["error", "truncated"].includes(pair.transcriptome_pair_validation.status))
-        ? true
-        : pair.genome_pair_validation
-        ? !pair.genome_pair_validation.checked || ["error", "truncated"].includes(pair.genome_pair_validation.status)
-        : (pair.blast_left.status ?? "validated") !== "validated" ||
-          (pair.blast_right.status ?? "validated") !== "validated"
+    const incomplete = pairs.some(
+      (pair) => getSpecificityEvidenceState(pair) === "incomplete"
     );
     const exonCount = pairs.filter((pair) => pair.exon_span.spans_junction).length;
     if (incomplete) {
@@ -1439,9 +1450,13 @@ export default function PrimerPage() {
     }
     const specificCount = pairs.filter((pair) => pair.is_specific).length;
     const assembly = data.design_basis?.reference_assembly ?? "versioned reference";
-    const screening = data.design_basis?.paired_transcriptome_screen
+    const screening = data.design_basis?.paired_amplicon_screen && data.design_basis?.paired_transcriptome_screen
       ? `${assembly} genome + matched RefSeq RNA paired screen`
-      : data.design_basis?.paired_amplicon_screen ? `${assembly} / Bowtie2 pair screen` : "RefSeq RNA BLAST";
+      : data.design_basis?.paired_amplicon_screen
+        ? `${assembly} / Bowtie2 pair screen`
+        : data.design_basis?.paired_transcriptome_screen
+          ? "NCBI RefSeq RNA paired-amplicon screen"
+          : "RefSeq RNA BLAST";
     return t("result_summary", {
       count: pairs.length,
       specific: specificCount,
@@ -1702,6 +1717,8 @@ export default function PrimerPage() {
   const specificityScopeLabel =
     result?.design_basis?.specificity_scope === "refseq_rna_transcripts"
       ? t("basis_scope_refseq_rna")
+      : result?.design_basis?.specificity_scope === "refseq_rna_paired_amplicons"
+        ? t("basis_scope_refseq_rna_pair")
       : result?.design_basis?.paired_amplicon_screen && result?.design_basis?.paired_transcriptome_screen
         ? t("basis_scope_joint_pair")
       : result?.design_basis?.paired_amplicon_screen
@@ -1961,7 +1978,7 @@ export default function PrimerPage() {
                 <span style={{ color: "var(--primer-color)", fontWeight: 600 }}>{t("basis_specificity_scope")}:</span>
                 <span>{specificityScopeLabel}</span>
                 <span style={{ color: "var(--border-mid)" }}>·</span>
-                <span>{t(result.design_basis?.paired_transcriptome_screen ? "basis_joint_note_body" : result.design_basis?.paired_amplicon_screen ? "basis_genome_note_body" : "basis_scope_note_body")}</span>
+                <span>{t(result.design_basis?.paired_amplicon_screen && result.design_basis?.paired_transcriptome_screen ? "basis_joint_note_body" : result.design_basis?.paired_amplicon_screen ? "basis_genome_note_body" : result.design_basis?.paired_transcriptome_screen ? "basis_remote_pair_note_body" : "basis_scope_note_body")}</span>
               </div>
             </div>
 

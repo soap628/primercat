@@ -33,7 +33,7 @@
     "transcriptome_max_alignments_per_primer": 128,
     "max_mismatches_per_primer": 2,
     "source_code_sha256": {
-      "backend/app/services/gene_primer_service.py": "6b5d45b189e7d25fc69d25b367760e42dbe4d448d02014712276264209946d55",
+      "backend/app/services/gene_primer_service.py": "a1210c9fb7bfb9227f166b95535f9f25e732b975488c91ee6a974e4a13e677eb",
       "backend/app/services/primer_bowtie2.py": "34b6db4e0aea0c3745aadb9bcb50abb94af874e2196a965874d6b403c885b909",
       "backend/app/services/primer_transcriptome.py": "783d96d9ee5747b6debab669efec92e1eacde11333f3eee63c4735e8f05b49a7",
       "backend/app/services/qpcr_target_locus.py": "3ae4d4e9335cf939c301496b155d86af5ff14f3f5acda5be7d60bb5126e9b2c3",

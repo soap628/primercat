@@ -11,7 +11,7 @@ from app.schemas.gene_primer import (
     BlastValidation, BlastValidationStatus,
 )
 from app.services.ncbi_fetch import fetch_transcript, fetch_gene_info, TranscriptInfo, ExonInfo, GeneInfoData
-from app.services.primer_blast import blast_primers_batch
+from app.services.primer_blast import blast_primer_pairs_batch, blast_primers_batch
 from app.services.primer_bowtie2 import (
     primer_bowtie2_available,
     validate_primer_pairs_batch,
@@ -68,10 +68,14 @@ def build_design_basis(
     candidate_pairs_blasted: int,
     returned_pairs: int,
     species: str = "human",
+    remote_transcriptome_pair_screen: bool = False,
 ) -> PrimerDesignBasis:
     product_min, product_max = PRIMER3_SETTINGS["PRIMER_PRODUCT_SIZE_RANGE"][0]
     use_bowtie2 = primer_bowtie2_available(species)
     use_transcriptome = bool(transcript and transcriptome_bowtie2_available(species))
+    use_remote_transcriptome = bool(
+        transcript and not use_bowtie2 and remote_transcriptome_pair_screen
+    )
     return PrimerDesignBasis(
         template_source="ncbi_refseq_transcript" if transcript else "custom_sequence",
         design_region_start=1,
@@ -100,12 +104,16 @@ def build_design_basis(
         blast_database=(
             "genome_bowtie2+refseq_rna_bowtie2"
             if use_bowtie2 and use_transcriptome
-            else "genome_bowtie2" if use_bowtie2 else "refseq_rna"
+            else "genome_bowtie2" if use_bowtie2
+            else "ncbi_refseq_rna_paired_blast" if use_remote_transcriptome
+            else "refseq_rna"
         ),
         specificity_scope=(
             "reference_genome_and_refseq_transcriptome_bowtie2"
             if use_bowtie2 and use_transcriptome
-            else "reference_genome_bowtie2" if use_bowtie2 else "refseq_rna_transcripts"
+            else "reference_genome_bowtie2" if use_bowtie2
+            else "refseq_rna_paired_amplicons" if use_remote_transcriptome
+            else "refseq_rna_transcripts"
         ),
         genome_wide_specificity_checked=use_bowtie2,
         off_target_identity_threshold=80.0,
@@ -115,11 +123,11 @@ def build_design_basis(
             if use_bowtie2
             else None
         ),
-        paired_transcriptome_screen=use_transcriptome,
+        paired_transcriptome_screen=use_transcriptome or use_remote_transcriptome,
         transcriptome_reference=(
             settings.genome_reference_assembly_by_species.get(species) or None
             if use_transcriptome
-            else None
+            else "NCBI RefSeq RNA live query" if use_remote_transcriptome else None
         ),
     )
 
@@ -218,7 +226,9 @@ async def gene_primer_stream(req: GenePrimerRequest) -> AsyncGenerator[str, None
         validation_engine = (
             "Bowtie2 基因组 + RefSeq 转录组成对比对"
             if use_bowtie2 and transcriptome_ready
-            else "Bowtie2 基因组比对" if use_bowtie2 else "NCBI BLAST"
+            else "Bowtie2 基因组比对" if use_bowtie2
+            else "NCBI RefSeq RNA 成对扩增初筛" if transcript
+            else "NCBI BLAST"
         )
         yield _sse("progress", {
             "step": 2, "total": 4,
@@ -272,16 +282,32 @@ async def gene_primer_stream(req: GenePrimerRequest) -> AsyncGenerator[str, None
                 all_seqs.append(pair["left"])
                 all_seqs.append(pair["right"])
             try:
-                blast_results = await asyncio.wait_for(
-                    loop.run_in_executor(
-                        _blast_executor,
-                        blast_primers_batch,
-                        all_seqs,
-                        req.species.value,
-                        transcript.transcript_id if transcript else None,
-                    ),
-                    timeout=150,
-                )
+                if transcript:
+                    blast_results, transcriptome_screen_results = await asyncio.wait_for(
+                        loop.run_in_executor(
+                            _blast_executor,
+                            blast_primer_pairs_batch,
+                            [(pair["left"], pair["right"]) for pair in candidates],
+                            req.species.value,
+                            transcript.transcript_id,
+                            transcript.gene_name,
+                        ),
+                        timeout=170,
+                    )
+                    validation_degraded = any(
+                        not result.checked for result in transcriptome_screen_results
+                    )
+                else:
+                    blast_results = await asyncio.wait_for(
+                        loop.run_in_executor(
+                            _blast_executor,
+                            blast_primers_batch,
+                            all_seqs,
+                            req.species.value,
+                            None,
+                        ),
+                        timeout=150,
+                    )
             except asyncio.TimeoutError:
                 validation_degraded = True
                 blast_results = [
@@ -337,6 +363,8 @@ async def gene_primer_stream(req: GenePrimerRequest) -> AsyncGenerator[str, None
                 if genome_pair_validation is not None and transcriptome_pair_validation is not None
                 else genome_pair_validation.specific
                 if genome_pair_validation is not None
+                else transcriptome_pair_validation.gene_specific
+                if transcriptome_pair_validation is not None
                 else bl.specific and br.specific
             )
 
@@ -390,6 +418,9 @@ async def gene_primer_stream(req: GenePrimerRequest) -> AsyncGenerator[str, None
                 candidate_pairs_blasted=candidate_pairs_blasted,
                 returned_pairs=len(top),
                 species=req.species.value,
+                remote_transcriptome_pair_screen=bool(
+                    transcript and not use_bowtie2 and transcriptome_screen_results is not None
+                ),
             ),
             primer_pairs=top,
             gene_info=GeneInfo(
@@ -410,7 +441,7 @@ async def gene_primer_stream(req: GenePrimerRequest) -> AsyncGenerator[str, None
             ) if gene_info_data and transcript else None,
             message=(
                 f"返回 {len(top)} 对引物（{specific_n} 对通过"
-                f"{'固定基因组与 RefSeq 转录组成对扩增' if use_bowtie2 and transcriptome_ready else '目标基因座锚定的 Bowtie2 成对扩增' if use_bowtie2 else 'RefSeq RNA BLAST'}特异性校验，{exon_n} 对跨外显子）"
+                f"{'固定基因组与 RefSeq 转录组成对扩增' if use_bowtie2 and transcriptome_ready else '目标基因座锚定的 Bowtie2 成对扩增' if use_bowtie2 else 'NCBI RefSeq RNA 成对扩增初筛' if transcriptome_screen_results is not None else 'RefSeq RNA BLAST'}，{exon_n} 对跨外显子）"
                 + ("；NCBI BLAST 远程验证超时，本次特异性得分按 0 处理，请重试验证。" if validation_degraded else "")
             ),
         )
