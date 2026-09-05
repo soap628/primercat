@@ -1,12 +1,14 @@
 "use client";
 
-import { FormEvent, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/navigation";
+import { useSessionWorkspace } from "@/lib/use-session-workspace";
 
 import {
   designPcr,
   screenPcrSpecificity,
+  PCRDesignRequest,
   PCRDesignResponse,
   PCRPairSpecificityResponse,
   PCRPreset,
@@ -26,6 +28,61 @@ const PRESETS: Record<PCRPreset, {
   colony: { productMin: 200, productMax: 1500, tmMin: 57, tmOpt: 60, tmMax: 63 },
   high_fidelity: { productMin: 500, productMax: 3000, tmMin: 60, tmOpt: 62.5, tmMax: 65 },
 };
+
+interface PCRWorkspaceSnapshot {
+  draft: {
+    preset: PCRPreset; label: string; sequence: string;
+    productMin: number; productMax: number; tmMin: number; tmOpt: number; tmMax: number;
+    gcMin: number; gcMax: number; numReturn: number;
+    targetEnabled: boolean; targetStart: string; targetEnd: string;
+  };
+  result: PCRDesignResponse | null;
+  resultQuery: PCRDesignRequest | null;
+  specificitySpecies: PCRSpecificitySpecies;
+  specificityResults: Record<number, PCRPairSpecificityResponse>;
+  expandedPairs: Record<number, boolean>;
+}
+
+const EMPTY_WORKSPACE: PCRWorkspaceSnapshot = {
+  draft: {
+    preset: "standard", label: "", sequence: "", ...PRESETS.standard,
+    gcMin: 40, gcMax: 60, numReturn: 5, targetEnabled: false, targetStart: "", targetEnd: "",
+  },
+  result: null,
+  resultQuery: null,
+  specificitySpecies: "human",
+  specificityResults: {},
+  expandedPairs: {},
+};
+
+function isPCRWorkspace(value: unknown): value is PCRWorkspaceSnapshot {
+  if (!value || typeof value !== "object") return false;
+  const saved = value as PCRWorkspaceSnapshot;
+  const draft = saved.draft;
+  if (!draft || !Object.hasOwn(PRESETS, draft.preset) ||
+    ![draft.label, draft.sequence, draft.targetStart, draft.targetEnd].every((item) => typeof item === "string") ||
+    ![draft.productMin, draft.productMax, draft.tmMin, draft.tmOpt, draft.tmMax, draft.gcMin, draft.gcMax, draft.numReturn].every(Number.isFinite) ||
+    typeof draft.targetEnabled !== "boolean" || !["human", "mouse"].includes(saved.specificitySpecies) ||
+    !saved.specificityResults || !saved.expandedPairs || !Object.values(saved.expandedPairs).every((item) => typeof item === "boolean")) return false;
+  if (!saved.result) return saved.result === null && saved.resultQuery === null && Object.keys(saved.specificityResults).length === 0;
+  if (!saved.result.success || !Array.isArray(saved.result.primer_pairs) || !saved.resultQuery || typeof saved.resultQuery.sequence !== "string" ||
+    !Object.hasOwn(PRESETS, saved.result.preset) || !Number.isFinite(saved.result.sequence_length)) return false;
+  const pairNumbers: Array<keyof PCRPrimerPair> = [
+    "pair_index", "left_tm", "right_tm", "left_gc", "right_gc", "tm_difference", "product_size", "penalty",
+    "left_start", "left_end", "right_start", "right_end", "amplicon_start", "amplicon_end", "left_self_any_th", "left_self_end_th",
+    "left_hairpin_th", "right_self_any_th", "right_self_end_th", "right_hairpin_th", "pair_compl_any_th", "pair_compl_end_th",
+    "left_gc_clamp", "right_gc_clamp", "annealing_temp_estimate", "annealing_gradient_low", "annealing_gradient_high",
+  ];
+  if (!saved.result.primer_pairs.every((pair) => pair && pairNumbers.every((field) => Number.isFinite(pair[field])) &&
+    [pair.left_primer, pair.right_primer, pair.amplicon_sequence].every((item) => typeof item === "string"))) return false;
+  return Object.entries(saved.specificityResults).every(([key, screen]) => screen &&
+    screen.species === saved.specificitySpecies && Number(key) === screen.pair_index &&
+    saved.result!.primer_pairs.some((pair) => pair.pair_index === screen.pair_index) &&
+    ["one_paired_record", "multiple_paired_records", "no_paired_records", "not_checked"].includes(screen.verdict) &&
+    Array.isArray(screen.paired_records) && screen.paired_records.every((record) => record &&
+      typeof record.accession === "string" && typeof record.title === "string" &&
+      [record.left_identity, record.right_identity, record.product_size, record.start, record.end].every(Number.isFinite)));
+}
 
 function normalizedSequenceLength(raw: string) {
   return raw
@@ -105,6 +162,8 @@ function PrimerPairCard({
   specificityBusy,
   specificityError,
   onScreenSpecificity,
+  expanded,
+  onToggleExpanded,
 }: {
   pair: PCRPrimerPair;
   templateLength: number;
@@ -114,9 +173,10 @@ function PrimerPairCard({
   specificityBusy: boolean;
   specificityError?: string;
   onScreenSpecificity: () => void;
+  expanded: boolean;
+  onToggleExpanded: () => void;
 }) {
   const t = useTranslations("pcr");
-  const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
   async function copy(value: string, key: string) {
@@ -229,7 +289,7 @@ function PrimerPairCard({
         <button
           type="button"
           className="pcr-expand-button"
-          onClick={() => setExpanded((value) => !value)}
+          onClick={onToggleExpanded}
           aria-expanded={expanded}
           aria-label={expanded ? t("collapse_pair", { n: pair.pair_index }) : t("expand_pair", { n: pair.pair_index })}
         >
@@ -356,10 +416,78 @@ export default function PCRPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<PCRDesignResponse | null>(null);
+  const [resultQuery, setResultQuery] = useState<PCRDesignRequest | null>(null);
   const [specificitySpecies, setSpecificitySpecies] = useState<PCRSpecificitySpecies>("human");
   const [specificityResults, setSpecificityResults] = useState<Record<number, PCRPairSpecificityResponse>>({});
   const [specificityErrors, setSpecificityErrors] = useState<Record<number, string>>({});
   const [specificityLoadingPair, setSpecificityLoadingPair] = useState<number | null>(null);
+  const [expandedPairs, setExpandedPairs] = useState<Record<number, boolean>>({});
+  const mountedRef = useRef(false);
+  const designRunRef = useRef(0);
+  const screenRunRef = useRef(0);
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      designRunRef.current += 1;
+      screenRunRef.current += 1;
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    };
+  }, []);
+
+  const snapshot = useMemo<PCRWorkspaceSnapshot>(() => ({
+    draft: { preset, label, sequence, productMin, productMax, tmMin, tmOpt, tmMax, gcMin, gcMax, numReturn, targetEnabled, targetStart, targetEnd },
+    result, resultQuery, specificitySpecies, specificityResults, expandedPairs,
+  }), [preset, label, sequence, productMin, productMax, tmMin, tmOpt, tmMax, gcMin, gcMax, numReturn, targetEnabled, targetStart, targetEnd,
+    result, resultQuery, specificitySpecies, specificityResults, expandedPairs]);
+
+  function restoreWorkspace(saved: PCRWorkspaceSnapshot) {
+    const draft = saved.draft;
+    setPreset(draft.preset);
+    setLabel(draft.label);
+    setSequence(draft.sequence);
+    setProductMin(draft.productMin);
+    setProductMax(draft.productMax);
+    setTmMin(draft.tmMin);
+    setTmOpt(draft.tmOpt);
+    setTmMax(draft.tmMax);
+    setGcMin(draft.gcMin);
+    setGcMax(draft.gcMax);
+    setNumReturn(draft.numReturn);
+    setTargetEnabled(draft.targetEnabled);
+    setTargetStart(draft.targetStart);
+    setTargetEnd(draft.targetEnd);
+    setResult(saved.result);
+    setResultQuery(saved.resultQuery);
+    setSpecificitySpecies(saved.specificitySpecies);
+    setSpecificityResults(saved.specificityResults);
+    setExpandedPairs(saved.expandedPairs);
+    setLoading(false);
+    setSpecificityLoadingPair(null);
+    setError("");
+    setSpecificityErrors({});
+  }
+
+  const workspace = useSessionWorkspace("primercat:workspace:pcr:v1", snapshot, restoreWorkspace, isPCRWorkspace);
+  const currentQuery = useMemo<PCRDesignRequest>(() => ({
+    sequence, label: label.trim() || undefined, preset,
+    product_size_min: productMin, product_size_max: productMax,
+    primer_tm_min: tmMin, primer_tm_opt: tmOpt, primer_tm_max: tmMax,
+    primer_gc_min: gcMin, primer_gc_max: gcMax, num_return: numReturn,
+    target_start: targetEnabled ? Number(targetStart) : undefined,
+    target_end: targetEnabled ? Number(targetEnd) : undefined,
+  }), [sequence, label, preset, productMin, productMax, tmMin, tmOpt, tmMax, gcMin, gcMax, numReturn, targetEnabled, targetStart, targetEnd]);
+  const resultInputChanged = resultQuery !== null && JSON.stringify(currentQuery) !== JSON.stringify(resultQuery);
+
+  function clearWorkspace() {
+    designRunRef.current += 1;
+    screenRunRef.current += 1;
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    workspace.clear();
+    restoreWorkspace(EMPTY_WORKSPACE);
+  }
 
   const sequenceLength = useMemo(() => normalizedSequenceLength(sequence), [sequence]);
 
@@ -414,11 +542,8 @@ export default function PCRPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (!workspace.ready || loading) return;
     setError("");
-    setResult(null);
-    setSpecificityResults({});
-    setSpecificityErrors({});
-    setSpecificityLoadingPair(null);
 
     if (!sequence.trim()) {
       setError(t("error_empty"));
@@ -437,43 +562,38 @@ export default function PCRPage() {
       return;
     }
 
+    const run = ++designRunRef.current;
+    screenRunRef.current += 1;
+    setSpecificityLoadingPair(null);
+    const query = currentQuery;
     setLoading(true);
     try {
-      const response = await designPcr({
-        sequence,
-        label: label.trim() || undefined,
-        preset,
-        product_size_min: productMin,
-        product_size_max: productMax,
-        primer_tm_min: tmMin,
-        primer_tm_opt: tmOpt,
-        primer_tm_max: tmMax,
-        primer_gc_min: gcMin,
-        primer_gc_max: gcMax,
-        num_return: numReturn,
-        target_start: targetEnabled ? Number(targetStart) : undefined,
-        target_end: targetEnabled ? Number(targetEnd) : undefined,
-      });
+      const response = await designPcr(query);
+      if (!mountedRef.current || run !== designRunRef.current) return;
       if (!response.success) {
         setError(messageFor(response.message));
         return;
       }
       setResult(response);
-      window.setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+      setResultQuery(query);
+      setSpecificityResults({});
+      setSpecificityErrors({});
+      setExpandedPairs({});
+      scrollTimerRef.current = setTimeout(() => {
+        if (mountedRef.current && run === designRunRef.current) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
     } catch (requestError) {
+      if (!mountedRef.current || run !== designRunRef.current) return;
       setError(messageForRequestError(requestError));
     } finally {
-      setLoading(false);
+      if (mountedRef.current && run === designRunRef.current) setLoading(false);
     }
   }
 
   async function handleSpecificity(pair: PCRPrimerPair) {
+    if (!workspace.ready || loading || specificityLoadingPair !== null) return;
+    const run = ++screenRunRef.current;
     setSpecificityLoadingPair(pair.pair_index);
-    setSpecificityResults((current) => {
-      const next = { ...current };
-      delete next[pair.pair_index];
-      return next;
-    });
     setSpecificityErrors((current) => {
       const next = { ...current };
       delete next[pair.pair_index];
@@ -490,18 +610,22 @@ export default function PCRPage() {
         max_amplicon_size: 5000,
         expected_product_size: pair.product_size,
       });
+      if (!mountedRef.current || run !== screenRunRef.current) return;
       setSpecificityResults((current) => ({ ...current, [pair.pair_index]: response }));
     } catch (requestError) {
+      if (!mountedRef.current || run !== screenRunRef.current) return;
       setSpecificityErrors((current) => ({
         ...current,
         [pair.pair_index]: requestError instanceof Error ? requestError.message : t("specificity_error_ncbi"),
       }));
     } finally {
-      setSpecificityLoadingPair(null);
+      if (mountedRef.current && run === screenRunRef.current) setSpecificityLoadingPair(null);
     }
   }
 
   function changeSpecificitySpecies(nextSpecies: PCRSpecificitySpecies) {
+    screenRunRef.current += 1;
+    setSpecificityLoadingPair(null);
     setSpecificitySpecies(nextSpecies);
     setSpecificityResults({});
     setSpecificityErrors({});
@@ -556,6 +680,15 @@ export default function PCRPage() {
           <small>{t("hero_meta_body")}</small>
         </div>
       </section>
+
+      {workspace.ready && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 18, color: "var(--text-2)", fontSize: 12, lineHeight: 1.7 }}>
+        <p role="status" style={{ margin: 0 }}>
+          {workspace.storageAvailable
+            ? (locale === "zh" ? "输入、已完成的结果和展开状态会保留在当前浏览会话中；切换页面后可继续查看。" : "Inputs, completed results and expanded details are kept in this browsing session, so you can return after visiting another page.")
+            : (locale === "zh" ? "浏览器暂时无法保存会话，当前仅在页面导航期间保留；刷新页面可能丢失。" : "Session storage is unavailable. Results are retained during navigation, but may be lost on refresh.")}
+        </p>
+        <button type="button" onClick={clearWorkspace} style={{ border: 0, padding: "4px 0", background: "transparent", color: "var(--text-2)", fontSize: 12, textDecoration: "underline", textUnderlineOffset: 3, cursor: "pointer" }}>{locale === "zh" ? "清除本页" : "Clear this workspace"}</button>
+      </div>}
 
       <div className="pcr-workspace">
         <form className="pcr-form-card" onSubmit={handleSubmit}>
@@ -626,7 +759,7 @@ export default function PCRPage() {
               <div><strong>{tCommon("request_failed")}</strong><p>{error}</p></div>
             </div>
           )}
-          <button className="pcr-submit" type="submit" disabled={loading}>
+          <button className="pcr-submit" type="submit" disabled={loading || !workspace.ready}>
             {loading ? <><span className="pcr-spinner" />{t("designing")}</> : t("design_button")}
           </button>
           <p className="pcr-form-boundary">{t("design_boundary")}</p>
@@ -667,8 +800,10 @@ export default function PCRPage() {
             </section>
           )}
 
-          {result && (
+          {result && !loading && (
             <div className="pcr-result-stack">
+              {resultInputChanged && <p role="status" style={{ margin: 0, color: "var(--text-2)", fontSize: 13, lineHeight: 1.75 }}>{locale === "zh" ? "输入参数已修改。下方保留的是上次已完成的设计结果，尚未应用当前输入。" : "The inputs have changed. Results below are from the last completed design and do not yet reflect the current inputs."}</p>}
+              {error && <p style={{ margin: 0, color: "var(--text-2)", fontSize: 13, lineHeight: 1.75 }}>{locale === "zh" ? "本次设计未完成，下方仍保留上次已完成的结果。" : "This design attempt did not complete. The last completed results remain below."}</p>}
               <section className="pcr-result-summary">
                 <div>
                   <div className="pcr-kicker">{t("results_kicker")}</div>
@@ -703,15 +838,17 @@ export default function PCRPage() {
               <div className="pcr-result-list">
                 {result.primer_pairs.map((pair) => (
                   <PrimerPairCard
-                    key={pair.pair_index}
+                    key={`${pair.pair_index}:${pair.left_primer}:${pair.right_primer}`}
                     pair={pair}
                     templateLength={result.sequence_length}
                     recommended={pair.pair_index === result.primer_pairs[0]?.pair_index}
-                    specificityResult={specificityResults[pair.pair_index]}
+                    specificityResult={specificityLoadingPair === pair.pair_index ? undefined : specificityResults[pair.pair_index]}
                     specificityLoading={specificityLoadingPair === pair.pair_index}
-                    specificityBusy={specificityLoadingPair !== null}
+                    specificityBusy={specificityLoadingPair !== null || !workspace.ready}
                     specificityError={specificityErrors[pair.pair_index]}
                     onScreenSpecificity={() => handleSpecificity(pair)}
+                    expanded={!!expandedPairs[pair.pair_index]}
+                    onToggleExpanded={() => setExpandedPairs((current) => ({ ...current, [pair.pair_index]: !current[pair.pair_index] }))}
                   />
                 ))}
               </div>

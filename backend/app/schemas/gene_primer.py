@@ -307,16 +307,19 @@ class GeneLiteratureRecord(BaseModel):
     pubmed_url: str
     doi_url: Optional[str] = None
     pmc_url: Optional[str] = None
+    journal_tier: str = "other"
 
 
 class GeneLiteratureResponse(BaseModel):
     query_gene: str
     species: Species
     source_name: str = "NCBI PubMed"
-    ranking: str = "PubMed Best Match"
+    ranking: str = "Curated journal priority, then PubMed Best Match"
     search_query: str
     search_url: str
     total_results: int = 0
+    total_results_exact: bool = True
+    partial: bool = False
     available: bool = True
     records: list[GeneLiteratureRecord] = Field(default_factory=list)
     message: str = ""

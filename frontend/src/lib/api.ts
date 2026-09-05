@@ -457,6 +457,8 @@ export interface BlastRequest {
   database?: "nt" | "nr" | "refseq_rna" | "refseq_protein" | "swissprot";
   hitlist_size?: number;
   expect?: number;
+  short_query?: boolean | null;
+  species?: "human" | "mouse";
 }
 
 export interface BlastHsp {
@@ -490,6 +492,15 @@ export interface BlastResponse {
   query_length: number;
   hits: BlastHit[];
   message: string;
+  error_code?: "timeout" | "unavailable" | "invalid_response" | "busy" | null;
+  query_sequence?: string;
+  search_parameters?: {
+    short_query: boolean;
+    expect: number;
+    word_size: number | null;
+    species: "human" | "mouse" | null;
+    hitlist_size: number;
+  } | null;
 }
 
 // ── Gene Primer Types ────────────────────────────────────────────────────────
@@ -696,6 +707,7 @@ export interface GeneLiteratureRecord {
   pmid: string;
   title: string;
   journal: string;
+  journal_tier?: "cns" | "cns_family" | "specialist" | "other";
   publication_date: string;
   year?: number | null;
   authors: string[];
@@ -715,6 +727,8 @@ export interface GeneLiteratureResponse {
   search_url: string;
   total_results: number;
   available: boolean;
+  partial?: boolean;
+  total_results_exact?: boolean;
   records: GeneLiteratureRecord[];
   message: string;
 }

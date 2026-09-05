@@ -2505,6 +2505,19 @@ body:has(.home-hero-wrap) .site-main {
   font-size: 10px;
   font-weight: 650;
 }
+.known-primer-sequences > div { grid-template-columns: 72px minmax(0, 1fr) auto auto; }
+.known-primer-sequences a {
+  color: var(--primer-color);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.known-primer-blast-note { margin: 7px 0 0; color: var(--text-2); font-size: 11px; line-height: 1.65; }
+.gene-literature-ranking { margin: -4px 0 16px; color: var(--text-2); font-size: 12px; line-height: 1.7; }
+.gene-literature-ranking summary { cursor: pointer; width: fit-content; text-decoration: underline; text-underline-offset: 3px; }
+.gene-literature-ranking p { margin: 8px 0; max-width: 850px; }
 .known-primer-metadata {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2594,13 +2607,22 @@ body:has(.home-hero-wrap) .site-main {
 }
 .primer-sequence-row {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
+  grid-template-columns: 52px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 8px;
   min-width: 0;
 }
 .primer-sequence-row.forward { color: #539df5; }
 .primer-sequence-row.reverse { color: var(--primer-color); }
+.primer-sequence-blast {
+  padding: 4px 0 4px 4px;
+  color: var(--text-2);
+  font-size: 10px;
+  white-space: nowrap;
+  text-underline-offset: 3px;
+}
+.primer-sequence-blast:hover { color: var(--text-1); text-decoration: underline; }
+.primer-sequence-blast:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .primer-sequence-label {
   display: inline-flex;
   align-items: baseline;
@@ -2985,7 +3007,7 @@ body:has(.home-hero-wrap) .site-main {
   .gene-literature-heading { flex-direction: column; gap: 6px; }
   .gene-literature-list > li { grid-template-columns: 26px minmax(0, 1fr); gap: 9px; }
   .known-primer-sequences > div {
-    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-columns: 52px minmax(0, 1fr) auto auto;
     gap: 6px;
   }
   .known-primer-sequences code {
@@ -3123,7 +3145,7 @@ body:has(.home-hero-wrap) .site-main {
     padding: 12px 10px;
   }
   .primer-sequence-row {
-    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-columns: 52px minmax(0, 1fr) auto auto;
     align-items: start;
     gap: 6px;
   }

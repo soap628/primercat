@@ -1,11 +1,31 @@
 import asyncio
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from hashlib import sha1
 
-from app.schemas.blast import BlastRequest, BlastResponse, BlastHit, BlastHsp
-from app.services.ncbi_client import cached_call, run_qblast
+from app.schemas.blast import BlastRequest, BlastResponse, BlastHit, BlastHsp, BlastSearchParameters
+from app.services.ncbi_client import cached_call
+from app.services.remote_blast import run_remote_blast as run_qblast
 
 _executor = ThreadPoolExecutor(max_workers=4)
+_pending: dict[str, asyncio.Future] = {}
+_logger = logging.getLogger(__name__)
+
+
+def _response(req: BlastRequest, **values) -> BlastResponse:
+    return BlastResponse(
+        program=req.program.value, database=req.database.value,
+        query_length=len(req.sequence), query_sequence=req.sequence,
+        search_parameters=BlastSearchParameters(
+            short_query=bool(req.short_query), expect=req.expect,
+            word_size=7 if req.short_query else None,
+            species=req.species, hitlist_size=req.hitlist_size,
+        ), **values,
+    )
+
+
+def _failure(req: BlastRequest, code: str, message: str) -> BlastResponse:
+    return _response(req, success=False, hits=[], error_code=code, message=message)
 
 
 def _run_blast(req: BlastRequest) -> BlastResponse:
@@ -15,6 +35,20 @@ def _run_blast(req: BlastRequest) -> BlastResponse:
 
     def _load() -> BlastResponse:
         try:
+            short_options = {}
+            if req.short_query:
+                # NCBI short nucleotide settings; E-value remains visible/editable in the UI.
+                # https://www.ncbi.nlm.nih.gov/books/NBK279684/table/appendices.T.blastn_application_options/
+                short_options = {
+                    "word_size": 7,
+                    "nucl_reward": 1,
+                    "nucl_penalty": -3,
+                    "gapcosts": "5 2",
+                    "filter": "F",
+                }
+                if req.species:
+                    taxid = {"human": "9606", "mouse": "10090"}[req.species]
+                    short_options["entrez_query"] = f"txid{taxid}[Organism:exp]"
             blast_records = run_qblast(
                 program=req.program.value,
                 database=req.database.value,
@@ -22,34 +56,32 @@ def _run_blast(req: BlastRequest) -> BlastResponse:
                 hitlist_size=req.hitlist_size,
                 expect=req.expect,
                 format_type="XML",
+                **short_options,
             )
-        except Exception as e:
-            return BlastResponse(
-                success=False,
-                program=req.program.value,
-                database=req.database.value,
-                query_length=len(req.sequence),
-                hits=[],
-                message=f"NCBI BLAST 请求失败: {str(e)}",
-            )
+        except TimeoutError:
+            return _failure(req, "timeout", "NCBI BLAST timed out; no completed result was received.")
+        except ValueError:
+            return _failure(req, "invalid_response", "NCBI BLAST returned an invalid or incomplete response.")
+        except Exception:
+            _logger.exception("Remote BLAST request failed")
+            return _failure(req, "unavailable", "NCBI BLAST is temporarily unavailable. Please try again later.")
 
-        if not blast_records:
-            return BlastResponse(
-                success=True,
-                program=req.program.value,
-                database=req.database.value,
-                query_length=len(req.sequence),
-                hits=[],
-                message="未找到相似序列",
-            )
+        # A real no-hit report still contains one query record. Empty/multiple
+        # records are not scientific negative evidence and must not be cached.
+        if len(blast_records) != 1:
+            return _failure(req, "invalid_response", "NCBI BLAST did not return one complete query record.")
 
         record = blast_records[0]
+        if getattr(record, "query_letters", None) != len(sequence):
+            return _failure(req, "invalid_response", "NCBI BLAST returned an unexpected query length.")
         hits = []
 
         for rank, alignment in enumerate(record.alignments, start=1):
             if not alignment.hsps:
                 continue
             hsp = max(alignment.hsps, key=lambda h: h.bits)
+            if hsp.align_length <= 0:
+                return _failure(req, "invalid_response", "NCBI BLAST returned an invalid alignment length.")
             identity_pct = round(hsp.identities / hsp.align_length * 100, 1)
             gaps_pct = round((hsp.gaps or 0) / hsp.align_length * 100, 1)
 
@@ -77,21 +109,21 @@ def _run_blast(req: BlastRequest) -> BlastResponse:
                 )
             )
 
-        return BlastResponse(
+        return _response(
+            req,
             success=True,
-            program=req.program.value,
-            database=req.database.value,
-            query_length=len(req.sequence),
             hits=hits,
-            message=f"找到 {len(hits)} 个相似序列",
+            message=f"Returned {len(hits)} matching sequences under the selected search settings.",
         )
 
     return cached_call(
-        "blast_sequence",
+        "blast_sequence_short_v2",
         req.program.value,
         req.database.value,
         req.hitlist_size,
         req.expect,
+        req.short_query,
+        req.species,
         sequence_hash,
         loader=_load,
         should_cache=lambda response: response.success,
@@ -99,6 +131,18 @@ def _run_blast(req: BlastRequest) -> BlastResponse:
 
 
 async def blast_sequence(req: BlastRequest) -> BlastResponse:
-    """异步入口，将同步 BLAST 查询投入线程池。"""
+    """Share identical in-flight work; keep the per-worker queue bounded."""
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(_executor, _run_blast, req)
+    key = sha1(req.model_dump_json().encode()).hexdigest()
+    future = _pending.get(key)
+    if future is None:
+        if len(_pending) >= 4:
+            return _failure(req, "busy", "BLAST capacity is busy. Please try again shortly.")
+        future = loop.run_in_executor(_executor, _run_blast, req)
+        _pending[key] = future
+        future.add_done_callback(lambda done: _pending.pop(key, None) if _pending.get(key) is done else None)
+    try:
+        # Cancellation of one HTTP client must not abandon the shared worker.
+        return await asyncio.wait_for(asyncio.shield(future), timeout=250)
+    except TimeoutError:
+        return _failure(req, "timeout", "NCBI BLAST timed out; no completed result was received.")
