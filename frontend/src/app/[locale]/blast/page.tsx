@@ -351,7 +351,7 @@ export default function BlastPage() {
             <label className="label-caps" style={{ display: "block", marginBottom: 8 }}>
               {t("program_label")}
             </label>
-            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            <div className="blast-program-grid" role="group" aria-label={t("program_label")}>
               {PROGRAMS.map((item) => (
                 <button
                   key={item.value}
@@ -359,6 +359,7 @@ export default function BlastPage() {
                   disabled={loading}
                   onClick={() => handleProgramChange(item.value)}
                   className="blast-program-choice"
+                  aria-pressed={program === item.value}
                   data-selected={program === item.value ? "true" : "false"}
                   style={{
                     display: "flex",
@@ -722,6 +723,7 @@ export default function BlastPage() {
                             {idx === 0 && <span className="result-best-label blast-top-label">{t("top_hit")}</span>}
                           </div>
                           <p
+                            className="blast-hit-title"
                             style={{
                               fontSize: 12,
                               color: "var(--text-2)",
@@ -732,7 +734,7 @@ export default function BlastPage() {
                           >
                             {hit.title}
                           </p>
-                          <p style={{ margin: "4px 0 0", fontSize: 11, color: "var(--text-2)" }}>{locale === "zh" ? "查询覆盖度" : "Query coverage"}: {queryCoverage === null ? "—" : `${queryCoverage}%`} · {locale === "zh" ? "查询坐标" : "Query positions"} {hit.best_hsp.query_start}–{hit.best_hsp.query_end}/{result.query_length}</p>
+                          <p className="blast-hit-coverage" style={{ margin: "4px 0 0", fontSize: 11, color: "var(--text-2)" }}>{locale === "zh" ? "查询覆盖度" : "Query coverage"}: {queryCoverage === null ? "—" : `${queryCoverage}%`} · {locale === "zh" ? "查询坐标" : "Query positions"} {hit.best_hsp.query_start}–{hit.best_hsp.query_end}/{result.query_length}</p>
                         </div>
                         <div style={{ textAlign: "right", fontSize: 12, flexShrink: 0 }}>
                           <div style={{ fontWeight: 600, color: "var(--text-1)" }}>{hit.best_hsp.bits} bits</div>
@@ -742,7 +744,16 @@ export default function BlastPage() {
                           <strong>{hit.best_hsp.identity_pct}%</strong>
                           <span aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, hit.best_hsp.identity_pct))}%` }} /></span>
                         </div>
-                        <span
+                        <button
+                          type="button"
+                          className="blast-hit-toggle"
+                          aria-expanded={isSelected}
+                          aria-controls={isSelected ? `blast-hit-details-${hit.rank}` : undefined}
+                          aria-label={locale === "zh" ? `${isSelected ? "收起" : "展开"} ${hit.accession} 的比对详情` : `${isSelected ? "Collapse" : "Expand"} alignment details for ${hit.accession}`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelectedHit(isSelected ? null : hit);
+                          }}
                           style={{
                             color: "var(--text-3)",
                             fontSize: 10,
@@ -753,11 +764,12 @@ export default function BlastPage() {
                           }}
                         >
                           &gt;
-                        </span>
+                        </button>
                       </div>
 
                       {isSelected && (
                         <div
+                          id={`blast-hit-details-${hit.rank}`}
                           className="fade-in-up blast-hit-detail"
                           style={{
                             marginTop: 4,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   CHEMICAL_INTERACTION_ALERTS,
   CHEMICAL_SAFETY_RECORDS,
@@ -26,6 +26,9 @@ const COPY = {
     emergencyTitle: "发生暴露或泄漏时",
     emergencyBody: "立即停止操作并启动本实验室应急流程。人员暴露使用洗眼器/安全淋浴并尽快联系现场急救、EHS 或医疗机构；不要依据网页摘要自行处理中毒或大型泄漏。具体措施见该产品 SDS 第 4 节和第 6 节。",
     searchLabel: "搜索试剂",
+    clearSearch: "清空搜索",
+    resetFilters: "清除搜索与筛选",
+    browseRecords: "检索试剂资料 ↓",
     searchPlaceholder: "名称、别名、CAS、化学式，例如：DMSO / OsO₄ / 58-58-2",
     useFilterLabel: "按实验用途",
     hazardFilterLabel: "按危险类别",
@@ -100,6 +103,9 @@ const COPY = {
     emergencyTitle: "If exposure or a spill occurs",
     emergencyBody: "Stop work and activate the laboratory emergency procedure. For personal exposure, use the eyewash/safety shower and promptly contact onsite response, EHS, or medical services. Do not use a web summary to self-treat poisoning or manage a large spill. Follow Sections 4 and 6 of the actual product SDS.",
     searchLabel: "Search reagents",
+    clearSearch: "Clear search",
+    resetFilters: "Clear search and filters",
+    browseRecords: "Browse reagent records ↓",
     searchPlaceholder: "Name, alias, CAS, or formula — e.g. DMSO / OsO₄ / 58-58-2",
     useFilterLabel: "By laboratory use",
     hazardFilterLabel: "By hazard category",
@@ -235,6 +241,14 @@ export default function ChemicalSafetyPage({
   const [query, setQuery] = useState(searchParams?.q ?? "");
   const [filter, setFilter] = useState<SafetyFilter>("all");
   const [useFilter, setUseFilter] = useState<UseFilter>("all");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const resetFilters = () => {
+    setQuery("");
+    setFilter("all");
+    setUseFilter("all");
+    searchRef.current?.focus();
+  };
 
   const records = useMemo(() => {
     const needle = normalize(query);
@@ -263,6 +277,7 @@ export default function ChemicalSafetyPage({
           <span className="lab-kicker">{copy.kicker}</span>
           <h1>{copy.title}</h1>
           <p>{copy.intro}</p>
+          <a className="chem-browse-link" href="#chemical-library">{copy.browseRecords}</a>
         </div>
       </section>
 
@@ -290,29 +305,33 @@ export default function ChemicalSafetyPage({
         </div>
       </section>
 
-      <section className="chem-browser">
+      <section className="chem-browser" id="chemical-library" aria-labelledby="chemical-library-heading">
         <header className="chemical-library-header">
-          <div><h2>{copy.searchLabel}</h2></div>
-          <span><strong>{records.length}</strong> {copy.results}</span>
+          <div><h2 id="chemical-library-heading">{copy.searchLabel}</h2></div>
+          <span className="chem-result-count" role="status" aria-atomic="true"><strong>{records.length}</strong> {copy.results}</span>
         </header>
         <div className="chem-search-block">
           <label htmlFor="chemical-search">{copy.searchLabel}</label>
-          <div className="chem-search-input"><span aria-hidden="true">⌕</span><input id="chemical-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.searchPlaceholder} autoComplete="off" /></div>
+          <div className="chem-search-input">
+            <span aria-hidden="true">⌕</span>
+            <input ref={searchRef} id="chemical-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.searchPlaceholder} autoComplete="off" />
+            {query && <button className="chem-search-clear" type="button" aria-label={copy.clearSearch} onClick={() => { setQuery(""); searchRef.current?.focus(); }}>×</button>}
+          </div>
         </div>
         <div className="chem-filter-group">
           <span>{copy.useFilterLabel}</span>
-          <div className="lab-filter-row chem-filters" aria-label={zh ? "实验用途筛选" : "Laboratory use filter"}>
-            {useFilters.map((item) => <button key={item} type="button" data-active={useFilter === item} onClick={() => setUseFilter(item)}>{item === "all" ? copy.allUses : copy[item]}</button>)}
+          <div className="lab-filter-row chem-filters" role="group" aria-label={zh ? "实验用途筛选" : "Laboratory use filter"}>
+            {useFilters.map((item) => <button key={item} type="button" data-active={useFilter === item} aria-pressed={useFilter === item} onClick={() => setUseFilter(item)}>{item === "all" ? copy.allUses : copy[item]}</button>)}
           </div>
         </div>
         <div className="chem-filter-group">
           <span>{copy.hazardFilterLabel}</span>
-          <div className="lab-filter-row chem-filters" aria-label={zh ? "危险类别筛选" : "Hazard category filter"}>
-            {filters.map((item) => <button key={item} type="button" data-active={filter === item} onClick={() => setFilter(item)}>{copy[item]}</button>)}
+          <div className="lab-filter-row chem-filters" role="group" aria-label={zh ? "危险类别筛选" : "Hazard category filter"}>
+            {filters.map((item) => <button key={item} type="button" data-active={filter === item} aria-pressed={filter === item} onClick={() => setFilter(item)}>{copy[item]}</button>)}
           </div>
         </div>
         <div className="chem-record-list">
-          {records.length ? records.map((record) => <ChemicalCard key={record.id} record={record} zh={zh} />) : <div className="chem-no-results">{copy.noResults}</div>}
+          {records.length ? records.map((record) => <ChemicalCard key={record.id} record={record} zh={zh} />) : <div className="chem-no-results"><p>{copy.noResults}</p><button className="chem-filter-reset" type="button" onClick={resetFilters}>{copy.resetFilters}</button></div>}
         </div>
       </section>
 

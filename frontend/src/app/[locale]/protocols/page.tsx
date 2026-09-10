@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@/navigation";
 import {
   PROTOCOLS,
@@ -124,6 +124,15 @@ export default function ProtocolsPage({ params: { locale } }: { params: { locale
   const [category, setCategory] = useState<CategoryFilter>("all");
   const [selectedId, setSelectedId] = useState(PROTOCOLS[0].id);
   const [completed, setCompleted] = useState<Record<string, string[]>>({});
+  const searchInput = useRef<HTMLInputElement>(null);
+  const detail = useRef<HTMLElement>(null);
+  const detailTitle = useRef<HTMLHeadingElement>(null);
+  const firstStep = useRef<HTMLButtonElement>(null);
+  const pendingScroll = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (pendingScroll.current !== null) window.cancelAnimationFrame(pendingScroll.current);
+  }, []);
 
   const filtered = useMemo(() => {
     const needle = normalized(query);
@@ -148,11 +157,34 @@ export default function ProtocolsPage({ params: { locale } }: { params: { locale
   const documentNumber = selected ? PROTOCOLS.findIndex((protocol) => protocol.id === selected.id) + 1 : 0;
   const documentId = `PC-PRO-${String(documentNumber).padStart(3, "0")}`;
 
+  function completionText(done: number, total: number) {
+    return zh ? `已完成 ${done} / ${total} 个步骤` : `${done} of ${total} steps completed`;
+  }
+
+  function clearSearch() {
+    setQuery("");
+    searchInput.current?.focus();
+  }
+
   function chooseProtocol(id: string) {
     setSelectedId(id);
+    if (pendingScroll.current !== null) window.cancelAnimationFrame(pendingScroll.current);
     if (window.matchMedia("(max-width: 900px)").matches) {
-      window.setTimeout(() => document.getElementById("protocol-detail")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+      pendingScroll.current = window.requestAnimationFrame(() => {
+        pendingScroll.current = null;
+        detailTitle.current?.focus({ preventScroll: true });
+        detail.current?.scrollIntoView({
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+          block: "start",
+        });
+      });
     }
+  }
+
+  function resetProgress() {
+    if (!selected) return;
+    setCompleted((current) => ({ ...current, [selected.id]: [] }));
+    firstStep.current?.focus();
   }
 
   function toggleStep(index: number) {
@@ -180,17 +212,17 @@ export default function ProtocolsPage({ params: { locale } }: { params: { locale
       </section>
 
       <section className="protocol-controls" aria-label={zh ? "搜索与筛选" : "Search and filters"}>
-        <label>
-          <span>{copy.searchLabel}</span>
-          <span className="protocol-search-field">
+        <div className="protocol-search-control">
+          <label className="protocol-search-label" htmlFor="protocol-search">{copy.searchLabel}</label>
+          <div className="protocol-search-field">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="2" /><path d="m15.5 15.5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.searchPlaceholder} />
-            {query ? <button type="button" onClick={() => setQuery("")} aria-label={zh ? "清空搜索" : "Clear search"}>×</button> : null}
-          </span>
-        </label>
-        <div className="protocol-filter-row">
+            <input id="protocol-search" ref={searchInput} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.searchPlaceholder} aria-controls="protocol-library-list" />
+            {query ? <button className="protocol-search-clear" type="button" onClick={clearSearch} aria-label={zh ? "清空搜索" : "Clear search"}>×</button> : null}
+          </div>
+        </div>
+        <div className="protocol-filter-row" role="group" aria-label={zh ? "流程分类" : "Protocol categories"}>
           {categories.map((item) => (
-            <button key={item} type="button" data-active={category === item} onClick={() => setCategory(item)}>
+            <button key={item} type="button" data-active={category === item} aria-pressed={category === item} aria-controls="protocol-library-list" onClick={() => setCategory(item)}>
               {item === "all" ? copy.all : copy.categories[item]}
               <span>{item === "all" ? PROTOCOLS.length : PROTOCOLS.filter((protocol) => protocol.category === item).length}</span>
             </button>
@@ -199,8 +231,8 @@ export default function ProtocolsPage({ params: { locale } }: { params: { locale
       </section>
 
       <div className="protocol-workspace">
-        <aside className="protocol-library" aria-label={zh ? "流程列表" : "Protocol list"}>
-          <div className="protocol-library-head"><span>{filtered.length} {copy.results}</span></div>
+        <aside id="protocol-library-list" className="protocol-library" aria-label={zh ? "流程列表" : "Protocol list"}>
+          <div className="protocol-library-head"><span className="protocol-result-count" role="status" aria-live="polite" aria-atomic="true">{filtered.length} {copy.results}</span></div>
           {filtered.length ? (
             <div className="protocol-list">
               {filtered.map((protocol) => {
@@ -214,12 +246,15 @@ export default function ProtocolsPage({ params: { locale } }: { params: { locale
                     data-active={selected?.id === protocol.id}
                     onClick={() => chooseProtocol(protocol.id)}
                     aria-pressed={selected?.id === protocol.id}
+                    aria-controls="protocol-detail"
+                    aria-describedby={`protocol-list-progress-${protocol.id}`}
                   >
                     <span className="protocol-list-copy">
                       <strong>{localized.title}</strong>
                       <small>{copy.categories[protocol.category]} · {localized.duration}</small>
                     </span>
-                    <span className="protocol-list-progress" aria-label={`${done}/${protocol.steps.length}`}>{done ? `${done}/${protocol.steps.length}` : "→"}</span>
+                    <span className="protocol-list-progress" aria-hidden="true">{done ? `${done}/${protocol.steps.length}` : "→"}</span>
+                    <span className="sr-only" id={`protocol-list-progress-${protocol.id}`}>{completionText(done, protocol.steps.length)}</span>
                   </button>
                 );
               })}
@@ -228,7 +263,7 @@ export default function ProtocolsPage({ params: { locale } }: { params: { locale
         </aside>
 
         {selected ? (
-          <article className="protocol-detail" id="protocol-detail">
+          <article className="protocol-detail" id="protocol-detail" ref={detail} aria-labelledby="protocol-detail-title">
             <header className="protocol-detail-head">
               <div>
                 <div className="protocol-detail-meta">
@@ -236,7 +271,7 @@ export default function ProtocolsPage({ params: { locale } }: { params: { locale
                   <span>{zh ? selected.duration.zh : selected.duration.en}</span>
                   <span>{selected.difficulty === "routine" ? copy.routine : copy.advanced}</span>
                 </div>
-                <h2>{zh ? selected.title.zh : selected.title.en}</h2>
+                <h2 id="protocol-detail-title" ref={detailTitle} tabIndex={-1}>{zh ? selected.title.zh : selected.title.en}</h2>
                 <p>{zh ? selected.summary.zh : selected.summary.en}</p>
               </div>
             </header>
@@ -251,10 +286,10 @@ export default function ProtocolsPage({ params: { locale } }: { params: { locale
             <section className="protocol-progress" aria-label={zh ? "本次完成进度" : "Session progress"}>
               <div>
                 <span>{copy.steps}</span>
-                <strong>{progress}% {copy.complete}</strong>
+                <strong className="protocol-progress-value" aria-live="polite" aria-atomic="true">{progress}% {copy.complete}</strong>
               </div>
-              <div className="protocol-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><i style={{ width: `${progress}%` }} /></div>
-              {completedSteps.length ? <button type="button" onClick={() => setCompleted((current) => ({ ...current, [selected.id]: [] }))}>{copy.reset}</button> : null}
+              <div className="protocol-progress-track" role="progressbar" aria-label={zh ? "本次完成进度" : "Session progress"} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-valuetext={completionText(completedSteps.length, selected.steps.length)}><i style={{ width: `${progress}%` }} /></div>
+              {completedSteps.length ? <button className="protocol-progress-reset" type="button" onClick={resetProgress}>{copy.reset}</button> : null}
             </section>
 
             <section className="protocol-scope protocol-document-section">
@@ -263,13 +298,13 @@ export default function ProtocolsPage({ params: { locale } }: { params: { locale
             </section>
 
             <section className="protocol-parameters protocol-document-section">
-              <h3><span>02</span>{copy.parameters}</h3>
-              <div className="protocol-parameter-table-wrap">
+              <h3 id="protocol-parameters-title"><span>02</span>{copy.parameters}</h3>
+              <div className="protocol-parameter-table-wrap" role="region" aria-labelledby="protocol-parameters-title" tabIndex={0}>
                 <table>
-                  <thead><tr><th>{copy.parameter}</th><th>{copy.referenceValue}</th><th>{copy.parameterBoundary}</th></tr></thead>
+                  <thead><tr><th scope="col">{copy.parameter}</th><th scope="col">{copy.referenceValue}</th><th scope="col">{copy.parameterBoundary}</th></tr></thead>
                   <tbody>{selected.parameters.map((parameter, index) => (
                     <tr key={index}>
-                      <th>{zh ? parameter.label.zh : parameter.label.en}</th>
+                      <th scope="row">{zh ? parameter.label.zh : parameter.label.en}</th>
                       <td>{zh ? parameter.value.zh : parameter.value.en}</td>
                       <td>{zh ? parameter.note.zh : parameter.note.en}</td>
                     </tr>
@@ -296,13 +331,13 @@ export default function ProtocolsPage({ params: { locale } }: { params: { locale
                   const isDone = completedSteps.includes(stepId);
                   return (
                     <article key={stepId} className="protocol-step" data-complete={isDone}>
-                      <button type="button" className="protocol-step-check" onClick={() => toggleStep(index)} aria-label={zh ? `${isDone ? "取消完成" : "完成"}步骤 ${index + 1}` : `${isDone ? "Mark incomplete" : "Complete"} step ${index + 1}`} aria-pressed={isDone}>
+                      <button type="button" className="protocol-step-check" ref={index === 0 ? firstStep : undefined} onClick={() => toggleStep(index)} aria-label={zh ? `${isDone ? "取消完成" : "完成"}步骤 ${index + 1}` : `${isDone ? "Mark incomplete" : "Complete"} step ${index + 1}`} aria-pressed={isDone} aria-describedby={`protocol-step-title-${stepId}`}>
                         <span>{isDone ? "✓" : String(index + 1).padStart(2, "0")}</span>
                       </button>
-                      <div>
-                        <h4>{zh ? step.title.zh : step.title.en}</h4>
+                      <div className="protocol-step-content">
+                        <h4 className="protocol-step-title" id={`protocol-step-title-${stepId}`}>{zh ? step.title.zh : step.title.en}</h4>
                         <p>{zh ? step.body.zh : step.body.en}</p>
-                        {step.checkpoint ? <aside><strong>{copy.checkpoint}</strong><span>{zh ? step.checkpoint.zh : step.checkpoint.en}</span></aside> : null}
+                        {step.checkpoint ? <aside className="protocol-step-checkpoint"><strong>{copy.checkpoint}</strong><span>{zh ? step.checkpoint.zh : step.checkpoint.en}</span></aside> : null}
                       </div>
                     </article>
                   );

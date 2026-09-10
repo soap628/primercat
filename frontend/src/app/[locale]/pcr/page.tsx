@@ -291,6 +291,7 @@ function PrimerPairCard({
           className="pcr-expand-button"
           onClick={onToggleExpanded}
           aria-expanded={expanded}
+          aria-controls={expanded ? `pcr-pair-details-${pair.pair_index}` : undefined}
           aria-label={expanded ? t("collapse_pair", { n: pair.pair_index }) : t("expand_pair", { n: pair.pair_index })}
         >
           {expanded ? t("collapse_details") : t("view_details")}
@@ -371,7 +372,7 @@ function PrimerPairCard({
       )}
 
       {expanded && (
-        <div className="pcr-pair-details">
+        <div className="pcr-pair-details" id={`pcr-pair-details-${pair.pair_index}`}>
           <div className="pcr-detail-grid">
             <div><span>{t("amplicon_range")}</span><strong>{pair.amplicon_start}–{pair.amplicon_end}</strong></div>
             <div><span>{t("gradient_start")}</span><strong>{pair.annealing_gradient_low.toFixed(1)}–{pair.annealing_gradient_high.toFixed(1)}°C</strong></div>
@@ -696,12 +697,13 @@ export default function PCRPage() {
             <span>01</span>
             <div><strong>{t("preset_title")}</strong><small>{t("preset_hint")}</small></div>
           </div>
-          <div className="pcr-preset-grid">
+          <div className="pcr-preset-grid" role="group" aria-label={t("preset_title")}>
             {(["standard", "colony", "high_fidelity"] as PCRPreset[]).map((item) => (
               <button
                 key={item}
                 type="button"
                 className={preset === item ? "is-active" : ""}
+                aria-pressed={preset === item}
                 onClick={() => applyPreset(item)}
               >
                 <strong>{t(`preset_${item}`)}</strong>

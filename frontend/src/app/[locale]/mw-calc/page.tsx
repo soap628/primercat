@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 // ── Periodic table (common elements) ──────────────────────────────
 const ELEMENTS: Record<string, number> = {
@@ -163,6 +163,16 @@ type Tab = "mw" | "solution" | "dilution";
 export default function MwCalcPage({ params: { locale } }: { params: { locale: string } }) {
   const zh = locale === "zh";
   const [tab, setTab] = useState<Tab>("mw");
+  const [announcement, setAnnouncement] = useState("");
+  const solutionMwRef = useRef<HTMLInputElement>(null);
+  const focusSolutionOnOpen = useRef(false);
+
+  useEffect(() => {
+    if (tab === "solution" && focusSolutionOnOpen.current) {
+      solutionMwRef.current?.focus();
+      focusSolutionOnOpen.current = false;
+    }
+  }, [tab]);
 
   // ── MW tab ──
   const [formula, setFormula] = useState("");
@@ -176,6 +186,7 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
     setMwResult(r);
     if ("mw" in r) {
       setHistory((h) => [{ formula, mw: r.mw }, ...h.slice(0, 9)]);
+      setAnnouncement(`${formula}: ${r.mw.toFixed(3)} g/mol`);
     }
   }, [formula]);
 
@@ -198,13 +209,19 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
     if (solMode === "conc" && !isNaN(mw) && !isNaN(massG) && !isNaN(volL) && volL > 0) {
       const mol = massG / mw;
       const concM = mol / volL;
-      setSolConc(formatSI(concM, solConcUnit));
+      const value = formatSI(concM, solConcUnit);
+      setSolConc(value);
+      setAnnouncement(`${zh ? "浓度" : "Concentration"}: ${value} ${solConcUnit}`);
     } else if (solMode === "mass" && !isNaN(mw) && !isNaN(concMol) && !isNaN(volL)) {
       const g = concMol * volL * mw;
-      setSolMass(formatSI(g, solMassUnit));
+      const value = formatSI(g, solMassUnit);
+      setSolMass(value);
+      setAnnouncement(`${zh ? "质量" : "Mass"}: ${value} ${solMassUnit}`);
     } else if (solMode === "vol" && !isNaN(mw) && !isNaN(concMol) && !isNaN(massG)) {
       const l = massG / (concMol * mw);
-      setSolVol(formatSI(l, solVolUnit));
+      const value = formatSI(l, solVolUnit);
+      setSolVol(value);
+      setAnnouncement(`${zh ? "体积" : "Volume"}: ${value} ${solVolUnit}`);
     }
   }
 
@@ -220,19 +237,29 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
   function calcDilution() {
     const c1 = parseFloat(dilC1), v1 = parseFloat(dilV1);
     const c2 = parseFloat(dilC2), v2 = parseFloat(dilV2);
-    if (dilMode === "v2" && !isNaN(c1) && !isNaN(v1) && !isNaN(c2) && c2 > 0)
-      setDilV2(fmt4(c1 * v1 / c2));
-    else if (dilMode === "v1" && !isNaN(c1) && !isNaN(c2) && !isNaN(v2) && c1 > 0)
-      setDilV1(fmt4(c2 * v2 / c1));
-    else if (dilMode === "c2" && !isNaN(c1) && !isNaN(v1) && !isNaN(v2) && v2 > 0)
-      setDilC2(fmt4(c1 * v1 / v2));
-    else if (dilMode === "c1" && !isNaN(c2) && !isNaN(v1) && !isNaN(v2) && v1 > 0)
-      setDilC1(fmt4(c2 * v2 / v1));
+    if (dilMode === "v2" && !isNaN(c1) && !isNaN(v1) && !isNaN(c2) && c2 > 0) {
+      const value = fmt4(c1 * v1 / c2);
+      setDilV2(value);
+      setAnnouncement(`V₂: ${value} ${dilVolUnit}`);
+    } else if (dilMode === "v1" && !isNaN(c1) && !isNaN(c2) && !isNaN(v2) && c1 > 0) {
+      const value = fmt4(c2 * v2 / c1);
+      setDilV1(value);
+      setAnnouncement(`V₁: ${value} ${dilVolUnit}`);
+    } else if (dilMode === "c2" && !isNaN(c1) && !isNaN(v1) && !isNaN(v2) && v2 > 0) {
+      const value = fmt4(c1 * v1 / v2);
+      setDilC2(value);
+      setAnnouncement(`C₂: ${value} ${dilUnit}`);
+    } else if (dilMode === "c1" && !isNaN(c2) && !isNaN(v1) && !isNaN(v2) && v1 > 0) {
+      const value = fmt4(c2 * v2 / v1);
+      setDilC1(value);
+      setAnnouncement(`C₁: ${value} ${dilUnit}`);
+    }
   }
 
   // Fill MW from result
   function fillMwToSolution() {
     if (mwResult && "mw" in mwResult) setSolMw(String(mwResult.mw));
+    focusSolutionOnOpen.current = true;
     setTab("solution");
   }
 
@@ -244,6 +271,7 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
 
   return (
     <div className="mw-workbench-v6" style={S.wrap}>
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</div>
       {/* Header */}
       <header className="mw-hero-v6">
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
@@ -260,10 +288,12 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
       </header>
 
       {/* Tab bar */}
-      <div className="mw-tabs-v6" style={{ display: "flex", gap: 4, background: "var(--bg-inset)", borderRadius: 10, padding: 4, width: "fit-content" }}>
+      <div className="mw-tabs-v6" role="group" aria-label={zh ? "计算类型" : "Calculation type"} style={{ display: "flex", gap: 4, background: "var(--bg-inset)", borderRadius: 10, padding: 4, width: "fit-content" }}>
         {TABS.map((t) => (
           <button
+            type="button"
             key={t.id}
+            aria-pressed={tab === t.id}
             onClick={() => setTab(t.id)}
             style={{
               padding: "7px 18px", borderRadius: 7, fontSize: 13, fontWeight: 600,
@@ -281,23 +311,32 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
       {tab === "mw" && (
         <>
           <section className="mw-work-surface mw-formula-surface" style={S.card}>
-            <div style={S.sectionTitle}>
+            <label className="mw-section-title" htmlFor="mw-formula" style={{ ...S.sectionTitle, display: "block" }}>
               {zh ? "输入化学式" : "Enter Chemical Formula"}
-            </div>
+            </label>
 
             {/* Presets */}
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
               {PRESETS.map((p) => (
-                <button key={p.label} style={S.pill}
-                  onClick={() => { setFormula(p.formula); setMwResult(parseFormula(p.formula)); }}>
+                <button type="button" className="mw-preset-button" key={p.label} style={S.pill}
+                  onClick={() => {
+                    setFormula(p.formula);
+                    const result = parseFormula(p.formula);
+                    setMwResult(result);
+                    if ("mw" in result) setAnnouncement(`${p.formula}: ${result.mw.toFixed(3)} g/mol`);
+                  }}>
                   {p.label}
                 </button>
               ))}
             </div>
 
-            <div style={{ display: "flex", gap: 10 }}>
+            <div className="mw-formula-entry" style={{ display: "flex", gap: 10 }}>
               <input
+                id="mw-formula"
                 ref={formulaRef}
+                spellCheck={false}
+                aria-invalid={!!mwResult && "error" in mwResult}
+                aria-describedby={mwResult && "error" in mwResult ? "mw-formula-help mw-formula-error" : "mw-formula-help"}
                 value={formula}
                 onChange={(e) => setFormula(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && calculate()}
@@ -305,6 +344,8 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
                 style={{ ...S.input, flex: 1 }}
               />
               <button
+                type="button"
+                className="mw-calculate-button"
                 onClick={calculate}
                 style={{
                   padding: "10px 22px", borderRadius: 8, fontSize: 14, fontWeight: 700,
@@ -314,14 +355,14 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
                 }}
               >{zh ? "计算" : "Calculate"}</button>
             </div>
-            <p style={{ fontSize: 12, color: "var(--text-3)", marginTop: 8 }}>
+            <p id="mw-formula-help" style={{ fontSize: 12, color: "var(--text-3)", marginTop: 8 }}>
               {zh
                 ? "支持括号 (Ca(OH)2)、水合物 (CuSO4·5H2O)、前置系数 (3H2O)"
                 : "Supports parentheses (Ca(OH)2), hydrates (CuSO4·5H2O), coefficients (3H2O)"}
             </p>
 
             {mwResult && "error" in mwResult && (
-              <p style={S.error}>⚠ {mwResult.error}</p>
+              <p id="mw-formula-error" role="alert" style={S.error}>⚠ {mwResult.error}</p>
             )}
           </section>
 
@@ -331,10 +372,12 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
                 <div>
                   <div style={S.label}>{zh ? "摩尔质量" : "Molar Mass"}</div>
-                  <div style={S.result}>{mwResult.mw.toFixed(3)}</div>
+                  <div className="mw-result-value" style={S.result}>{mwResult.mw.toFixed(3)}</div>
                   <div style={S.resultSub}>g/mol</div>
                 </div>
                 <button
+                  type="button"
+                  className="mw-result-action"
                   onClick={fillMwToSolution}
                   style={{
                     padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
@@ -395,16 +438,18 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
           {history.length > 0 && (
             <section className="mw-work-surface mw-history-surface" style={S.card}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <div style={S.sectionTitle}>{zh ? "计算历史" : "History"}</div>
-                <button onClick={() => setHistory([])} style={{ fontSize: 12, color: "var(--text-3)", background: "none", border: "none", cursor: "pointer" }}>
+                <div className="mw-section-title" style={S.sectionTitle}>{zh ? "计算历史" : "History"}</div>
+                <button type="button" className="mw-history-clear" onClick={() => setHistory([])} style={{ fontSize: 12, color: "var(--text-3)", background: "none", border: "none", cursor: "pointer" }}>
                   {zh ? "清除" : "Clear"}
                 </button>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {history.map((h, i) => (
-                  <div
+                  <button
+                    type="button"
+                    className="mw-history-button"
                     key={i}
-                    onClick={() => { setFormula(h.formula); setMwResult({ mw: h.mw, composition: {} }); }}
+                    onClick={() => { setFormula(h.formula); setMwResult({ mw: h.mw, composition: {} }); setAnnouncement(`${h.formula}: ${h.mw} g/mol`); }}
                     style={{
                       display: "flex", justifyContent: "space-between", alignItems: "center",
                       padding: "8px 12px", borderRadius: 8, cursor: "pointer",
@@ -415,7 +460,7 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
                   >
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: 14, color: "var(--text-1)" }}>{h.formula}</span>
                     <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-2)" }}>{h.mw} g/mol</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </section>
@@ -426,26 +471,26 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
       {/* ── Tab: Solution ── */}
       {tab === "solution" && (
         <section className="mw-work-surface mw-solution-surface" style={S.card}>
-          <div style={S.sectionTitle}>{zh ? "溶液配制计算 (C = n/V = m / (MW·V))" : "Solution Preparation (C = m / (MW · V))"}</div>
+          <div className="mw-section-title" style={S.sectionTitle}>{zh ? "溶液配制计算 (C = n/V = m / (MW·V))" : "Solution Preparation (C = m / (MW · V))"}</div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {/* MW input */}
             <div>
-              <div style={S.label}>{zh ? "分子量 (g/mol)" : "Molecular Weight (g/mol)"}</div>
-              <input value={solMw} onChange={(e) => setSolMw(e.target.value)}
+              <label htmlFor="mw-solution-mw" style={{ ...S.label, display: "block" }}>{zh ? "分子量 (g/mol)" : "Molecular Weight (g/mol)"}</label>
+              <input id="mw-solution-mw" ref={solutionMwRef} value={solMw} onChange={(e) => setSolMw(e.target.value)}
                 placeholder="e.g. 180.156" style={{ ...S.numInput, width: "100%", boxSizing: "border-box" }} />
             </div>
 
             {/* Solve for selector */}
             <div>
-              <div style={S.label}>{zh ? "求解目标" : "Solve for"}</div>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div id="mw-solution-target" style={S.label}>{zh ? "求解目标" : "Solve for"}</div>
+              <div role="group" aria-labelledby="mw-solution-target" style={{ display: "flex", gap: 8 }}>
                 {([["conc", zh ? "浓度" : "Conc."], ["mass", zh ? "质量" : "Mass"], ["vol", zh ? "体积" : "Volume"]] as [typeof solMode, string][]).map(([id, lbl]) => (
-                  <button key={id} onClick={() => setSolMode(id)} style={{
+                  <button type="button" className="mw-mode-button" key={id} aria-pressed={solMode === id} onClick={() => setSolMode(id)} style={{
                     padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
                     border: "1px solid", cursor: "pointer",
                     background: solMode === id ? "var(--accent)" : "var(--bg-inset)",
-                    color: solMode === id ? "#fff" : "var(--text-2)",
+                    color: solMode === id ? "var(--on-accent)" : "var(--text-2)",
                     borderColor: solMode === id ? "var(--accent)" : "var(--border)",
                   }}>{lbl}</button>
                 ))}
@@ -454,13 +499,13 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
 
             {/* Mass */}
             <div>
-              <div style={S.label}>{zh ? "质量" : "Mass"} {solMode === "mass" && <span style={{ color: "var(--accent)" }}>← {zh ? "计算结果" : "result"}</span>}</div>
+              <label htmlFor="mw-solution-mass" style={{ ...S.label, display: "block" }}>{zh ? "质量" : "Mass"} {solMode === "mass" && <span style={{ color: "var(--accent)" }}>← {zh ? "计算结果" : "result"}</span>}</label>
               <div style={S.row}>
-                <input value={solMass} onChange={(e) => setSolMass(e.target.value)}
+                <input id="mw-solution-mass" value={solMass} onChange={(e) => setSolMass(e.target.value)}
                   readOnly={solMode === "mass"}
                   placeholder={solMode === "mass" ? (zh ? "自动计算" : "auto") : "e.g. 36"}
                   style={{ ...S.numInput, background: solMode === "mass" ? "var(--bg-inset)" : undefined }} />
-                <select value={solMassUnit} onChange={(e) => setSolMassUnit(e.target.value)} style={S.select}>
+                <select aria-label={zh ? "质量单位" : "Mass unit"} value={solMassUnit} onChange={(e) => setSolMassUnit(e.target.value)} style={S.select}>
                   <option>µg</option><option>mg</option><option>g</option>
                 </select>
               </div>
@@ -468,13 +513,13 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
 
             {/* Volume */}
             <div>
-              <div style={S.label}>{zh ? "体积" : "Volume"} {solMode === "vol" && <span style={{ color: "var(--accent)" }}>← {zh ? "计算结果" : "result"}</span>}</div>
+              <label htmlFor="mw-solution-volume" style={{ ...S.label, display: "block" }}>{zh ? "体积" : "Volume"} {solMode === "vol" && <span style={{ color: "var(--accent)" }}>← {zh ? "计算结果" : "result"}</span>}</label>
               <div style={S.row}>
-                <input value={solVol} onChange={(e) => setSolVol(e.target.value)}
+                <input id="mw-solution-volume" value={solVol} onChange={(e) => setSolVol(e.target.value)}
                   readOnly={solMode === "vol"}
                   placeholder={solMode === "vol" ? (zh ? "自动计算" : "auto") : "e.g. 10"}
                   style={{ ...S.numInput, background: solMode === "vol" ? "var(--bg-inset)" : undefined }} />
-                <select value={solVolUnit} onChange={(e) => setSolVolUnit(e.target.value)} style={S.select}>
+                <select aria-label={zh ? "体积单位" : "Volume unit"} value={solVolUnit} onChange={(e) => setSolVolUnit(e.target.value)} style={S.select}>
                   <option>µL</option><option>mL</option><option>L</option>
                 </select>
               </div>
@@ -482,19 +527,19 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
 
             {/* Concentration */}
             <div>
-              <div style={S.label}>{zh ? "浓度" : "Concentration"} {solMode === "conc" && <span style={{ color: "var(--accent)" }}>← {zh ? "计算结果" : "result"}</span>}</div>
+              <label htmlFor="mw-solution-concentration" style={{ ...S.label, display: "block" }}>{zh ? "浓度" : "Concentration"} {solMode === "conc" && <span style={{ color: "var(--accent)" }}>← {zh ? "计算结果" : "result"}</span>}</label>
               <div style={S.row}>
-                <input value={solConc} onChange={(e) => setSolConc(e.target.value)}
+                <input id="mw-solution-concentration" value={solConc} onChange={(e) => setSolConc(e.target.value)}
                   readOnly={solMode === "conc"}
                   placeholder={solMode === "conc" ? (zh ? "自动计算" : "auto") : "e.g. 10"}
                   style={{ ...S.numInput, background: solMode === "conc" ? "var(--bg-inset)" : undefined }} />
-                <select value={solConcUnit} onChange={(e) => setSolConcUnit(e.target.value)} style={S.select}>
+                <select aria-label={zh ? "浓度单位" : "Concentration unit"} value={solConcUnit} onChange={(e) => setSolConcUnit(e.target.value)} style={S.select}>
                   <option>nM</option><option>µM</option><option>mM</option><option>M</option>
                 </select>
               </div>
             </div>
 
-            <button onClick={calcSolution} style={{
+            <button type="button" className="mw-calculate-button" onClick={calcSolution} style={{
               padding: "11px", borderRadius: 10, fontSize: 14, fontWeight: 700,
               background: "linear-gradient(135deg,#A31F34,#7c1128)", color: "#fff",
               border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(163,31,52,0.3)",
@@ -506,24 +551,24 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
       {/* ── Tab: Dilution ── */}
       {tab === "dilution" && (
         <section className="mw-work-surface mw-dilution-surface" style={S.card}>
-          <div style={S.sectionTitle}>{zh ? "稀释计算 (C₁V₁ = C₂V₂)" : "Dilution Calculator (C₁V₁ = C₂V₂)"}</div>
+          <div className="mw-section-title" style={S.sectionTitle}>{zh ? "稀释计算 (C₁V₁ = C₂V₂)" : "Dilution Calculator (C₁V₁ = C₂V₂)"}</div>
 
           <div style={{ marginBottom: 14 }}>
-            <div style={S.label}>{zh ? "求解目标" : "Solve for"}</div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div id="mw-dilution-target" style={S.label}>{zh ? "求解目标" : "Solve for"}</div>
+            <div role="group" aria-labelledby="mw-dilution-target" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {([["c1","C₁"],["v1","V₁"],["c2","C₂"],["v2","V₂"]] as [typeof dilMode, string][]).map(([id, lbl]) => (
-                <button key={id} onClick={() => setDilMode(id)} style={{
+                <button type="button" className="mw-mode-button" key={id} aria-pressed={dilMode === id} onClick={() => setDilMode(id)} style={{
                   padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: 700,
                   border: "1px solid", cursor: "pointer",
                   background: dilMode === id ? "var(--accent)" : "var(--bg-inset)",
-                  color: dilMode === id ? "#fff" : "var(--text-2)",
+                  color: dilMode === id ? "var(--on-accent)" : "var(--text-2)",
                   borderColor: dilMode === id ? "var(--accent)" : "var(--border)",
                 }}>{lbl}</button>
               ))}
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="mw-dilution-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {[
               { id: "c1" as const, label: zh ? "原始浓度 C₁" : "Stock Conc. C₁", val: dilC1, set: setDilC1 },
               { id: "v1" as const, label: zh ? "取用体积 V₁" : "Transfer Vol. V₁", val: dilV1, set: setDilV1 },
@@ -531,15 +576,16 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
               { id: "v2" as const, label: zh ? "最终体积 V₂" : "Final Volume V₂", val: dilV2, set: setDilV2 },
             ].map((f) => (
               <div key={f.id}>
-                <div style={S.label}>
+                <label htmlFor={`mw-dilution-${f.id}`} style={{ ...S.label, display: "block" }}>
                   {f.label} {dilMode === f.id && <span style={{ color: "var(--accent)" }}>← {zh ? "结果" : "result"}</span>}
-                </div>
+                </label>
                 <div style={S.row}>
-                  <input value={f.val} onChange={(e) => f.set(e.target.value)}
+                  <input id={`mw-dilution-${f.id}`} value={f.val} onChange={(e) => f.set(e.target.value)}
                     readOnly={dilMode === f.id}
                     placeholder={dilMode === f.id ? (zh ? "自动计算" : "auto") : ""}
                     style={{ ...S.numInput, background: dilMode === f.id ? "var(--bg-inset)" : undefined }} />
                   <select
+                    aria-label={`${f.label} ${zh ? "单位" : "unit"}`}
                     value={f.id.startsWith("c") ? dilUnit : dilVolUnit}
                     onChange={(e) => f.id.startsWith("c") ? setDilUnit(e.target.value) : setDilVolUnit(e.target.value)}
                     style={S.select}
@@ -553,7 +599,7 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
             ))}
           </div>
 
-          <button onClick={calcDilution} style={{
+          <button type="button" className="mw-calculate-button" onClick={calcDilution} style={{
             marginTop: 20, width: "100%", padding: "11px", borderRadius: 10, fontSize: 14, fontWeight: 700,
             background: "linear-gradient(135deg,#A31F34,#7c1128)", color: "#fff",
             border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(163,31,52,0.3)",
@@ -574,7 +620,7 @@ export default function MwCalcPage({ params: { locale } }: { params: { locale: s
 
       {/* Reference table */}
       <section className="mw-work-surface mw-reference-surface" style={S.card}>
-        <div style={S.sectionTitle}>{zh ? "常用元素原子量参考" : "Common Atomic Weights Reference"}</div>
+        <div className="mw-section-title" style={S.sectionTitle}>{zh ? "常用元素原子量参考" : "Common Atomic Weights Reference"}</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {["H","C","N","O","P","S","Na","K","Ca","Mg","Cl","F","Fe","Zn","Cu","I","Br"].map((el) => (
             <div key={el} style={{

@@ -29,7 +29,7 @@ function ScoreRing({ score }: { score: number }) {
   const circumference = 2 * Math.PI * radius;
   const fill = Math.min(score / 100, 1) * circumference;
   const color =
-    score >= 65 ? "#4ade80" : score >= 40 ? "#ffa42b" : "#f87171";
+    score >= 65 ? "var(--green)" : score >= 40 ? "var(--orange)" : "var(--red)";
   return (
     <svg width="64" height="64" viewBox="0 0 64 64" style={{ flexShrink: 0 }} className="grna-score-ring">
       <circle cx="32" cy="32" r="28" fill="var(--bg-inset)" />
@@ -42,9 +42,8 @@ function ScoreRing({ score }: { score: number }) {
         strokeDasharray={`${fill} ${circumference}`}
         strokeLinecap="round"
         transform="rotate(-90 32 32)"
-        style={{ filter: `drop-shadow(0 0 4px ${color}88)` }}
       />
-      <text x="32" y="37" textAnchor="middle" fontSize="15" fontWeight="800" fill={color}>
+      <text x="32" y="37" textAnchor="middle" fontSize="15" fontWeight="700" fill="var(--text-1)">
         {score}
       </text>
     </svg>
@@ -396,10 +395,10 @@ export default function GrnaPage() {
 
         <form className="sequence-control-form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div>
-            <label className="label-caps" style={{ display: "block", marginBottom: 8 }}>
+            <div id="grna-cas-label" className="label-caps" style={{ display: "block", marginBottom: 8 }}>
               {t("cas_label")}
-            </label>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            </div>
+            <div className="grna-cas-options" role="group" aria-labelledby="grna-cas-label" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {casOptions.map((option) => (
                 <button
                   key={option.value}
@@ -407,6 +406,7 @@ export default function GrnaPage() {
                   onClick={() => setCasType(option.value)}
                   className="grna-choice-tile"
                   data-selected={casType === option.value ? "true" : "false"}
+                  aria-pressed={casType === option.value}
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
@@ -438,18 +438,18 @@ export default function GrnaPage() {
           </div>
 
           <div>
-            <label className="label-caps" style={{ display: "block", marginBottom: 8 }}>
+            <div id="grna-species-label" className="label-caps" style={{ display: "block", marginBottom: 8 }}>
               {t("species_label")}
-            </label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
+            </div>
+            <div className="grna-species-options" role="radiogroup" aria-labelledby="grna-species-label" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
               {(["human", "mouse"] as SpeciesValue[]).map((value) => (
                 <label
                   key={value}
-                  className="grna-choice-tile"
+                  className="grna-choice-tile grna-species-option"
                   data-selected={species === value ? "true" : "false"}
                   style={{ padding: "10px 12px", cursor: "pointer" }}
                 >
-                  <input type="radio" name="grna-species" value={value} checked={species === value} onChange={() => setSpecies(value)} style={{ display: "none" }} />
+                  <input className="sr-only" type="radio" name="grna-species" value={value} checked={species === value} onChange={() => setSpecies(value)} />
                   {value === "mouse" ? t("species_mouse") : t("species_human")}
                 </label>
               ))}
@@ -478,13 +478,14 @@ export default function GrnaPage() {
           </div>
 
           <div>
-            <label className="label-caps" style={{ display: "block", marginBottom: 8 }}>
+            <label htmlFor="grna-gene" className="label-caps" style={{ display: "block", marginBottom: 8 }}>
               {t("gene_label")}{" "}
               <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "var(--text-3)" }}>
                 {t("gene_optional")}
               </span>
             </label>
             <input
+              id="grna-gene"
               className="input-field input-field-green"
               style={{ width: "100%", padding: "10px 12px", borderRadius: 16 }}
               placeholder={t("gene_placeholder")}
@@ -494,22 +495,25 @@ export default function GrnaPage() {
           </div>
 
           <div>
-            <label className="label-caps" style={{ display: "block", marginBottom: 8 }}>
+            <label htmlFor="grna-locus" className="label-caps" style={{ display: "block", marginBottom: 8 }}>
               {t("locus_label")}{" "}
               <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "var(--text-3)" }}>
                 {t("locus_optional")}
               </span>
             </label>
             <input
+              id="grna-locus"
               className="input-field input-field-green"
               style={{ width: "100%", padding: "10px 12px", borderRadius: 16 }}
               placeholder={t("locus_placeholder")}
               value={targetLocusText}
               onChange={(event) => setTargetLocusText(event.target.value)}
+              aria-invalid={Boolean(targetLocusText.trim() && !parsedTargetLocus)}
+              aria-describedby={targetLocusText.trim() && !parsedTargetLocus ? "grna-locus-help grna-locus-error" : "grna-locus-help"}
             />
-            <p style={{ fontSize: 11, lineHeight: 1.7, color: "var(--text-3)", marginTop: 6 }}>{t("locus_help")}</p>
+            <p id="grna-locus-help" style={{ fontSize: 11, lineHeight: 1.7, color: "var(--text-3)", marginTop: 6 }}>{t("locus_help")}</p>
             {targetLocusText.trim() && !parsedTargetLocus ? (
-              <div style={{ fontSize: 11, color: "var(--red)", marginTop: 6 }}>{t("error_invalid_target_locus")}</div>
+              <div id="grna-locus-error" style={{ fontSize: 11, color: "var(--red)", marginTop: 6 }}>{t("error_invalid_target_locus")}</div>
             ) : null}
             {parsedTargetLocus ? (
               <div className="card-sm" style={{ marginTop: 8, padding: "10px 12px", borderRadius: 16 }}>
@@ -524,14 +528,16 @@ export default function GrnaPage() {
           </div>
 
           <div>
-            <label className="label-caps" style={{ display: "block", marginBottom: 8 }}>
+            <label htmlFor="grna-sequence" className="label-caps" style={{ display: "block", marginBottom: 8 }}>
               {t("seq_label")}{" "}
               <span style={{ color: "var(--text-3)", textTransform: "none", letterSpacing: 0 }}>
                 {t("seq_optional")}
               </span>
             </label>
             <textarea
+              id="grna-sequence"
               className="input-field input-field-green"
+              aria-describedby="grna-sequence-help"
               style={{
                 width: "100%",
                 minHeight: 148,
@@ -546,6 +552,7 @@ export default function GrnaPage() {
               onChange={(event) => setSequence(event.target.value.replace(/\s/g, ""))}
             />
             <div
+              id="grna-sequence-help"
               style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -660,13 +667,14 @@ export default function GrnaPage() {
               }}
             >
               {result.target_locus ? (
-                <div style={{ fontSize: 12, lineHeight: 1.8, color: "rgba(255,255,255,0.82)", marginBottom: 16 }}>
+                <div className="grna-result-anchor" style={{ fontSize: 12, lineHeight: 1.8, color: "rgba(255,255,255,0.82)", marginBottom: 16 }}>
                   {t("anchor_intro", { locus: formatTargetLocus(result.target_locus) })}
                 </div>
               ) : null}
-              <div style={{ display: "flex", gap: 16, justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap" }}>
+              <div className="grna-result-heading" style={{ display: "flex", gap: 16, justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap" }}>
                 <div style={{ maxWidth: 760 }}>
                   <div
+                    className="grna-result-kicker"
                     style={{
                       display: "inline-flex",
                       padding: "5px 11px",
@@ -682,8 +690,8 @@ export default function GrnaPage() {
                     {t("results_badge")}
                   </div>
                   <h2 style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.04em", marginBottom: 8 }}>{t("results_title")}</h2>
-                  <p style={{ fontSize: 14, lineHeight: 1.75, color: "rgba(255,255,255,0.84)", maxWidth: 720 }}>{resultsIntro}</p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+                  <p className="grna-result-intro" style={{ fontSize: 14, lineHeight: 1.75, color: "rgba(255,255,255,0.84)", maxWidth: 720 }}>{resultsIntro}</p>
+                  <div className="grna-result-models" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
                     <span className="badge" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.18)" }}>
                       {t("model_chip_activity")}: <code>{result.risk_model}</code>
                     </span>
@@ -728,7 +736,7 @@ export default function GrnaPage() {
                 </button>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginTop: 22 }}>
+              <div className="grna-result-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginTop: 22 }}>
                 {[
                   { label: t("total_label"), value: result.grna_list.length },
                   { label: t("validated_count_label"), value: validatedCount },
@@ -994,11 +1002,8 @@ export default function GrnaPage() {
                       borderLeft: `3px solid ${riskColor}`,
                     }}
                   >
-                    <button
-                      type="button"
-                      className="grna-guide-toggle"
-                      onClick={() => setExpandedRank(expanded ? null : guide.rank)}
-                      aria-expanded={expanded}
+                    <div
+                      className="grna-guide-summary"
                       style={{
                         width: "100%",
                         display: "flex",
@@ -1009,11 +1014,11 @@ export default function GrnaPage() {
                         textAlign: "left",
                         border: "none",
                         background: "transparent",
-                        cursor: "pointer",
                       }}
                     >
-                      <div style={{ display: "flex", gap: 16, alignItems: "center", minWidth: 0 }}>
+                      <div className="grna-guide-identity" style={{ display: "flex", gap: 16, alignItems: "center", minWidth: 0 }}>
                         <div
+                          className="grna-guide-rank"
                           style={{
                             width: 38,
                             height: 38,
@@ -1029,10 +1034,11 @@ export default function GrnaPage() {
                         >
                           {guide.rank}
                         </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+                        <div className="grna-guide-content" style={{ minWidth: 0 }}>
+                          <div className="grna-guide-sequence-row" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
                             {index === 0 && <span className="result-best-label">{t("best_candidate")}</span>}
                             <code
+                              className="grna-guide-sequence"
                               style={{
                                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
                                 fontSize: 15,
@@ -1045,7 +1051,9 @@ export default function GrnaPage() {
                             </code>
                             <button
                               type="button"
-                              onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(guide.grna_sequence); }}
+                              className="grna-guide-copy"
+                              aria-label={`${t("copy")} gRNA #${guide.rank}`}
+                              onClick={() => navigator.clipboard.writeText(guide.grna_sequence)}
                               style={{
                                 fontSize: 10,
                                 padding: "2px 7px",
@@ -1075,7 +1083,7 @@ export default function GrnaPage() {
                             <span className={offTargetBadge.className}>{offTargetBadge.label}</span>
                             {result.target_locus ? <span className={anchorStatus.className}>{anchorStatus.label}</span> : null}
                           </div>
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 12, color: "var(--text-3)" }}>
+                          <div className="grna-guide-meta" style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 12, color: "var(--text-3)" }}>
                             <span>{t("position_label")} {guide.position}</span>
                             <span>{guide.strand === "+" ? t("strand_plus") : t("strand_minus")}</span>
                             <span>{t("gc_label")} {guide.gc_content}%</span>
@@ -1083,18 +1091,31 @@ export default function GrnaPage() {
                           </div>
                         </div>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+                      <div className="grna-guide-metrics" style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                        <div className="grna-guide-statuses" style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
                           <span className={TIER_STYLE[guide.heuristic_risk]}>{getActivityLabel(guide.heuristic_risk, t)}</span>
                           <span className="badge badge-blue">{t("offtarget_hits_label", { count: guide.potential_off_target_hits })}</span>
                         </div>
                         <ScoreRing score={Math.round(guide.on_target_score)} />
+                        <button
+                          type="button"
+                          className="grna-guide-toggle"
+                          onClick={() => setExpandedRank(expanded ? null : guide.rank)}
+                          aria-expanded={expanded}
+                          aria-controls={expanded ? `grna-guide-details-${guide.rank}` : undefined}
+                          aria-label={locale === "zh"
+                            ? `${expanded ? "收起" : "展开"}候选 #${guide.rank} 的详情`
+                            : `${expanded ? "Hide" : "Show"} details for candidate #${guide.rank}`}
+                        >
+                          {locale === "zh" ? (expanded ? "收起详情" : "展开详情") : (expanded ? "Hide details" : "Show details")}
+                          <span aria-hidden="true">{expanded ? " −" : " +"}</span>
+                        </button>
                       </div>
-                    </button>
+                    </div>
 
                     {expanded ? (
-                      <div className="grna-guide-expanded" style={{ borderTop: "1px solid var(--border)", padding: "16px 20px 20px" }}>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
+                      <div id={`grna-guide-details-${guide.rank}`} className="grna-guide-expanded" style={{ borderTop: "1px solid var(--border)", padding: "16px 20px 20px" }}>
+                        <div className="grna-analysis-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
                           <div
                             className="grna-analysis-panel is-activity"
                             style={{
@@ -1116,7 +1137,7 @@ export default function GrnaPage() {
                             >
                               {t("activity_panel_title")}
                             </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+                            <div className="grna-analysis-metrics" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
                               <div className="card-sm" style={{ padding: "12px 13px", borderRadius: 18 }}>
                                 <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 4 }}>{t("activity_score_label")}</div>
                                 <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text-1)" }}>{guide.on_target_score}</div>
@@ -1165,7 +1186,7 @@ export default function GrnaPage() {
                             >
                               {t("offtarget_panel_title")}
                             </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+                            <div className="grna-analysis-metrics" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
                               <div className="card-sm" style={{ padding: "12px 13px", borderRadius: 18 }}>
                                 <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 4 }}>{t("offtarget_status_label")}</div>
                                 <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>{offTargetBadge.label}</div>
@@ -1175,7 +1196,7 @@ export default function GrnaPage() {
                                 <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text-1)" }}>{guide.potential_off_target_hits}</div>
                               </div>
                             </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, marginTop: 10 }}>
+                            <div className="grna-analysis-metrics" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, marginTop: 10 }}>
                               <div
                                 style={{
                                   padding: "12px 13px",
@@ -1231,6 +1252,7 @@ export default function GrnaPage() {
 
                         {guide.top_off_target_hits.length ? (
                           <div
+                            className="grna-top-hits"
                             style={{
                               marginTop: 14,
                               padding: 16,
@@ -1239,7 +1261,7 @@ export default function GrnaPage() {
                               border: "1px solid var(--border)",
                             }}
                           >
-                            <div style={{ display: "flex", gap: 10, justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", marginBottom: 10 }}>
+                            <div className="grna-top-hits-heading" style={{ display: "flex", gap: 10, justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", marginBottom: 10 }}>
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)", marginBottom: 4 }}>{t("top_hits_title")}</div>
                                 <div style={{ fontSize: 12, lineHeight: 1.7, color: "var(--text-2)", maxWidth: 760 }}>
@@ -1250,12 +1272,13 @@ export default function GrnaPage() {
                                 {hitAnnotationMeta?.label || t("hit_annotation_fallback_badge")}
                               </span>
                             </div>
-                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                            <div className="grna-hit-list" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                               {guide.top_off_target_hits.map((hit) => {
                                 const regionMeta = getHitRegionMeta(hit.annotation, t);
                                 return (
                                   <div
                                     key={`${guide.rank}-${hit.rank}-${hit.accession}-${hit.position}`}
+                                    className="grna-hit-grid"
                                     style={{
                                       display: "grid",
                                       gridTemplateColumns: "minmax(0, 1.8fr) repeat(5, minmax(72px, 96px))",
@@ -1267,8 +1290,8 @@ export default function GrnaPage() {
                                       border: "1px solid var(--border)",
                                     }}
                                   >
-                                    <div style={{ minWidth: 0 }}>
-                                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 4 }}>
+                                    <div className="grna-hit-main" style={{ minWidth: 0 }}>
+                                      <div className="grna-hit-heading" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 4 }}>
                                         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-1)" }}>{hit.accession}</div>
                                         {hit.is_target_locus ? <span className="badge badge-green">{t("target_hit_badge")}</span> : null}
                                         {hit.annotation?.gene_symbol ? <span className="badge badge-blue">{hit.annotation.gene_symbol}</span> : null}
@@ -1276,9 +1299,9 @@ export default function GrnaPage() {
                                           <span className={regionMeta.className}>{regionMeta.label}</span>
                                         ) : null}
                                       </div>
-                                      <div style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.6 }}>{hit.title}</div>
+                                      <div className="grna-hit-title" style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.6 }}>{hit.title}</div>
                                       {hit.annotation?.status === "annotated" ? (
-                                        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8, fontSize: 11, color: "var(--text-3)" }}>
+                                        <div className="grna-hit-meta" style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8, fontSize: 11, color: "var(--text-3)" }}>
                                           {hit.annotation.transcript_id ? (
                                             <span>{t("hit_annotation_transcript")}: {hit.annotation.transcript_id}</span>
                                           ) : null}
@@ -1290,28 +1313,28 @@ export default function GrnaPage() {
                                           ) : null}
                                         </div>
                                       ) : (
-                                        <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.6, color: "var(--text-3)" }}>
+                                        <div className="grna-hit-meta" style={{ marginTop: 8, fontSize: 11, lineHeight: 1.6, color: "var(--text-3)" }}>
                                           {t("hit_annotation_unavailable_inline")}
                                         </div>
                                       )}
                                     </div>
-                                    <div>
+                                    <div className="grna-hit-metric">
                                       <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 4 }}>{t("hit_position_label")}</div>
                                       <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>{hit.position || "--"}</div>
                                     </div>
-                                    <div>
+                                    <div className="grna-hit-metric">
                                       <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 4 }}>{t("hit_strand_label")}</div>
                                       <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>{hit.strand}</div>
                                     </div>
-                                    <div>
+                                    <div className="grna-hit-metric">
                                       <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 4 }}>{t("hit_pam_label")}</div>
                                       <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>{hit.pam || "--"}</div>
                                     </div>
-                                    <div>
+                                    <div className="grna-hit-metric">
                                       <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 4 }}>{t("identity_label")}</div>
                                       <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>{hit.identity}%</div>
                                     </div>
-                                    <div>
+                                    <div className="grna-hit-metric">
                                       <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 4 }}>{t("mismatches_label")}</div>
                                       <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>{hit.mismatches}</div>
                                     </div>

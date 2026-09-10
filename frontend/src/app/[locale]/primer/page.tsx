@@ -134,9 +134,9 @@ const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: Valida
 
   const passCount = items.filter(i => i.state === "pass").length;
   const countBg =
-    passCount === items.length ? { bg: "#d1fae5", color: "#065f46" } :
-    passCount >= 6             ? { bg: "#e0e7ff", color: "#3730a3" } :
-                                 { bg: "#fef3c7", color: "#92400e" };
+    passCount === items.length ? { bg: "var(--green-soft)", color: "var(--green)" } :
+    passCount >= 6             ? { bg: "var(--bg-inset)", color: "var(--text-2)" } :
+                                 { bg: "var(--orange-soft)", color: "var(--orange)" };
 
   return (
     <div>
@@ -150,10 +150,10 @@ const ValidationChecklist = memo(function ValidationChecklist({ p }: { p: Valida
         {items.map(item => {
           const isPass = item.state === "pass";
           const isIncomplete = item.state === "incomplete";
-          const tone = isPass ? "#10b981" : item.state === "note" ? "var(--text-2)" : isIncomplete ? "#d97706" : "#ef4444";
+          const tone = isPass ? "var(--green)" : item.state === "note" ? "var(--text-2)" : isIncomplete ? "var(--orange)" : "var(--red)";
           return (
           <div key={item.label} className={`primer-checklist-item is-${item.state}`}>
-            <span style={{ flexShrink: 0, width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 10, fontWeight: 700, background: tone }}>{isPass ? "✓" : item.state === "note" ? "i" : isIncomplete ? "!" : "✗"}</span>
+            <span style={{ flexShrink: 0, width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: tone, fontSize: 12, fontWeight: 700, background: `color-mix(in srgb, ${tone} 12%, var(--bg-card))` }}>{isPass ? "✓" : item.state === "note" ? "i" : isIncomplete ? "!" : "✗"}</span>
             <span className="primer-checklist-label" style={{ color: isPass ? "var(--text-2)" : tone }}>{item.label}{item.help && <PrimerHelp topic={item.help} />}</span>
             <span className="primer-checklist-detail">{item.detail}</span>
           </div>
@@ -2093,8 +2093,8 @@ export default function PrimerPage() {
 
             {blastWarningCount > 0 && (
               <div className="card primer-alert-card notice" style={{ marginBottom: 0 }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: "#92400e", marginBottom: 4 }}>{t("blast_warning_title")}</p>
-                <p style={{ fontSize: 12, color: "#a16207", lineHeight: 1.6 }}>{t("blast_warning_body", { count: blastWarningCount })}</p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "var(--color-warn)", marginBottom: 4 }}>{t("blast_warning_title")}</p>
+                <p style={{ fontSize: 14, color: "var(--text-2)", lineHeight: 1.6 }}>{t("blast_warning_body", { count: blastWarningCount })}</p>
               </div>
             )}
 

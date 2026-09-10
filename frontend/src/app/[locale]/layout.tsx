@@ -82,7 +82,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body style={{ minHeight: "100vh" }}>
+      <body className="research-refresh" style={{ minHeight: "100vh" }}>
         <StructuredData data={structuredData} />
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>

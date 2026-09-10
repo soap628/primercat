@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/lib/useToast";
 
 type Ratios = Record<string, number>;
@@ -101,7 +101,12 @@ function decodePlan(value: string) {
 
 export default function FundCalculatorPage({ params: { locale } }: { params: { locale: string } }) {
   const zh = locale === "zh";
-  const { toast } = useToast();
+  const { toast: showToast } = useToast();
+  const [announcement, setAnnouncement] = useState("");
+  const toast = useCallback((message: string, type?: "success" | "error" | "info") => {
+    showToast(message, type);
+    setAnnouncement(message);
+  }, [showToast]);
   const [preset, setPreset] = useState<keyof typeof PRESETS>("nsfc");
   const [projectName, setProjectName] = useState("");
   const [total, setTotal] = useState(30);
@@ -212,6 +217,7 @@ export default function FundCalculatorPage({ params: { locale } }: { params: { l
     const next = savedPlans.filter((plan) => plan.id !== id);
     setSavedPlans(next);
     localStorage.setItem("primercat-fund-plans", JSON.stringify(next));
+    toast(zh ? "预算草案已删除" : "Budget draft deleted");
   }
 
   function exportCsv() {
@@ -265,6 +271,7 @@ export default function FundCalculatorPage({ params: { locale } }: { params: { l
 
   return (
     <div className="fund-calc-v1">
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</div>
       <section className="fund-calc-hero">
         <div>
           <span className="fund-calc-kicker">PRIMERCAT · FUND PLANNER</span>
@@ -297,11 +304,11 @@ export default function FundCalculatorPage({ params: { locale } }: { params: { l
           </div>
           <label>
             <span>{zh ? "间接费用占总经费（草案）" : "Indirect share of total (draft)"}<b>{indirectShare.toFixed(0)}%</b></span>
-            <input type="range" min="0" max="40" step="1" value={indirectShare} onChange={(event) => setIndirectShare(Number(event.target.value))} />
+            <input type="range" min="0" max="40" step="1" value={indirectShare} aria-describedby="fund-indirect-basis" aria-valuetext={`${indirectShare.toFixed(0)}%, ${indirect.toFixed(2)} ${zh ? "万元" : "CNY 10k"}`} onChange={(event) => setIndirectShare(Number(event.target.value))} />
           </label>
           <div className="fund-calc-control-note">
             <strong>{zh ? "口径提示" : "Basis note"}</strong>
-            <p>{zh ? "这里按“总经费中的预计占比”做内部草案，不等同于政策规定的间接费用核定公式。" : "This is an internal share-of-total draft, not the regulatory formula for indirect-cost approval."}</p>
+            <p id="fund-indirect-basis">{zh ? "这里按“总经费中的预计占比”做内部草案，不等同于政策规定的间接费用核定公式。" : "This is an internal share-of-total draft, not the regulatory formula for indirect-cost approval."}</p>
           </div>
         </aside>
 
@@ -314,7 +321,7 @@ export default function FundCalculatorPage({ params: { locale } }: { params: { l
           </section>
 
           <section className="fund-calc-section">
-            <header className="fund-calc-section-head"><div><span>02</span><h2>{zh ? "直接费用内部明细" : "Direct-cost detail"}</h2></div><button type="button" onClick={() => setRatios(DEFAULT_RATIOS)}>{zh ? "恢复参考比例" : "Reset shares"}</button></header>
+            <header className="fund-calc-section-head"><div><span>02</span><h2>{zh ? "直接费用内部明细" : "Direct-cost detail"}</h2></div><button type="button" onClick={() => { setRatios(DEFAULT_RATIOS); toast(zh ? "已恢复参考比例" : "Reference shares restored"); }}>{zh ? "恢复参考比例" : "Reset shares"}</button></header>
             <div className="fund-calc-segments" aria-hidden="true">
               {categoryAmounts.map((item) => <i key={item.key} style={{ width: `${item.ratio}%`, background: item.color }} />)}
             </div>
@@ -322,7 +329,7 @@ export default function FundCalculatorPage({ params: { locale } }: { params: { l
               {categoryAmounts.map((item) => (
                 <div className="fund-calc-allocation" key={item.key}>
                   <span className="fund-calc-allocation-label"><i style={{ background: item.color }} />{item.label}</span>
-                  <input aria-label={`${item.label} ${zh ? "比例" : "share"}`} type="range" min="0" max="70" step="1" value={item.ratio} onChange={(event) => setRatios((current) => rebalance(current, item.key, Number(event.target.value)))} />
+                  <input aria-label={`${item.label} ${zh ? "比例" : "share"}`} aria-valuetext={`${item.ratio.toFixed(1)}%, ${item.amount.toFixed(2)} ${zh ? "万元" : "CNY 10k"}`} type="range" min="0" max="70" step="1" value={item.ratio} onChange={(event) => setRatios((current) => rebalance(current, item.key, Number(event.target.value)))} />
                   <strong>{item.amount.toFixed(2)}</strong>
                   <small>{item.ratio.toFixed(1)}%</small>
                 </div>
@@ -331,12 +338,12 @@ export default function FundCalculatorPage({ params: { locale } }: { params: { l
           </section>
 
           <section className="fund-calc-section">
-            <header className="fund-calc-section-head"><div><span>03</span><h2>{zh ? "年度直接费用计划" : "Annual direct-cost schedule"}</h2></div><button type="button" onClick={() => setYearShares(equalShares(duration))}>{zh ? "平均分配" : "Distribute evenly"}</button></header>
+            <header className="fund-calc-section-head"><div><span>03</span><h2>{zh ? "年度直接费用计划" : "Annual direct-cost schedule"}</h2></div><button type="button" onClick={() => { setYearShares(equalShares(duration)); toast(zh ? "已按年度平均分配" : "Distributed evenly across years"); }}>{zh ? "平均分配" : "Distribute evenly"}</button></header>
             <div className="fund-calc-year-list">
               {yearShares.map((share, index) => (
                 <div key={index}>
                   <span>{zh ? `第 ${index + 1} 年` : `Year ${index + 1}`}</span>
-                  <input aria-label={zh ? `第 ${index + 1} 年比例` : `Year ${index + 1} share`} type="range" min="0" max="100" step="1" value={share} onChange={(event) => setYearShares((current) => rebalanceYears(current, index, Number(event.target.value)))} />
+                  <input aria-label={zh ? `第 ${index + 1} 年比例` : `Year ${index + 1} share`} aria-valuetext={`${share.toFixed(1)}%, ${yearAmounts[index].toFixed(2)} ${zh ? "万元" : "CNY 10k"}`} type="range" min="0" max="100" step="1" value={share} onChange={(event) => setYearShares((current) => rebalanceYears(current, index, Number(event.target.value)))} />
                   <strong>{yearAmounts[index].toFixed(2)}</strong><small>{share.toFixed(1)}%</small>
                 </div>
               ))}
@@ -371,7 +378,7 @@ export default function FundCalculatorPage({ params: { locale } }: { params: { l
           {savedPlans.length > 0 && (
             <section className="fund-calc-saved">
               <header><span>05</span><h2>{zh ? "当前浏览器中的草案" : "Drafts in this browser"}</h2></header>
-              <div>{savedPlans.map((plan) => <article key={plan.id}><div><strong>{plan.projectName || presetLabels[plan.preset as keyof typeof PRESETS]}</strong><span>{plan.total.toFixed(1)} {zh ? "万元" : "× CNY 10k"} · {new Date(plan.savedAt).toLocaleDateString(locale)}</span></div><button type="button" onClick={() => loadPlan(plan)}>{zh ? "载入" : "Load"}</button><button type="button" onClick={() => deletePlan(plan.id)}>{zh ? "删除" : "Delete"}</button></article>)}</div>
+              <div>{savedPlans.map((plan) => <article key={plan.id}><div><strong>{plan.projectName || presetLabels[plan.preset as keyof typeof PRESETS]}</strong><span>{plan.total.toFixed(1)} {zh ? "万元" : "× CNY 10k"} · {new Date(plan.savedAt).toLocaleDateString(locale)}</span></div><button type="button" aria-label={`${zh ? "载入" : "Load"}: ${plan.projectName || presetLabels[plan.preset as keyof typeof PRESETS]}`} onClick={() => loadPlan(plan)}>{zh ? "载入" : "Load"}</button><button type="button" aria-label={`${zh ? "删除" : "Delete"}: ${plan.projectName || presetLabels[plan.preset as keyof typeof PRESETS]}`} onClick={() => deletePlan(plan.id)}>{zh ? "删除" : "Delete"}</button></article>)}</div>
             </section>
           )}
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link } from "@/navigation";
 import {
   CHEMICAL_SAFETY_RECORDS,
@@ -42,6 +42,7 @@ const COPY = {
     vv: "v/v（mL / 100 mL）",
     percentNoteWv: "先溶解称取的溶质，再用溶剂定容；不要把“加水量”直接写成终体积。",
     percentNoteVv: "量取液体组分后用溶剂定容。混合体积可能不完全相加，因此不直接给出“溶剂体积差值”。",
+    percentInvalid: "v/v 百分浓度不能大于 100%。",
     invalid: "请输入大于 0 的有效数值。",
     dilutionInvalid: "储备液浓度必须高于或等于目标浓度。",
     mwHelper: "摩尔质量可从试剂标签、供应商 SDS 或本站分子量工具确认。",
@@ -67,6 +68,12 @@ const COPY = {
     openRecipe: "展开配方",
     closeRecipe: "收起配方",
     recipesShown: "个配方",
+    recipeSearch: "搜索配方",
+    recipeSearchPlaceholder: "名称、用途或成分",
+    clearSearch: "清除搜索",
+    recipeCategories: "配方分类",
+    noRecipeMatches: "未找到匹配配方，请更换关键词或分类。",
+    unit: "单位",
     noLinkedRecords: "当前配方没有映射到毒性库中的高关注试剂；这不代表所有原料均无危险，仍须核对每个产品 SDS。",
     additionOrder: "关键加料顺序",
     incompatibility: "禁配与不相容",
@@ -119,6 +126,7 @@ const COPY = {
     vv: "v/v (mL / 100 mL)",
     percentNoteWv: "Dissolve the weighed solute, then bring to final volume with solvent; do not treat final volume as the water-addition volume.",
     percentNoteVv: "Measure the liquid component, then bring to final volume. Mixed volumes may not be perfectly additive, so a solvent difference is not prescribed.",
+    percentInvalid: "A v/v percentage cannot exceed 100%.",
     invalid: "Enter valid values greater than zero.",
     dilutionInvalid: "Stock concentration must be greater than or equal to target concentration.",
     mwHelper: "Confirm molar mass from the reagent label, supplier SDS, or the PrimerCat molecular-weight tool.",
@@ -144,6 +152,12 @@ const COPY = {
     openRecipe: "Open recipe",
     closeRecipe: "Close recipe",
     recipesShown: "recipes",
+    recipeSearch: "Search recipes",
+    recipeSearchPlaceholder: "Name, purpose, or ingredient",
+    clearSearch: "Clear search",
+    recipeCategories: "Recipe categories",
+    noRecipeMatches: "No matching recipes. Try another search or category.",
+    unit: "unit",
     noLinkedRecords: "This recipe currently has no high-concern reagent mapped in the safety library. That does not establish every ingredient as hazard-free; check each product SDS.",
     additionOrder: "Critical addition order",
     incompatibility: "Do not mix / incompatibilities",
@@ -196,26 +210,40 @@ function formatVolume(liters: number, preferredUnit: string) {
   return `${compactNumber(liters / factor)} ${preferredUnit}`;
 }
 
-function NumericField({ label, value, setValue, unit, setUnit, units }: {
+function recipeMatchesQuery(recipe: SolutionRecipe, query: string) {
+  const normalize = (value: string) => value.normalize("NFKC").toLowerCase();
+  const terms = normalize(query).trim().split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return true;
+  const searchableText = normalize([
+    recipe.title.zh, recipe.title.en, recipe.subtitle.zh, recipe.subtitle.en,
+    ...recipe.ingredients.flatMap((ingredient) => [ingredient.name.zh, ingredient.name.en]),
+  ].join("\n"));
+  return terms.every((term) => searchableText.includes(term));
+}
+
+function NumericField({ id, label, value, setValue, unit, setUnit, units, unitLabel, invalid }: {
+  id: string;
   label: string;
   value: string;
   setValue: (value: string) => void;
   unit?: string;
   setUnit?: (value: string) => void;
   units?: string[];
+  unitLabel: string;
+  invalid?: boolean;
 }) {
   return (
-    <label className="lab-field">
-      <span>{label}</span>
+    <div className="lab-field">
+      <label className="lab-field-label" htmlFor={id}>{label}</label>
       <div className="lab-input-row">
-        <input type="number" min="0" step="any" value={value} onChange={(event) => setValue(event.target.value)} inputMode="decimal" />
+        <input id={id} type="number" min="0" step="any" value={value} onChange={(event) => setValue(event.target.value)} inputMode="decimal" aria-label={unit ? `${label} (${unit})` : label} aria-invalid={invalid ?? positiveNumber(value) === null} />
         {units && unit && setUnit ? (
-          <select value={unit} onChange={(event) => setUnit(event.target.value)} aria-label={`${label} unit`}>
+          <select value={unit} onChange={(event) => setUnit(event.target.value)} aria-label={`${label} ${unitLabel}`}>
             {units.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
         ) : unit ? <b>{unit}</b> : null}
       </div>
-    </label>
+    </div>
   );
 }
 
@@ -239,6 +267,8 @@ function RecipeCard({ recipe, zh, expanded, onToggle }: {
   const title = zh ? recipe.title.zh : recipe.title.en;
   const subtitle = zh ? recipe.subtitle.zh : recipe.subtitle.en;
   const detailId = `${recipe.id}-detail`;
+  const titleId = `${recipe.id}-title`;
+  const volumeId = `${recipe.id}-volume`;
 
   return (
     <article className={`lab-recipe-card${expanded ? " is-open" : ""}`} id={recipe.id}>
@@ -246,7 +276,7 @@ function RecipeCard({ recipe, zh, expanded, onToggle }: {
         <span className="lab-recipe-type-mark" aria-hidden="true" />
         <span className="lab-recipe-summary-copy">
           <span className="lab-recipe-category">{copy[recipe.category]}</span>
-          <h3>{title}</h3>
+          <h3 id={titleId}>{title}</h3>
           <p>{subtitle}</p>
         </span>
         <span className="lab-recipe-summary-meta">
@@ -256,15 +286,17 @@ function RecipeCard({ recipe, zh, expanded, onToggle }: {
         <span className="lab-recipe-toggle-label">{expanded ? copy.closeRecipe : copy.openRecipe}<b aria-hidden="true">⌄</b></span>
       </button>
 
-      {expanded && <div className="lab-recipe-detail" id={detailId}>
+      <div className="lab-recipe-detail" id={detailId} hidden={!expanded} role="region" aria-labelledby={titleId}>
+      {expanded && <>
       <div className="lab-recipe-head lab-recipe-detail-bar">
-        <label className="lab-volume-control">
+        <label className="lab-volume-control" htmlFor={volumeId}>
           <span>{copy.finalVolumeLabel}</span>
-          <div><input type="number" min="0.001" step="any" value={volume} onChange={(event) => setVolume(event.target.value)} /><b>mL</b></div>
+          <div><input id={volumeId} type="number" min="0.001" step="any" value={volume} onChange={(event) => setVolume(event.target.value)} inputMode="decimal" aria-label={`${title} — ${copy.finalVolumeLabel} (mL)`} aria-invalid={targetVolume === null} aria-describedby={targetVolume === null ? `${volumeId}-error` : undefined} /><b>mL</b></div>
         </label>
+        {targetVolume === null && <p className="lab-recipe-volume-error" id={`${volumeId}-error`} role="alert">{copy.invalid}</p>}
       </div>
 
-      <div className="lab-ingredient-table" role="table" aria-label={`${zh ? recipe.title.zh : recipe.title.en} ingredients`}>
+      <div className="lab-ingredient-table" role="table" aria-label={`${title} — ${copy.ingredient}`}>
         <div className="lab-ingredient-row lab-ingredient-header" role="row">
           <span role="columnheader">{copy.ingredient}</span><span role="columnheader">{copy.amount}</span>
         </div>
@@ -316,7 +348,8 @@ function RecipeCard({ recipe, zh, expanded, onToggle }: {
         <a href={recipe.sourceUrl} target="_blank" rel="noreferrer">{copy.source} ↗</a>
         <Link href={recipe.safetyQuery ? `/chemical-safety?q=${encodeURIComponent(recipe.safetyQuery)}` : "/chemical-safety"}>{copy.safety} →</Link>
       </div>
-      </div>}
+      </>}
+      </div>
     </article>
   );
 }
@@ -339,6 +372,8 @@ export default function SolutionsPage({ params: { locale } }: { params: { locale
   const [percentVolume, setPercentVolume] = useState("100");
   const [percentVolumeUnit, setPercentVolumeUnit] = useState("mL");
   const [category, setCategory] = useState<"all" | SolutionRecipe["category"]>("all");
+  const [recipeQuery, setRecipeQuery] = useState("");
+  const recipeSearchRef = useRef<HTMLInputElement>(null);
   const [openRecipeId, setOpenRecipeId] = useState<string | null>(SOLUTION_RECIPES[0]?.id ?? null);
 
   const molarResult = useMemo(() => {
@@ -368,7 +403,9 @@ export default function SolutionsPage({ params: { locale } }: { params: { locale
     return (pct / 100) * finalMl;
   }, [percent, percentType, percentVolume, percentVolumeUnit]);
 
-  const visibleRecipes = category === "all" ? SOLUTION_RECIPES : SOLUTION_RECIPES.filter((recipe) => recipe.category === category);
+  const visibleRecipes = useMemo(() => SOLUTION_RECIPES.filter((recipe) => (
+    (category === "all" || recipe.category === category) && recipeMatchesQuery(recipe, recipeQuery)
+  )), [category, recipeQuery]);
   const dilutionValuesValid = positiveNumber(stockConcentration) && positiveNumber(targetConcentration) && positiveNumber(dilutionVolume);
 
   return (
@@ -391,21 +428,21 @@ export default function SolutionsPage({ params: { locale } }: { params: { locale
           <div><span>01</span><h2>{copy.calculator}</h2></div>
           <p>{copy.calculatorIntro}</p>
         </div>
-        <div className="lab-tabs" role="tablist">
+        <div className="lab-tabs lab-calculator-mode" role="group" aria-label={copy.calculator}>
           {(["molar", "dilution", "percent"] as CalculatorMode[]).map((item) => (
-            <button key={item} type="button" role="tab" aria-selected={mode === item} onClick={() => setMode(item)}>{copy[item]}</button>
+            <button key={item} type="button" aria-pressed={mode === item} data-active={mode === item} onClick={() => setMode(item)}>{copy[item]}</button>
           ))}
         </div>
 
         {mode === "molar" && (
           <div className="lab-calc-grid">
             <div className="lab-fields-grid">
-              <NumericField label={copy.mw} value={mw} setValue={setMw} unit="g/mol" />
-              <NumericField label={copy.concentration} value={molarConcentration} setValue={setMolarConcentration} unit={molarUnit} setUnit={setMolarUnit} units={["M", "mM", "µM"]} />
-              <NumericField label={copy.finalVolume} value={molarVolume} setValue={setMolarVolume} unit={molarVolumeUnit} setUnit={setMolarVolumeUnit} units={["L", "mL", "µL"]} />
+              <NumericField id="solution-molar-mw" unitLabel={copy.unit} label={copy.mw} value={mw} setValue={setMw} unit="g/mol" />
+              <NumericField id="solution-molar-concentration" unitLabel={copy.unit} label={copy.concentration} value={molarConcentration} setValue={setMolarConcentration} unit={molarUnit} setUnit={setMolarUnit} units={["M", "mM", "µM"]} />
+              <NumericField id="solution-molar-volume" unitLabel={copy.unit} label={copy.finalVolume} value={molarVolume} setValue={setMolarVolume} unit={molarVolumeUnit} setUnit={setMolarVolumeUnit} units={["L", "mL", "µL"]} />
               <div className="lab-field-helper">{copy.mwHelper} <Link href="/mw-calc">{copy.openMw} →</Link></div>
             </div>
-            <div className="lab-result-card" aria-live="polite">
+            <div className="lab-result-card" role="status" aria-live="polite" aria-atomic="true">
               <span>{copy.equationMolar}</span>
               <p>{copy.massNeeded}</p>
               <strong>{molarResult === null ? "—" : formatMass(molarResult)}</strong>
@@ -417,11 +454,11 @@ export default function SolutionsPage({ params: { locale } }: { params: { locale
         {mode === "dilution" && (
           <div className="lab-calc-grid">
             <div className="lab-fields-grid">
-              <NumericField label={copy.stockConcentration} value={stockConcentration} setValue={setStockConcentration} unit={copy.sameUnit} />
-              <NumericField label={copy.targetConcentration} value={targetConcentration} setValue={setTargetConcentration} unit={copy.sameUnit} />
-              <NumericField label={copy.finalVolume} value={dilutionVolume} setValue={setDilutionVolume} unit={dilutionVolumeUnit} setUnit={setDilutionVolumeUnit} units={["L", "mL", "µL"]} />
+              <NumericField id="solution-stock-concentration" unitLabel={copy.unit} label={copy.stockConcentration} value={stockConcentration} setValue={setStockConcentration} unit={copy.sameUnit} />
+              <NumericField id="solution-target-concentration" unitLabel={copy.unit} label={copy.targetConcentration} value={targetConcentration} setValue={setTargetConcentration} unit={copy.sameUnit} invalid={positiveNumber(targetConcentration) === null || (!!dilutionValuesValid && dilutionResult === null)} />
+              <NumericField id="solution-dilution-volume" unitLabel={copy.unit} label={copy.finalVolume} value={dilutionVolume} setValue={setDilutionVolume} unit={dilutionVolumeUnit} setUnit={setDilutionVolumeUnit} units={["L", "mL", "µL"]} />
             </div>
-            <div className="lab-result-card" aria-live="polite">
+            <div className="lab-result-card" role="status" aria-live="polite" aria-atomic="true">
               <span>{copy.equationDilution}</span>
               <p>{copy.stockVolume}</p>
               <strong>{dilutionResult ? formatVolume(dilutionResult.stockLiters, dilutionVolumeUnit) : "—"}</strong>
@@ -435,13 +472,14 @@ export default function SolutionsPage({ params: { locale } }: { params: { locale
           <div className="lab-calc-grid">
             <div className="lab-fields-grid">
               <label className="lab-field"><span>{copy.concentrationType}</span><select className="lab-wide-select" value={percentType} onChange={(event) => setPercentType(event.target.value as "wv" | "vv")}><option value="wv">{copy.wv}</option><option value="vv">{copy.vv}</option></select></label>
-              <NumericField label={copy.percentValue} value={percent} setValue={setPercent} unit="%" />
-              <NumericField label={copy.finalVolume} value={percentVolume} setValue={setPercentVolume} unit={percentVolumeUnit} setUnit={setPercentVolumeUnit} units={["L", "mL", "µL"]} />
+              <NumericField id="solution-percent-value" unitLabel={copy.unit} label={copy.percentValue} value={percent} setValue={setPercent} unit="%" invalid={positiveNumber(percent) === null || (percentType === "vv" && Number(percent) > 100)} />
+              <NumericField id="solution-percent-volume" unitLabel={copy.unit} label={copy.finalVolume} value={percentVolume} setValue={setPercentVolume} unit={percentVolumeUnit} setUnit={setPercentVolumeUnit} units={["L", "mL", "µL"]} />
             </div>
-            <div className="lab-result-card" aria-live="polite">
+            <div className="lab-result-card" role="status" aria-live="polite" aria-atomic="true">
               <span>{percentType === "wv" ? copy.wv : copy.vv}</span>
               <p>{copy.componentNeeded}</p>
               <strong>{percentResult === null ? "—" : `${compactNumber(percentResult)} ${percentType === "wv" ? "g" : "mL"}`}</strong>
+              {percentResult === null && <small>{percentType === "vv" && Number(percent) > 100 ? copy.percentInvalid : copy.invalid}</small>}
               <small>{percentType === "wv" ? copy.percentNoteWv : copy.percentNoteVv}</small>
             </div>
           </div>
@@ -453,19 +491,27 @@ export default function SolutionsPage({ params: { locale } }: { params: { locale
           <div><span>02</span><div><small>{copy.recipesKicker}</small><h2>{copy.recipesTitle}</h2></div></div>
           <p>{copy.recipesIntro}</p>
         </div>
-        <div className="solution-library-toolbar">
-          <div className="lab-filter-row">
-            {(["all", "buffer", "electrophoresis", "stock"] as const).map((item) => <button key={item} type="button" data-active={category === item} onClick={() => { setCategory(item); setOpenRecipeId(null); }}>{copy[item]}</button>)}
+        <div className="solution-library-search">
+          <label htmlFor="solution-recipe-search">{copy.recipeSearch}</label>
+          <div className="solution-search-field">
+            <input id="solution-recipe-search" ref={recipeSearchRef} type="search" value={recipeQuery} onChange={(event) => setRecipeQuery(event.target.value)} placeholder={copy.recipeSearchPlaceholder} aria-controls="solution-recipe-results" aria-describedby="solution-recipe-count" />
+            {recipeQuery && <button className="solution-search-clear" type="button" onClick={() => { setRecipeQuery(""); recipeSearchRef.current?.focus(); }}>{copy.clearSearch}</button>}
           </div>
-          <span><b>{visibleRecipes.length}</b> {copy.recipesShown}</span>
         </div>
-        <div className="lab-recipe-grid">{visibleRecipes.map((recipe) => <RecipeCard
+        <div className="solution-library-toolbar">
+          <div className="lab-filter-row" role="group" aria-label={copy.recipeCategories}>
+            {(["all", "buffer", "electrophoresis", "stock"] as const).map((item) => <button key={item} type="button" aria-pressed={category === item} data-active={category === item} onClick={() => { setCategory(item); setOpenRecipeId(null); }}>{copy[item]}</button>)}
+          </div>
+          <span className="solution-library-count" id="solution-recipe-count" role="status" aria-live="polite" aria-atomic="true"><b>{visibleRecipes.length}</b> {copy.recipesShown}</span>
+        </div>
+        <div className="lab-recipe-grid" id="solution-recipe-results">{visibleRecipes.map((recipe) => <RecipeCard
           key={recipe.id}
           recipe={recipe}
           zh={zh}
           expanded={openRecipeId === recipe.id}
           onToggle={() => setOpenRecipeId((current) => current === recipe.id ? null : recipe.id)}
         />)}</div>
+        {visibleRecipes.length === 0 && <p className="solution-library-empty">{copy.noRecipeMatches}</p>}
       </section>
 
       <section className="lab-safety-check solution-safety-strip">

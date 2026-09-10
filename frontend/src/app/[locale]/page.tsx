@@ -168,7 +168,7 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
             <span>{isZh ? "示意预览" : "Illustrative preview"}</span>
             <strong>TP53 · NM_000546</strong>
           </div>
-          <span className="home-evidence-status"><i />{isZh ? "RNA 初筛未见明显非目标命中" : "No evident non-target RNA hit"}</span>
+          <span className="home-evidence-status">5′ → 3′</span>
         </div>
 
         <div className="home-evidence-track">
@@ -192,7 +192,7 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
         </div>
 
         <div className="home-evidence-footer">
-          <div className="home-evidence-score is-status"><strong>{isZh ? "参数优秀" : "Strong parameters"}</strong><span>{isZh ? "特异性证据已记录" : "Specificity evidence recorded"}</span></div>
+          <div className="home-evidence-score is-status"><span>{isZh ? "示意数据，非实验结果" : "Illustrative data, not experimental results"}</span></div>
           <div className="home-evidence-sources"><span>NCBI RefSeq</span><span>Primer3</span><span>RNA BLAST</span></div>
         </div>
       </div>
@@ -368,7 +368,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
   });
 
   return (
-    <div className="home-page-v4">
+    <div className="home-page-v4 home-page-v5">
       {/* ── Easter egg: Cat Party overlay ── */}
       {party && (
         <div className="cat-party-overlay" aria-hidden="true">
@@ -390,22 +390,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
 
       {/* ══ HERO ══ */}
       <section className="home-hero-wrap home-breakout">
-        {/* large diffuse pink glow */}
-        <div className="hero-glow-blob" aria-hidden="true" />
-        {/* floating ambient particles */}
-        <div className="hero-particles" aria-hidden="true">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="hero-particle" style={{
-              left: `${8 + i * 7.5}%`,
-              animationDelay: `${i * 0.45}s`,
-              animationDuration: `${6 + (i % 5)}s`,
-            }} />
-          ))}
-        </div>
-
         <div className="home-hero-inner">
-
-          <ProductEvidenceGraphic locale={locale} />
 
           {/* headline */}
           <div className="home-hero-kicker">PRIMERCAT · {locale === "zh" ? "生命科学设计工具" : "LIFE SCIENCE DESIGN TOOLS"}</div>
@@ -418,7 +403,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
               </>
             ) : (
               <>
-                <span className="hero-name">Primer<strong>Cat</strong></span>
+                <span className="hero-name">Primer<strong>Cat</strong>:{" "}</span>
                 <span className="hero-promise">Design primers.</span>
                 <span className="hero-promise hero-promise-last">Keep the evidence.</span>
               </>
@@ -436,9 +421,6 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
                 {i < arr.length - 1 && <span className="hero-pipeline-arrow">→</span>}
               </span>
             ))}
-            <span className="hero-pipeline-tag">
-              {locale === "zh" ? "自动运行 · 依据可查" : "Automated · Evidence shown"}
-            </span>
           </div>
 
           {/* CTAs */}
@@ -457,15 +439,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
             </Link>
           </div>
 
-          {/* feature pills */}
-          <div className="hero-pills">
-            {[t("page_feat_1"), t("page_feat_2"), t("page_feat_3")].map((f) => (
-              <div key={f} className="hero-pill">
-                <div className="hero-pill-dot" />
-                {f}
-              </div>
-            ))}
-          </div>
+          <ProductEvidenceGraphic locale={locale} />
 
         </div>
       </section>
@@ -473,10 +447,15 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
       {/* ══ CURRENT PRODUCTION EVIDENCE ══ */}
       <section className="home-production-snapshot home-breakout" aria-labelledby="home-production-title">
         <div className="home-science-shell">
+          <details className="home-archive-details">
+            <summary id="home-production-title">
+              <span>{zh ? "参考与验证记录" : "Reference & validation record"}</span>
+              <span>{productionEvidence.snapshot_date}<b aria-hidden="true">+</b></span>
+            </summary>
           <header className="home-science-header">
             <div>
-              <h2 id="home-production-title">{zh ? "当前运行依据" : "Current operating basis"}</h2>
-              <p>{zh ? `截至 ${productionEvidence.snapshot_date}，我们已将 PrimerCat 使用的参考组装、数据索引、计算审计和发布检查留档，并链接原始来源或机器可读记录。这些证据界定 PrimerCat 的计算范围；研究者仍需完成实验验证。` : `As of ${productionEvidence.snapshot_date}, we have recorded the reference assemblies, data indexes, computational audits, and release checks used by PrimerCat, with links to primary or machine-readable records. This evidence defines PrimerCat's computational scope; researchers must still perform experimental validation.`}</p>
+              <h2>{zh ? "已归档的验证快照" : "Archived validation snapshot"}</h2>
+              <p>{zh ? `以下为 ${productionEvidence.snapshot_date} 的参考数据与审计记录，并非实时服务状态。实际使用的数据库与筛查范围，请以每次设计结果的说明为准。` : `The records below were archived on ${productionEvidence.snapshot_date}; they are not a live service-status report. Consult each design result for the databases and screening scope actually used.`}</p>
             </div>
           </header>
 
@@ -493,7 +472,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
             <article>
               <span>INDEX</span>
               <h3>{zh ? "索引范围" : "Index scope"}</h3>
-              <p>{zh ? `PrimerCat 当前索引含人类 ${formatCount(productionEvidence.references.human.grna_feature_rows)} 条注释特征记录、${formatCount(productionEvidence.references.human.transcript_locus_rows)} 条转录本—基因组定位记录，以及小鼠 ${formatCount(productionEvidence.references.mouse.grna_feature_rows)} 条注释特征记录。` : `PrimerCat currently indexes ${formatCount(productionEvidence.references.human.grna_feature_rows)} human annotation-feature records, ${formatCount(productionEvidence.references.human.transcript_locus_rows)} human transcript-to-genome locus records, and ${formatCount(productionEvidence.references.mouse.grna_feature_rows)} mouse annotation-feature records.`}</p>
+              <p>{zh ? `该快照记录了人类 ${formatCount(productionEvidence.references.human.grna_feature_rows)} 条注释特征、${formatCount(productionEvidence.references.human.transcript_locus_rows)} 条转录本—基因组定位，以及小鼠 ${formatCount(productionEvidence.references.mouse.grna_feature_rows)} 条注释特征。` : `This snapshot records ${formatCount(productionEvidence.references.human.grna_feature_rows)} human annotation features, ${formatCount(productionEvidence.references.human.transcript_locus_rows)} human transcript-to-genome loci, and ${formatCount(productionEvidence.references.mouse.grna_feature_rows)} mouse annotation features.`}</p>
             </article>
             <article>
               <span>AUDIT</span>
@@ -514,6 +493,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
               <a href="/evidence/production-snapshot-v1.json">JSON ↗</a>
             </div>
           </div>
+          </details>
         </div>
       </section>
 
@@ -534,7 +514,6 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
                 <h3>{step.title}</h3>
                 <div className="home-method-copy">
                   <p>{step.body}<HomeCitations ids={step.refs} /></p>
-                  <span>{step.note}</span>
                 </div>
               </li>
             ))}
@@ -563,8 +542,6 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
           </div>
 
           <aside className="home-science-disclosure">
-            <span>{science.disclosureTitle}</span>
-            <p>{science.disclosure}</p>
             <div>
               <Link href="/methods">{science.methodsLink} →</Link>
               <Link href="/validation">{science.validationLink} →</Link>

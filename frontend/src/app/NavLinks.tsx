@@ -177,6 +177,7 @@ export default function NavLinks({ locale }: { locale: string }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileRef = useRef<HTMLDivElement>(null);
+  const mobileToggleRef = useRef<HTMLButtonElement>(null);
   const { dark, toggle } = useDarkMode();
 
   useEffect(() => {
@@ -188,19 +189,25 @@ export default function NavLinks({ locale }: { locale: string }) {
         setMobileOpen(false);
       }
     }
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        setDropdownOpen(false);
-        setMobileOpen(false);
-      }
-    }
     document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      setDropdownOpen(false);
+      if (mobileOpen) {
+        e.preventDefault();
+        setMobileOpen(false);
+        mobileToggleRef.current?.focus({ preventScroll: true });
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen]);
 
   useEffect(() => {
     setDropdownOpen(false);
@@ -208,13 +215,15 @@ export default function NavLinks({ locale }: { locale: string }) {
   }, [pathname]);
 
   useEffect(() => {
-    if (!mobileOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [mobileOpen]);
+    // Match the CSS breakpoint; do not reopen an old mobile menu on return.
+    const mobileViewport = window.matchMedia("(max-width: 1100px)");
+    function closeOnDesktop() {
+      if (!mobileViewport.matches) setMobileOpen(false);
+    }
+    closeOnDesktop();
+    mobileViewport.addEventListener("change", closeOnDesktop);
+    return () => mobileViewport.removeEventListener("change", closeOnDesktop);
+  }, []);
 
   const links = [
     { href: "/primer", label: copy.primer, icon: <CatIcon />, matchPrefixes: ["/primer"] },
@@ -331,8 +340,18 @@ export default function NavLinks({ locale }: { locale: string }) {
       )}
       </nav>
 
-      <div ref={mobileRef} className="nav-mobile">
+      <div
+        ref={mobileRef}
+        className="nav-mobile"
+        onBlur={(event) => {
+          // This is a non-modal disclosure: Tab can leave without trapping focus.
+          if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) {
+            setMobileOpen(false);
+          }
+        }}
+      >
         <button
+          ref={mobileToggleRef}
           type="button"
           className="nav-menu-button"
           aria-label={mobileOpen ? copy.closeMenu : copy.openMenu}

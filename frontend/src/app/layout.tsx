@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./research-theme.css";
 
 export const metadata: Metadata = {
   verification: {
