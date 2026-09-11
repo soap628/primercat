@@ -4,91 +4,24 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/navigation";
 import { useCallback, useEffect, useState, useRef } from "react";
 import { productionEvidence } from "@/data/production-evidence";
-
-function PrimerCatMascot({ locale, onActivate, expanded }: { locale: string; onActivate: () => void; expanded: boolean }) {
-  const isZh = locale === "zh";
-
-  return (
-    <button
-      type="button"
-      className="home-mascot-trigger"
-      onClick={onActivate}
-      aria-label={isZh ? "点击 PrimerCat 猫咪" : "Click the PrimerCat mascot"}
-      aria-haspopup="dialog"
-      aria-expanded={expanded}
-    >
-      <svg className="home-mascot" viewBox="0 0 180 170" fill="none" aria-hidden="true">
-        <defs>
-          <linearGradient id="mascotCoat" x1="48" y1="32" x2="132" y2="157" gradientUnits="userSpaceOnUse">
-            <stop stopColor="var(--mascot-coat-light)" />
-            <stop offset="1" stopColor="var(--mascot-coat-dark)" />
-          </linearGradient>
-          <linearGradient id="mascotTail" x1="111" y1="112" x2="157" y2="147" gradientUnits="userSpaceOnUse">
-            <stop stopColor="var(--mascot-coat-dark)" />
-            <stop offset="1" stopColor="var(--mascot-coat-light)" />
-          </linearGradient>
-        </defs>
-
-        <ellipse className="home-mascot-shadow" cx="91" cy="157" rx="45" ry="5.5" />
-        <path className="home-mascot-tail" d="M110 119c24-8 45 1 47 16 2 13-10 23-23 18-10-4-14-14-8-22 4-6 12-6 18-2" stroke="url(#mascotTail)" strokeWidth="10" strokeLinecap="round" />
-
-        <g className="home-mascot-body">
-          <path className="home-mascot-torso" d="M68 82c-12 9-18 28-16 49 1 19 10 28 27 28h30c15 0 23-8 20-20-2-11-9-18-19-22 3-15-2-28-13-36-8-5-20-5-29 1Z" fill="url(#mascotCoat)" />
-          <path className="home-mascot-chest" d="M72 91c-8 15-9 36-4 59 4 5 10 7 18 7h5c-5-24-2-47 7-68-9-4-18-3-26 2Z" />
-          <path className="home-mascot-haunch" d="M108 116c13 4 20 12 22 23 2 11-7 19-21 19H96c11-9 15-23 12-42Z" />
-          <path className="home-mascot-paw" d="M69 119c-1 12-1 22 1 31m20-34c-2 13-2 24 0 34" />
-          <path className="home-mascot-paw-toes" d="M62 151c5-2 10-2 15 0m6 0c5-2 10-2 15 0" />
-        </g>
-
-        <g className="home-mascot-head">
-          <path className="home-mascot-face" d="M47 60c0-10 3-19 10-26L54 13l21 14c9-4 20-4 29 0l21-13-4 23c6 7 8 15 8 24-1 22-18 36-41 36-24 0-41-15-41-37Z" fill="url(#mascotCoat)" />
-          <path className="home-mascot-ear-inner" d="m59 24 13 9-11 7-2-16Zm53 9 9-8-2 16-7-8Z" />
-          <path className="home-mascot-face-highlight" d="M82 28c4-2 9-2 13 0-2 8-4 14-6 21-2-7-4-14-7-21Z" />
-          <path className="home-mascot-brow" d="M63 54c5-3 11-3 16 0m18 0c5-3 11-3 15 0" />
-          <g className="home-mascot-eyes">
-            <path d="M62 62c4-6 12-6 17 0-4 6-12 6-17 0Z" className="home-mascot-eye-white" />
-            <path d="M97 62c4-6 12-6 17 0-4 6-12 6-17 0Z" className="home-mascot-eye-white" />
-            <ellipse cx="71" cy="62" rx="1.8" ry="4" className="home-mascot-iris" />
-            <ellipse cx="106" cy="62" rx="1.8" ry="4" className="home-mascot-iris" />
-            <circle cx="70.5" cy="60.8" r=".8" className="home-mascot-eye-glint" />
-            <circle cx="105.5" cy="60.8" r=".8" className="home-mascot-eye-glint" />
-          </g>
-          <ellipse className="home-mascot-cheek" cx="82" cy="75" rx="8" ry="6" />
-          <ellipse className="home-mascot-cheek" cx="95" cy="75" rx="8" ry="6" />
-          <path className="home-mascot-chin" d="M82 80c2 6 10 7 13 0-4 2-9 2-13 0Z" />
-          <path className="home-mascot-nose" d="m85 72 3.5-1.6L92 72l-3.5 3.4L85 72Z" />
-          <path className="home-mascot-mouth" d="M88.5 75v4m0 0c-3 3-6 3-8 1m8-1c3 3 6 3 8 1" />
-          <g className="home-mascot-whiskers">
-            <path d="M72 75 44 70m29 10-31 2m63-7 28-5m-29 10 31 2" />
-          </g>
-        </g>
-
-        <g className="home-mascot-collar">
-          <path d="M68 91c13 6 28 6 41 0" />
-          <circle cx="88.5" cy="97" r="4.5" />
-          <path d="m86.5 97 2-2 2 2-2 2-2-2Z" />
-        </g>
-      </svg>
-    </button>
-  );
-}
+import PrimerCatMascot from "@/components/PrimerCatMascot";
 
 function ProductEvidenceGraphic({ locale }: { locale: string }) {
   const isZh = locale === "zh";
   const mascotNotes = isZh
     ? [
-        "这对候选，值得看看。",
-        "ΔTm 在目标范围内。",
-        "跨外显子，降低 gDNA 干扰。",
-        "BLAST 初筛完成，别忘了做实验。",
-        "94 分，还得上实验台。",
+        "先看序列，再做实验。",
+        "5′ → 3′，别弄反。",
+        "别忘了阴性对照。",
+        "好引物，也要做实验。",
+        "点点我，有个小秘密。",
       ]
     : [
-        "This candidate is worth reviewing.",
-        "ΔTm is within the target range.",
-        "Exon-spanning can reduce gDNA interference.",
-        "BLAST screening is complete. Validate it experimentally.",
-        "Score 94. Bench test next.",
+        "Check the sequence. Then test.",
+        "Always read 5′ → 3′.",
+        "Remember your controls.",
+        "Good primers still need a bench test.",
+        "Psst… try clicking me.",
       ];
   const [noteIndex, setNoteIndex] = useState(0);
   const [easterEggOpen, setEasterEggOpen] = useState(false);
@@ -172,28 +105,26 @@ function ProductEvidenceGraphic({ locale }: { locale: string }) {
         </div>
 
         <div className="home-evidence-track">
-          <div className="home-evidence-axis" aria-hidden="true"><span>5′</span><span>3′</span></div>
           <div className="home-evidence-gene" aria-hidden="true">
             <span className="exon exon-1" /><span className="exon exon-2" /><span className="exon exon-3" /><span className="exon exon-4" />
           </div>
           <div className="home-mascot-note" aria-hidden="true">
             <strong key={`${locale}-${noteIndex}`} className="home-mascot-note-copy">{mascotNotes[noteIndex]}</strong>
-            <span className="home-mascot-note-dots"><i /><i /><i /></span>
           </div>
           <PrimerCatMascot locale={locale} onActivate={openEasterEgg} expanded={easterEggOpen} />
           <div className="home-evidence-primer forward" aria-hidden="true"><b>F</b><span>AGGCTGCTCCCC...</span></div>
           <div className="home-evidence-primer reverse" aria-hidden="true"><span>CGTGCAAGTCAC...</span><b>R</b></div>
         </div>
 
-        <div className="home-evidence-metrics">
-          <div><span>ΔTm</span><strong>0.3 °C</strong></div>
-          <div><span>GC</span><strong>55%</strong></div>
-          <div><span>{isZh ? "扩增子" : "Amplicon"}</span><strong>152 bp</strong></div>
-        </div>
+        <dl className="home-evidence-metrics" aria-label={isZh ? "示意参数" : "Illustrative parameters"}>
+          <div><dt>ΔTm</dt><dd>0.3 °C</dd></div>
+          <div><dt>GC</dt><dd>55%</dd></div>
+          <div><dt>{isZh ? "扩增子" : "Amplicon"}</dt><dd>152 bp</dd></div>
+        </dl>
 
         <div className="home-evidence-footer">
-          <div className="home-evidence-score is-status"><span>{isZh ? "示意数据，非实验结果" : "Illustrative data, not experimental results"}</span></div>
-          <div className="home-evidence-sources"><span>NCBI RefSeq</span><span>Primer3</span><span>RNA BLAST</span></div>
+          <p className="home-evidence-disclaimer">{isZh ? "示意数据，非实验结果" : "Illustrative data, not experimental results"}</p>
+          <span className="home-evidence-methodline">NCBI RefSeq · Primer3 · RNA BLAST</span>
         </div>
       </div>
 

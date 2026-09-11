@@ -1,0 +1,74 @@
+.trigger {
+  --cat-coat-light: #d6b2d0;
+  --cat-coat: #ba8bb0;
+  --cat-coat-shade: #93658c;
+  --cat-outline: #855b7b;
+  --cat-ink: #342c39;
+  --cat-shadow: #523650;
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:global([data-theme="dark"]) .trigger {
+  --cat-coat-light: #e9cce2;
+  --cat-coat: #c8a0c0;
+  --cat-coat-shade: #a2759b;
+  --cat-outline: #906686;
+  --cat-shadow: #000;
+}
+
+.art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  /* The cat is visible even if animation is disabled or interrupted. */
+  opacity: 1;
+  filter: drop-shadow(0 5px 5px rgb(67 38 60 / 7%));
+  animation: arrive 650ms cubic-bezier(.22, 1, .36, 1) 150ms backwards;
+}
+
+.outline { stroke: var(--cat-outline); stroke-width: 1.1; stroke-linejoin: round; }
+.rimLight { stroke: #fff4ec; stroke-width: 2; stroke-linecap: round; opacity: .17; }
+.faceLight { stroke: #fff4ec; stroke-width: 2.3; stroke-linecap: round; opacity: .32; }
+.toes { stroke: #af8e9b; stroke-width: 1.2; stroke-linecap: round; opacity: .65; }
+.markings { stroke: var(--cat-coat-shade); stroke-width: 3.5; stroke-linecap: round; opacity: .28; }
+.brows { stroke: #fff5e9; stroke-width: 2; stroke-linecap: round; opacity: .45; }
+.mouth { stroke: #73505e; stroke-width: 1.5; stroke-linecap: round; }
+.whiskers { stroke: #795b75; stroke-width: 1.2; stroke-linecap: round; opacity: .58; }
+:global([data-theme="dark"]) .whiskers { stroke: #c3a2bb; opacity: .75; }
+
+.body { transform-origin: 116px 207px; animation: breathe 5s ease-in-out infinite; }
+.head { transform-origin: 116px 129px; animation: listen 9s ease-in-out 1s infinite; }
+.tail { transform-origin: 165px 185px; animation: tail 6.5s ease-in-out infinite; }
+.eyes { transform-box: fill-box; transform-origin: center; animation: blink 6.8s ease-in-out 1.2s infinite; }
+.rightEar { transform-origin: 151px 55px; animation: ear 11s ease-in-out 2s infinite; }
+.character { transform-origin: 116px 205px; transition: transform 280ms ease; }
+.pupils { transition: transform 240ms ease; }
+
+@media (hover: hover) and (pointer: fine) {
+  .trigger:hover .head { animation: greet 650ms cubic-bezier(.22, 1, .36, 1) both; }
+  .trigger:hover .tail { animation: tailHello 950ms ease-in-out both; }
+  .trigger:hover .pupils { transform: translateY(-1px); }
+}
+.trigger:focus-visible .head { animation: greet 650ms cubic-bezier(.22, 1, .36, 1) both; }
+.trigger:active .character { transform: translateY(1px) scale(.985); }
+.trigger[aria-expanded="true"] .art,
+.trigger[aria-expanded="true"] .art * { animation-play-state: paused; }
+
+@keyframes arrive {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.013); } }
+@keyframes listen { 0%, 65%, 100% { transform: rotate(0); } 74%, 83% { transform: rotate(-2deg); } 92% { transform: rotate(.5deg); } }
+@keyframes tail { 0%, 45%, 100% { transform: rotate(0); } 65% { transform: rotate(-5deg); } 82% { transform: rotate(2deg); } }
+@keyframes blink { 0%, 39%, 43%, 75%, 79%, 100% { transform: scaleY(1); } 41%, 77% { transform: scaleY(.08); } }
+@keyframes ear { 0%, 72%, 82%, 100% { transform: rotate(0); } 75% { transform: rotate(6deg); } 78% { transform: rotate(-2deg); } }
+@keyframes greet { 0%, 100% { transform: rotate(0); } 45%, 65% { transform: translateY(-1px) rotate(-5deg); } }
+@keyframes tailHello { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-10deg); } 65% { transform: rotate(4deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .trigger .art, .trigger .art * { animation: none !important; transition: none !important; transform: none !important; }
+  .trigger .art { opacity: 1; }
+}
